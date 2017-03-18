@@ -79,7 +79,7 @@ def random_draft(card_class: CardClass, exclude=[]):
         if cls.type == CardType.HERO:
             # Heroes are collectible...
             continue
-        if cls.card_class and cls.card_class != card_class:
+        if cls.card_class and cls.card_class != card_class and cls.card_class != CardClass.NEUTRAL:
             continue
         collection.append(cls)
 
@@ -87,6 +87,36 @@ def random_draft(card_class: CardClass, exclude=[]):
         card = random.choice(collection)
         if deck.count(card.id) < card.max_count_in_deck:
             deck.append(card.id)
+
+    return deck
+
+
+def fix_draft(card_class: CardClass, card_ids):
+    """
+    Return a deck of fixed cards
+    """
+    from . import cards
+    from .deck import Deck
+
+    deck = []
+    collection = []
+    hero = card_class.default_hero
+
+    for card in cards.db.keys():
+        cls = cards.db[card]
+        if not cls.collectible:
+            continue
+        if cls.type == CardType.HERO:
+            # Heroes are collectible...
+            continue
+        if cls.card_class and cls.card_class != card_class and cls.card_class != CardClass.NEUTRAL:
+            continue
+        collection.append(cls.id)
+
+    for card_id in card_ids:
+        # make sure our fixed deck is correct
+        assert card_id in collection
+        deck.append(card_id)
 
     return deck
 
@@ -164,6 +194,9 @@ def weighted_card_choice(source, weights: List[int], card_sets: List[str], count
 
 
 def setup_game() -> ".game.Game":
+    """
+    Original setup
+    """
     from .game import Game
     from .player import Player
 
@@ -171,6 +204,58 @@ def setup_game() -> ".game.Game":
     deck2 = random_draft(CardClass.WARRIOR)
     player1 = Player("Player1", deck1, CardClass.MAGE.default_hero)
     player2 = Player("Player2", deck2, CardClass.WARRIOR.default_hero)
+
+    game = Game(players=(player1, player2))
+    game.start()
+
+    return game
+
+
+def setup_game_fix_player_fix_deck() -> ".game.Game":
+    """
+    Setup two fixed players and decks
+    """
+    from .game import Game
+    from .player import Player
+
+    fix_deck_card_ids = [
+                          'EX1_277',       # Arcane Missiles x2
+                          'EX1_277',
+                          'NEW1_012',      # Mana Wyrm x2
+                          'NEW1_012',
+                          'CS2_027',       # Mirror Image x2
+                          'CS2_027',
+                          'EX1_066',       # Acidic Swamp Ooze x2
+                          'EX1_066',
+                          'CS2_172',       # Bloodfen Raptor x2
+                          'CS2_172',
+                          'CS2_173',       # Bluegill Warrior
+                          'EX1_608',       # Sorcerer's Apprentice x2
+                          'EX1_608',
+                          'EX1_582',       # Dalaran Mage
+                          'CS2_124',       # Wolfrider x2
+                          'CS2_124',
+                          'CS2_182',       # Chillwind Yeti x2
+                          'CS2_182',
+                          'CS2_029',       # Fireball x2
+                          'CS2_029',
+                          'CS2_022',       # Polymorph x2
+                          'CS2_022',
+                          'CS2_155',       # Archmage x2
+                          'CS2_155',
+                          'CS2_213',       # Reckless Rocketeer
+                          'CS2_201',       # Core Hound
+                          'CS2_032',       # Flamestrike
+                          'CS2_032',
+                          'OG_142',        # Eldritch Horror
+                          'EX1_279',       # Pyroblast
+                      ]
+
+    deck1 = fix_draft(CardClass.MAGE, card_ids=fix_deck_card_ids)
+    deck2 = fix_draft(CardClass.MAGE, card_ids= fix_deck_card_ids)
+
+    player1 = Player("Player Mage 1", deck1, CardClass.MAGE.default_hero)
+    player2 = Player("Player Mage 2", deck2, CardClass.MAGE.default_hero)
 
     game = Game(players=(player1, player2))
     game.start()
@@ -219,8 +304,7 @@ def play_turn(game: ".game.Game") -> ".game.Game":
     return game
 
 
-def play_full_game() -> ".game.Game":
-    game = setup_game()
+def play_full_game(game: ".game.Game") -> ".game.Game":
 
     for player in game.players:
         print("%r can mulligan %r" % (player, player.choice.cards))
