@@ -252,7 +252,7 @@ def setup_game_fix_player_fix_deck() -> ".game.Game":
                       ]
 
     deck1 = fix_draft(CardClass.MAGE, card_ids=fix_deck_card_ids)
-    deck2 = fix_draft(CardClass.MAGE, card_ids= fix_deck_card_ids)
+    deck2 = fix_draft(CardClass.MAGE, card_ids=fix_deck_card_ids)
 
     player1 = Player("Player Mage 1", deck1, CardClass.MAGE.default_hero)
     player2 = Player("Player Mage 2", deck2, CardClass.MAGE.default_hero)
@@ -277,6 +277,10 @@ def play_turn(game: ".game.Game") -> ".game.Game":
 
         # iterate over our hand and play whatever is playable
         for card in player.hand:
+            if card.id == 'EX1_277':
+                print('a')
+                card.play(target=None)
+
             if card.is_playable() and random.random() < 0.5:
                 target = None
                 if card.must_choose_one:
