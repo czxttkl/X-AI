@@ -2,6 +2,7 @@ from enum import Enum
 import random
 import copy
 import string
+from actions import *
 
 
 class Card:
@@ -77,110 +78,6 @@ class Card:
             return "SPELL:{0}({1})".format(self.name, self.mana_cost)
         elif self.is_minion:
             return "MINION:{0}({1}, {2}, {3})".format(self.name, self.mana_cost, self.attack, self.health)
-
-
-class Action:
-    def apply(self, game_world):
-        pass
-
-
-class MinionPlay(Action):
-    """ Play a minion from inhand to intable """
-    def __init__(self, src_player, src_card):
-        self.src_player = src_player.name
-        self.src_card = src_card
-
-    def apply(self, game_world):
-        for card in game_world[self.src_player]['inhands']:
-            if card == self.src_card:
-                game_world[self.src_player]['intable'].append(card)
-                game_world[self.src_player]['inhands'].remove(card)
-                game_world[self.src_player]['mana'] -= card.mana_cost
-                if card.charge:
-                    card.used_this_turn = False
-                else:
-                    card.used_this_turn = True
-                break
-
-
-class SpellPlay(Action):
-    def __init__(self, src_player, src_card, target_player=None, target_unit=None):
-        self.src_player = src_player.name
-        self.src_card = src_card
-        if target_player:
-            self.target_player = target_player.name
-        self.target_unit = target_unit
-
-    def apply(self, game_world):
-        for card in game_world[self.src_player]['inhands']:
-            if card == self.src_card:
-                game_world[self.src_player]['inhands'].remove(card)
-                game_world[self.src_player]['mana'] -= card.mana_cost
-                self.spell_effect(game_world)
-                break
-
-    def spell_effect(self, game_world):
-        sp_eff = self.src_card.spell_play_effect
-        if sp_eff == 'this_turn_mana+1':
-            game_world[self.src_player]['mana'] += 1
-        elif sp_eff == 'damage_to_a_target_6':
-            if self.target_unit == 'hero':
-                game_world[self.target_player]['health'] -= 6
-            else:
-                for pawn in game_world[self.target_player]['intable']:
-                    if pawn == self.target_unit:
-                        pawn.health -= 6
-                        break
-        elif sp_eff == 'transform_to_a_1/1sheep':
-            for pawn in game_world[self.target_player]['intable']:
-                if pawn == self.target_unit:
-                    pawn = Card.init_card('Sheep')
-
-
-class MinionAttack(Action):
-    def __init__(self, src_player, target_player, target_unit, src_card):
-        self.src_player = src_player.name
-        self.target_player = target_player.name
-        self.target_unit = target_unit
-        self.src_card = src_card
-
-    def apply(self, game_world):
-        assert self.src_card.is_minion
-        # need to find src card in the new game world
-        for pawn in game_world[self.src_player]['intable']:
-            if pawn == self.src_card:
-                self.src_card = pawn
-                break
-
-        if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= self.src_card.attack
-        else:
-            for pawn in game_world[self.target_player]['intable']:
-                if pawn == self.target_unit:
-                    pawn.health -= self.src_card.attack
-                    self.src_card.health -= pawn.attack
-                    break
-
-        self.src_card.used_this_turn = True
-
-
-class HeroPowerAttack(Action):
-    def __init__(self, src_player, target_player, target_unit):
-        self.src_player = src_player.name
-        self.target_player = target_player.name
-        self.target_unit = target_unit
-
-    def apply(self, game_world):
-        src_card = game_world[self.src_player]['heropower']  # need to find src card in the new game world
-
-        game_world[self.src_player]['mana'] -= src_card.mana_cost
-        if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= src_card.attack
-        else:
-            for pawn in game_world[self.target_player]['intable']:
-                if pawn == self.target_unit:
-                    pawn.health -= src_card.attack
-                    break
 
 
 mage_fix_deck = [
@@ -299,8 +196,11 @@ class Player:
                     return False
             return True
 
-    def search_all_actions(self, game_world, cur_act_seq_and_gw, all_act_seqs_and_gw):
+    def search_all_actions(self, game_world, cur_act_seq, all_act_seqs):
         """ Search all possible actions """
+        # add actions so far as a choice
+        all_act_seqs.add(cur_act_seq)
+
         candidates = []
 
         if self.card_playable_from_hands(self.heropower, game_world):
@@ -332,19 +232,16 @@ class Player:
                                           target_unit=oppo_pawn, game_world=game_world):
                     candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit=oppo_pawn))
 
-        # add doing nothing as a choice
-        all_act_seqs_and_gw.append(copy.deepcopy(cur_act_seq_and_gw))
-
         for candidate in candidates:
             # backup
-            game_world_new = game_world.copy()
+            game_world_old = game_world.copy()
             candidate.apply(game_world)
             # apply, DFS
-            cur_act_seq_and_gw.append((candidate, game_world))
-            self.search_all_actions(game_world, cur_act_seq_and_gw, all_act_seqs_and_gw)
+            cur_act_seq.update(candidate, game_world)
+            self.search_all_actions(game_world, cur_act_seq, all_act_seqs)
             # restore
-            cur_act_seq_and_gw.pop()
-            game_world = game_world_new
+            game_world = game_world_old
+            cur_act_seq.pop(game_world)
 
 
 
@@ -392,11 +289,12 @@ class Match:
             player.turn_begin_init(self.turn)      # update mana, etc. at the beginning of a turn
             print("Turn {0}. {1}".format(self.turn, player))
 
-            all_act_seqs_and_gw = []
+            all_act_seqs = ActionSequenceCollection()
             game_world = GameWorld(self.player1, self.player2).copy()
             player.search_all_actions(game_world,
-                                      cur_act_seq_and_gw=[(None, game_world)],
-                                      all_act_seqs_and_gw=all_act_seqs_and_gw)
-            print(player, all_act_seqs_and_gw)
+                                      cur_act_seq=ActionSequence(game_world),
+                                      all_act_seqs=all_act_seqs)
+            print(player)
+            print(all_act_seqs)
 
 
