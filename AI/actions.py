@@ -1,4 +1,6 @@
 from match import *
+from card import *
+import random
 
 
 class Action:
@@ -22,13 +24,14 @@ class MinionPlay(Action):
     def apply(self, game_world):
         for card in game_world[self.src_player]['inhands']:
             if card == self.src_card:
-                game_world[self.src_player]['intable'].append(card)
                 game_world[self.src_player]['inhands'].remove(card)
                 game_world[self.src_player]['mana'] -= card.mana_cost
-                if card.charge:
-                    card.used_this_turn = False
-                else:
-                    card.used_this_turn = True
+                if len(game_world[self.src_player]['intable']) < 7:
+                    game_world[self.src_player]['intable'].append(card)
+                    if card.charge:
+                        card.used_this_turn = False
+                    else:
+                        card.used_this_turn = True
                 break
 
     def __repr__(self):
@@ -65,9 +68,10 @@ class SpellPlay(Action):
                         pawn.health -= 6
                         break
         elif sp_eff == 'transform_to_a_1/1sheep':
-            for pawn in game_world[self.target_player]['intable']:
+            for i, pawn in enumerate(game_world[self.target_player]['intable']):
                 if pawn == self.target_unit:
-                    pawn = Card.init_card('Sheep')
+                    game_world[self.target_player]['intable'][i] = Card.init_card('Sheep')
+                    break
 
     def __repr__(self):
         if self.target_player:
@@ -162,10 +166,29 @@ class ActionSequenceCollection:
         self.data.append(action_seq.copy())
 
     def __repr__(self):
-        str = ''
+        str = '\nActionSequenceChoices:\n'
         for i, d in enumerate(self.data):
             str += "Choice %d: %r\n" % (i, d)
         return str
 
+
+class ActionPicker:
+    def pick_action(self, act_seq_coll: ActionSequenceCollection):
+        pass
+
+    def pick_action_and_apply(self, act_seq_coll: ActionSequenceCollection,
+                              player1: ".match.Player", player2: ".match.Player"):
+        act_seq = self.pick_action(act_seq_coll)
+        act_seq.game_world.update(player1, player2)
+        print(act_seq.game_world)
+
+
+class RandomActionPicker(ActionPicker):
+    def pick_action(self, act_seq_coll: ActionSequenceCollection):
+        """ pick an ActionSequence """
+        i = random.choice(range(len(act_seq_coll.data)))
+        act_seq = act_seq_coll.data[i]
+        print("Pick Choice %d: %r" % (i, act_seq))
+        return act_seq
 
 
