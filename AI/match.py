@@ -87,21 +87,29 @@ class Player:
                     return False
             return True
 
+    def candidate_has_minion_attack(self, candidates):
+        """ whether candidate actions contain MinionAttack action. Used in heuristic search """
+        for candidate in candidates:
+            if isinstance(candidate, MinionAttack):
+                return True
+        return False
+
     def search_all_actions(self, game_world, cur_act_seq, all_act_seqs):
         """ Search all possible actions """
-        # add actions so far as a choice
-        all_act_seqs.add(cur_act_seq)
-
         candidates = []
 
-        if self.card_playable_from_hands(self.heropower, game_world):
+        # hero power
+        # heuristic search: if used, hero power should be used first (when cur_act_seq only has NullAction)
+        if len(cur_act_seq) == 1 and self.card_playable_from_hands(self.heropower, game_world):
             candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit='hero'))
             for oppo_pawn in game_world[self.opponent.name]['intable']:
                 candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit=oppo_pawn))
 
+        # play inhands
         for card in game_world[self.name]['inhands']:
             if self.card_playable_from_hands(card, game_world):
-                if card.is_spell:
+                # heuristic search: spellplay should be executed before MinionPlay and MinionAttack
+                if card.is_spell and cur_act_seq.no([MinionPlay, MinionAttack]):
                     if card.spell_require_target:
                         if card.spell_target_can_be_hero:
                             candidates.append(SpellPlay(src_player=self, src_card=card, target_player=self.opponent,
@@ -111,17 +119,26 @@ class Player:
                                                         target_unit=oppo_pawn))
                     else:
                         candidates.append(SpellPlay(src_player=self, src_card=card))
-                elif card.is_minion:
+                elif card.is_minion and cur_act_seq.no([MinionAttack]):
+                    # heuristic search: minionplay should be executed before MinionAttack
                     candidates.append(MinionPlay(src_player=self, src_card=card))
 
-        for pawn in game_world[self.name]['intable']:
-            if self.minion_attackable(src_card=pawn, target_player=self.opponent,
-                                      target_unit='hero', game_world=game_world):
-                candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit='hero'))
-            for oppo_pawn in game_world[self.opponent.name]['intable']:
+        # minion attack
+        # heuristic search: only one candidate for minionattack at one point
+        if not cur_act_seq.last(MinionAttack):
+            for pawn in game_world[self.name]['intable']:
                 if self.minion_attackable(src_card=pawn, target_player=self.opponent,
-                                          target_unit=oppo_pawn, game_world=game_world):
-                    candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit=oppo_pawn))
+                                          target_unit='hero', game_world=game_world):
+                    candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit='hero'))
+                for oppo_pawn in game_world[self.opponent.name]['intable']:
+                    if self.minion_attackable(src_card=pawn, target_player=self.opponent,
+                                              target_unit=oppo_pawn, game_world=game_world):
+                        candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit=oppo_pawn))
+
+        # add actions so far as a choice
+        # heuristic search: has to add all MinionAttack before finishing the turn
+        if not self.candidate_has_minion_attack(candidates):
+            all_act_seqs.add(cur_act_seq)
 
         for candidate in candidates:
             # backup
@@ -206,12 +223,13 @@ class Match:
         self.turn = 0
 
     def play_match(self):
-        for i in range(30):
+        for i in range(60):
             self.turn += 1
             player = self.player1 if self.turn % 2 else self.player2
             success_flg = player.turn_begin_init(self.turn)      # update mana, etc. at the beginning of a turn
             if not success_flg:
                 self.match_end(winner=player.opponent, loser=player, reason='no_card_to_drawn')
+                break
 
             print("Turn {0}. {1}".format(self.turn, player))
 
@@ -222,17 +240,22 @@ class Match:
                                       all_act_seqs=all_act_seqs)
             print(all_act_seqs)
 
-            RandomActionPicker().pick_action_and_apply(all_act_seqs, self.player1, self.player2)
-            self.check_for_match_end()
+            RandomActionPicker(player).pick_action_and_apply(all_act_seqs, self.player1, self.player2)
+            if self.check_for_match_end():
+                break
             print("")
 
     def match_end(self, winner, loser, reason):
-        print("match ends. winner=%r, loser=%r, reason=%r" % (winner.name, loser.name, reason))
+        print("match ends at turn %d. winner=%r, loser=%r, reason=%r" % (self.turn, winner.name, loser.name, reason))
 
     def check_for_match_end(self):
+        """ return True if the match ends """
         if self.player1.health <= 0:
             self.match_end(winner=self.player2, loser=self.player1, reason="player1 health<=0")
+            return True
         elif self.player2.health <= 0:
             self.match_end(winner=self.player1, loser=self.player2, reason="player2 health<=0")
-
+            return True
+        else:
+            return False
 

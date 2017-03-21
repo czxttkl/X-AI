@@ -6,9 +6,9 @@ import string
 class Card:
     CARD_DB = {
         'The Coin':
-            {'mana_cost':0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True},
+            {'mana_cost':0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True, 'is_minion': False},
         'Mage_Hero_Fireblast':
-            {'attack': 1, 'mana_cost': 2, 'heropower': True},
+            {'attack': 1, 'mana_cost': 2, 'heropower': True, 'is_minion': False},
         'Sheep':
             {'attack': 1, 'health': 1},
         'Mana Wyrm':
@@ -26,12 +26,12 @@ class Card:
         'Chillwind Yeti':
             {'attack': 4, 'health': 5, 'mana_cost': 4},
         'Fireball':
-            {'mana_cost': 4, 'is_spell': True, 'spell_play_effect': 'damage_to_a_target_6',
+            {'mana_cost': 4, 'is_spell': True, 'is_minion': False, 'spell_play_effect': 'damage_to_a_target_6',
              'spell_require_target': True, 'spell_target_can_be_hero': True},
         'Oasis Snapjaw':
             {'attack': 2, 'health': 7, 'mana_cost': 4},
         'Polymorph':
-            {'mana_cost': 4, 'is_spell': True, 'spell_play_effect': 'transform_to_a_1/1sheep',
+            {'mana_cost': 4, 'is_spell': True, 'is_minion': False, 'spell_play_effect': 'transform_to_a_1/1sheep',
              'spell_require_target': True, 'spell_target_can_be_hero': False},
         'Stormwind Knight':
             {'attack': 2, 'health': 5, 'mana_cost': 4, 'charge': True}

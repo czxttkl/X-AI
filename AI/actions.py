@@ -144,8 +144,34 @@ class ActionSequence:
         self.action_list.append(act)
         self.game_world = game_world
 
+    def __len__(self):
+        return len(self.action_list)
+
     def copy(self):
         return copy.deepcopy(self)
+
+    def all(self, action_type):
+        """ whether all actions (except NullAction) are of certain action_type """
+        if len(self) == 1:
+            return True
+        for act in self.action_list[1:]:
+            if not isinstance(act, action_type):
+                return False
+        return True
+
+    def no(self, action_type_list):
+        """ whether all actions (except NullAction) are not of certain action_types """
+        if len(self) == 1:
+            return True
+        for act in self.action_list[1:]:
+            for action_type in action_type_list:
+                if isinstance(act, action_type):
+                    return False
+        return True
+
+    def last(self, action_type):
+        """ whether last action is of certain action_type """
+        return isinstance(self.action_list[-1], action_type)
 
     def pop(self, game_world: ".match.GameWorld"):
         """ pop the last action and restore the game world"""
@@ -173,6 +199,9 @@ class ActionSequenceCollection:
 
 
 class ActionPicker:
+    def __init__(self, player):
+        self.player = player.name
+
     def pick_action(self, act_seq_coll: ActionSequenceCollection):
         pass
 
@@ -188,7 +217,7 @@ class RandomActionPicker(ActionPicker):
         """ pick an ActionSequence """
         i = random.choice(range(len(act_seq_coll.data)))
         act_seq = act_seq_coll.data[i]
-        print("Pick Choice %d: %r" % (i, act_seq))
+        print("%r pick Choice %d: %r\n" % (self.player, i, act_seq))
         return act_seq
 
 
