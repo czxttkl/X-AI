@@ -69,30 +69,10 @@ class Player:
                     return False
             return game_world[self.name]['mana'] >= card.mana_cost
 
-    def minion_attackable(self, src_card, target_player, target_unit, game_world):
-        """ whether a minion can attack the opponent """
-        if src_card.used_this_turn:
-            return False
-
-        if target_unit == 'hero':
-            for oppo_pawn in game_world[target_player.name]['intable']:
-                if oppo_pawn.taunt:
-                    return False
-            return True
-        elif target_unit.is_minion:
-            if target_unit.taunt:
-                return True
-            for oppo_pawn in game_world[target_player.name]['intable']:
-                if oppo_pawn.taunt:
-                    return False
-            return True
-
-    def candidate_has_minion_attack(self, candidates):
-        """ whether candidate actions contain MinionAttack action. Used in heuristic search """
-        for candidate in candidates:
-            if isinstance(candidate, MinionAttack):
-                return True
-        return False
+    def estimate_all_actions(self, game_world):
+        """ estimate the number of all actions in a turn. """
+        print("estimated actions %d" %
+              (len(game_world[self.opponent.name]['intable']) + 1) ** (3+len(game_world[self.name]['intable'])))
 
     def search_all_actions(self, game_world, cur_act_seq, all_act_seqs):
         """ Search all possible actions """
@@ -119,25 +99,58 @@ class Player:
                                                         target_unit=oppo_pawn))
                     else:
                         candidates.append(SpellPlay(src_player=self, src_card=card))
+                # heuristic search: minionplay should be executed before MinionAttack
                 elif card.is_minion and cur_act_seq.no([MinionAttack]):
-                    # heuristic search: minionplay should be executed before MinionAttack
                     candidates.append(MinionPlay(src_player=self, src_card=card))
 
         # minion attack
-        # heuristic search: only one candidate for minionattack at one point
-        if not cur_act_seq.last(MinionAttack):
+        oppo_taunt = []
+        oppo_divine = []
+        for oppo_pawn in game_world[self.opponent.name]['intable']:
+            if oppo_pawn.divine:
+                oppo_divine.append(oppo_pawn)
+            if oppo_pawn.taunt:
+                oppo_taunt.append(oppo_pawn)
+        # heuristic search: when taunt is present, minion attacks can initiate from any of my minions,
+        # to any of taunt opponent minions
+        if oppo_taunt:
             for pawn in game_world[self.name]['intable']:
-                if self.minion_attackable(src_card=pawn, target_player=self.opponent,
-                                          target_unit='hero', game_world=game_world):
-                    candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit='hero'))
-                for oppo_pawn in game_world[self.opponent.name]['intable']:
-                    if self.minion_attackable(src_card=pawn, target_player=self.opponent,
-                                              target_unit=oppo_pawn, game_world=game_world):
-                        candidates.append(MinionAttack(src_player=self, src_card=pawn, target_player=self.opponent, target_unit=oppo_pawn))
+                if not pawn.used_this_turn:
+                    for oppo_pawn in oppo_taunt:
+                        candidates.append(
+                                MinionAttack(src_player=self, src_card=pawn,
+                                             target_player=self.opponent, target_unit=oppo_pawn))
+        # heuristic search: when divine is present, search minion attacks from any of my minions,
+        # to any of opponent minions
+        elif oppo_divine:
+            for pawn in game_world[self.name]['intable']:
+                if not pawn.used_this_turn:
+                    candidates.append(MinionAttack(src_player=self, src_card=pawn,
+                                                   target_player=self.opponent, target_unit='hero'))
+                    for oppo_pawn in game_world[self.opponent.name]['intable']:
+                        candidates.append(
+                                MinionAttack(src_player=self, src_card=pawn,
+                                             target_player=self.opponent, target_unit=oppo_pawn))
+        # heuristic search: when no taunt or divine is present in opponent minions, search
+        # minion attacks from my first usable minion to any of other minions
+        else:
+            for pawn in game_world[self.name]['intable']:
+                if not pawn.used_this_turn:
+                    candidates.append(MinionAttack(src_player=self, src_card=pawn,
+                                                   target_player=self.opponent, target_unit='hero'))
+                    for oppo_pawn in game_world[self.opponent.name]['intable']:
+                        candidates.append(MinionAttack(src_player=self, src_card=pawn,
+                                                       target_player=self.opponent, target_unit=oppo_pawn))
+                    break
 
         # add actions so far as a choice
         # heuristic search: has to add all MinionAttack before finishing the turn
-        if not self.candidate_has_minion_attack(candidates):
+        candidate_has_minion_attack = False
+        for candidate in candidates:
+            if isinstance(candidate, MinionAttack):
+                candidate_has_minion_attack = True
+                break
+        if not candidate_has_minion_attack:
             all_act_seqs.add(cur_act_seq)
 
         for candidate in candidates:
@@ -235,6 +248,7 @@ class Match:
 
             all_act_seqs = ActionSequenceCollection()
             game_world = GameWorld(self.player1, self.player2).copy()
+            player.estimate_all_actions(game_world)
             player.search_all_actions(game_world,
                                       cur_act_seq=ActionSequence(game_world),
                                       all_act_seqs=all_act_seqs)
