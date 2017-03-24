@@ -74,8 +74,49 @@ class Player:
         print("estimated actions %d" %
               (len(game_world[self.opponent.name]['intable']) + 1) ** (3+len(game_world[self.name]['intable'])))
 
-    def search_all_actions(self, game_world, cur_act_seq, all_act_seqs):
-        """ Search all possible actions """
+    def search_one_action(self, game_world):
+        candidates = list()
+        candidates.append(NullAction())
+
+        # hero power
+        if self.card_playable_from_hands(self.heropower, game_world):
+            candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit='hero'))
+            for oppo_pawn in game_world[self.opponent.name]['intable']:
+                candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit=oppo_pawn))
+
+        # play inhands
+        for card in game_world[self.name]['inhands']:
+            if self.card_playable_from_hands(card, game_world):
+                if card.is_spell:
+                    if card.spell_require_target:
+                        if card.spell_target_can_be_hero:
+                            candidates.append(SpellPlay(src_player=self, src_card=card, target_player=self.opponent,
+                                                        target_unit='hero'))
+                        for oppo_pawn in game_world[self.opponent.name]['intable']:
+                            candidates.append(SpellPlay(src_player=self, src_card=card, target_player=self.opponent,
+                                                        target_unit=oppo_pawn))
+                    else:
+                        candidates.append(SpellPlay(src_player=self, src_card=card))
+                elif card.is_minion:
+                    candidates.append(MinionPlay(src_player=self, src_card=card))
+
+        # minion attacks
+        for pawn in game_world[self.name]['intable']:
+            if not pawn.used_this_turn:
+                candidates.append(MinionAttack(src_player=self, src_card=pawn,
+                                               target_player=self.opponent, target_unit='hero'))
+                for oppo_pawn in game_world[self.opponent.name]['intable']:
+                    candidates.append(
+                        MinionAttack(src_player=self, src_card=pawn,
+                                     target_player=self.opponent, target_unit=oppo_pawn))
+
+        for i, candidate in enumerate(candidates):
+            print("Choice %d: %r" % (i, candidate))
+
+        return candidates
+
+    def search_all_actions_in_one_turn(self, game_world, cur_act_seq, all_act_seqs):
+        """ Search all possible actions in one turn """
         candidates = []
 
         # hero power
@@ -157,10 +198,9 @@ class Player:
             # backup
             game_world_old = game_world.copy()
             candidate.apply(game_world)
-            game_world.update_after_action()
             # apply, DFS
             cur_act_seq.update(candidate, game_world)
-            self.search_all_actions(game_world, cur_act_seq, all_act_seqs)
+            self.search_all_actions_in_one_turn(game_world, cur_act_seq, all_act_seqs)
             # restore
             game_world = game_world_old
             cur_act_seq.pop(game_world)
@@ -181,6 +221,8 @@ class GameWorld:
                                     'heropower': player2.heropower}}
         self.player1_name = player1.name
         self.player2_name = player2.name
+        self.data = copy.deepcopy(self.data)  # make sure game world is a copy of player states
+                                              # so altering game world will not really affect player states
 
     def __repr__(self):
         str = '%r. health: %d, mana: %d\n' % \
@@ -206,18 +248,19 @@ class GameWorld:
     def copy(self):
         return copy.deepcopy(self)
 
-    def update(self, player1, player2):
-        """ update player1 and player2 according to this game world """
+    def update_player(self, player1, player2):
+        """ update player1 and player2 according to this game world
+        This represents the real updates, the updates really affect player states """
         player1.intable = self[player1.name]['intable']
         player1.inhands = self[player1.name]['inhands']
         player1.health = self[player1.name]['health']
-        player1.mana = self[player1.name]['mana']
+        player1.this_turn_mana = self[player1.name]['mana']
         player1.heropower = self[player1.name]['heropower']
 
         player2.intable = self[player2.name]['intable']
         player2.inhands = self[player2.name]['inhands']
         player2.health = self[player2.name]['health']
-        player2.mana = self[player2.name]['mana']
+        player2.this_turn_mana = self[player2.name]['mana']
         player2.heropower = self[player2.name]['heropower']
 
 
@@ -246,15 +289,28 @@ class Match:
 
             print("Turn {0}. {1}".format(self.turn, player))
 
-            all_act_seqs = ActionSequenceCollection()
-            game_world = GameWorld(self.player1, self.player2).copy()
-            player.estimate_all_actions(game_world)
-            player.search_all_actions(game_world,
-                                      cur_act_seq=ActionSequence(game_world),
-                                      all_act_seqs=all_act_seqs)
-            print(all_act_seqs)
+            # one action search
+            game_world = GameWorld(self.player1, self.player2)
+            while True:
+                all_acts = player.search_one_action(game_world)
+                act = RandomActionPicker(player).pick_action(all_acts, game_world)
+                if isinstance(act, NullAction):
+                    break
+                else:
+                    act.apply(game_world)
+                    print(game_world)
+            game_world.update_player(self.player1, self.player2)
 
-            RandomActionPicker(player).pick_action_and_apply(all_act_seqs, self.player1, self.player2)
+            # action sequence search
+            # all_act_seqs = ActionSequenceCollection()
+            # game_world = GameWorld(self.player1, self.player2)
+            # player.estimate_all_actions(game_world)
+            # player.search_all_actions_in_one_turn(game_world,
+            #                                       cur_act_seq=ActionSequence(game_world),
+            #                                       all_act_seqs=all_act_seqs)
+            # print(all_act_seqs)
+            # RandomActionSeqPicker(player).pick_action_seq_and_apply(all_act_seqs, self.player1, self.player2)
+
             if self.check_for_match_end():
                 break
             print("")

@@ -5,6 +5,12 @@ import random
 
 class Action:
     def apply(self, game_world):
+        """ apply this action to game world and update this game world. """
+        self.__apply__(game_world)
+        game_world.update_after_action()
+
+    def __apply__(self, game_world):
+        """ the real action taken place """
         pass
 
 
@@ -21,7 +27,7 @@ class MinionPlay(Action):
         self.src_player = src_player.name
         self.src_card = src_card
 
-    def apply(self, game_world):
+    def __apply__(self, game_world):
         for card in game_world[self.src_player]['inhands']:
             if card == self.src_card:
                 game_world[self.src_player]['inhands'].remove(card)
@@ -47,7 +53,7 @@ class SpellPlay(Action):
         if target_player:
             self.target_player = target_player.name
 
-    def apply(self, game_world):
+    def __apply__(self, game_world):
         for card in game_world[self.src_player]['inhands']:
             if card == self.src_card:
                 game_world[self.src_player]['inhands'].remove(card)
@@ -88,7 +94,7 @@ class MinionAttack(Action):
         self.target_unit = target_unit
         self.src_card = src_card
 
-    def apply(self, game_world):
+    def __apply__(self, game_world):
         assert self.src_card.is_minion
         # need to find src card in the new game world
         for pawn in game_world[self.src_player]['intable']:
@@ -118,7 +124,7 @@ class HeroPowerAttack(Action):
         self.target_player = target_player.name
         self.target_unit = target_unit
 
-    def apply(self, game_world):
+    def __apply__(self, game_world):
         src_card = game_world[self.src_player]['heropower']  # need to find src card in the new game world
 
         game_world[self.src_player]['mana'] -= src_card.mana_cost
@@ -198,21 +204,21 @@ class ActionSequenceCollection:
         return str
 
 
-class ActionPicker:
+class ActionSeqPicker:
     def __init__(self, player):
         self.player = player.name
 
     def pick_action(self, act_seq_coll: ActionSequenceCollection):
         pass
 
-    def pick_action_and_apply(self, act_seq_coll: ActionSequenceCollection,
+    def pick_action_seq_and_apply(self, act_seq_coll: ActionSequenceCollection,
                               player1: ".match.Player", player2: ".match.Player"):
         act_seq = self.pick_action(act_seq_coll)
-        act_seq.game_world.update(player1, player2)
+        act_seq.game_world.update_player(player1, player2)
         print(act_seq.game_world)
 
 
-class RandomActionPicker(ActionPicker):
+class RandomActionSeqPicker(ActionSeqPicker):
     def pick_action(self, act_seq_coll: ActionSequenceCollection):
         """ pick an ActionSequence """
         i = random.choice(range(len(act_seq_coll.data)))
@@ -220,4 +226,23 @@ class RandomActionPicker(ActionPicker):
         print("%r pick Choice %d: %r\n" % (self.player, i, act_seq))
         return act_seq
 
+
+class ActionPicker:
+    def __init__(self, player):
+        self.player = player.name
+
+    def pick_action(self, actions, game_world):
+        pass
+
+    def pick_action_and_apply(self, actions, game_world):
+        act = self.pick_action(actions)
+        act.apply(game_world)
+
+
+class RandomActionPicker(ActionPicker):
+
+    def pick_action(self, actions, game_world):
+        act = random.choice(actions)
+        print("%r pick %r\n" % (self.player, act))
+        return act
 
