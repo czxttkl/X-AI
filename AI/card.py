@@ -91,10 +91,17 @@ class Card:
 
     @staticmethod
     def find_card(card_list, card):
-        """ return the card wit the same cid in the card list"""
+        """ return the card with the same cid in the card list"""
         for c in card_list:
             if card == c:
                 return c
+
+    @staticmethod
+    def find_card_idx(card_list, card):
+        """ return the index of the card with the same cid in the card list"""
+        for i, c in enumerate(card_list):
+            if card == c:
+                return i
 
     def __repr__(self):
         if self.is_spell:

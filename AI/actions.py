@@ -37,22 +37,22 @@ class MinionPlay(Action):
 
     def __apply__(self, game_world):
         if self.from_inhands:
-            card = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
-            game_world[self.src_player]['inhands'].remove(card)
-            game_world[self.src_player]['mana'] -= card.mana_cost
+            new_minion = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
+            game_world[self.src_player]['inhands'].remove(new_minion)
+            game_world[self.src_player]['mana'] -= new_minion.mana_cost
         else:
             # when MinionPlay is not from inhands, play self.src_card directly
-            card = self.src_card
+            new_minion = self.src_card
 
         # a table could have at most 7 minions
         if len(game_world[self.src_player]['intable']) < 7:
-            game_world[self.src_player]['intable'].append(card)
-            if card.charge:
-                card.used_this_turn = False
+            game_world[self.src_player]['intable'].append(new_minion)
+            if new_minion.charge:
+                new_minion.used_this_turn = False
             else:
-                card.used_this_turn = True
-            if card.summon:
-                for summon in card.summon:
+                new_minion.used_this_turn = True
+            if new_minion.summon:
+                for summon in new_minion.summon:
                     MinionPlay(src_player_name=self.src_player, from_inhands=False, src_card=Card.init_card(summon))\
                         .apply(game_world)
 
@@ -70,12 +70,10 @@ class SpellPlay(Action):
             self.target_player = target_player.name
 
     def __apply__(self, game_world):
-        for card in game_world[self.src_player]['inhands']:
-            if card == self.src_card:
-                game_world[self.src_player]['inhands'].remove(card)
-                game_world[self.src_player]['mana'] -= card.mana_cost
-                self.spell_effect(game_world)
-                break
+        card = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
+        game_world[self.src_player]['inhands'].remove(card)
+        game_world[self.src_player]['mana'] -= card.mana_cost
+        self.spell_effect(game_world)
 
     def spell_effect(self, game_world):
         sp_eff = self.src_card.spell_play_effect
@@ -85,15 +83,11 @@ class SpellPlay(Action):
             if self.target_unit == 'hero':
                 game_world[self.target_player]['health'] -= 6
             else:
-                for pawn in game_world[self.target_player]['intable']:
-                    if pawn == self.target_unit:
-                        pawn.health -= 6
-                        break
+                target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+                target_pawn.health -= 6
         elif sp_eff == 'transform_to_a_1/1sheep':
-            for i, pawn in enumerate(game_world[self.target_player]['intable']):
-                if pawn == self.target_unit:
-                    game_world[self.target_player]['intable'][i] = Card.init_card('Sheep')
-                    break
+            target_pawn_idx = Card.find_card_idx(game_world[self.target_player]['intable'], self.target_unit)
+            game_world[self.target_player]['intable'][target_pawn_idx] = Card.init_card('Sheep')
         elif sp_eff == 'summon two 0/2 taunt minions':
             MinionPlay(src_player_name=self.src_player, from_inhands=False,
                        src_card=Card.init_card('Mirror Image 0/2 Taunt')).apply(game_world)
@@ -117,28 +111,22 @@ class MinionAttack(Action):
 
     def __apply__(self, game_world):
         assert self.src_card.is_minion
-        # need to find src card in the new game world
-        for pawn in game_world[self.src_player]['intable']:
-            if pawn == self.src_card:
-                self.src_card = pawn
-                break
+        pawn = Card.find_card(game_world[self.src_player]['intable'], self.src_card)
 
         if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= self.src_card.attack
+            game_world[self.target_player]['health'] -= pawn.attack
         else:
-            for pawn in game_world[self.target_player]['intable']:
-                if pawn == self.target_unit:
-                    if pawn.divine:
-                        pawn.divine = False
-                    else:
-                        pawn.health -= self.src_card.attack
-                    self.src_card.health -= pawn.attack
-                    break
+            target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+            if target_pawn.divine:
+                target_pawn.divine = False
+            else:
+                target_pawn.health -= pawn.attack
+            if pawn.divine:
+                pawn.divine = False
+            else:
+                pawn.health -= target_pawn.attack
 
-        if self.src_card.divine:
-            self.src_card.divine = False
-
-        self.src_card.used_this_turn = True
+        pawn.used_this_turn = True
 
     def __repr__(self):
         return "MinionAttack(source=%r, target_player=%r, target_unit=%r)" \
@@ -152,16 +140,19 @@ class HeroPowerAttack(Action):
         self.target_unit = target_unit
 
     def __apply__(self, game_world):
-        src_card = game_world[self.src_player]['heropower']  # need to find src card in the new game world
+        heropower = game_world[self.src_player]['heropower']  # need to find src card in the new game world
 
-        game_world[self.src_player]['mana'] -= src_card.mana_cost
+        game_world[self.src_player]['mana'] -= heropower.mana_cost
         if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= src_card.attack
+            game_world[self.target_player]['health'] -= heropower.attack
         else:
-            for pawn in game_world[self.target_player]['intable']:
-                if pawn == self.target_unit:
-                    pawn.health -= src_card.attack
-                    break
+            target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+            if target_pawn.divine:
+                target_pawn.divine = False
+            else:
+                target_pawn.health -= heropower.attack
+
+        heropower.used_this_turn = True
 
     def __repr__(self):
         return 'HeroPowerAttack(target_player=%r, target_unit=%r)' % (self.target_player, self.target_unit)
