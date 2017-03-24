@@ -48,10 +48,12 @@ class Player:
         for card in self.intable:
             card.used_this_turn = False
         self.heropower.used_this_turn = False
-        new_card = self.deck.draw(1)
-        if new_card:
-            self.inhands.extend(new_card)
-        else:
+        try:
+            new_card = self.deck.draw(1)
+            # you can maximally hold 10 cards. otherwise the new drawn card will be wasted.
+            if len(self.inhands) < 10:
+                self.inhands.extend(new_card)
+        except DeckInsufficientException:
             return False   # failure flag because of insufficient deck
         return True
 
@@ -76,7 +78,7 @@ class Player:
 
     def search_one_action(self, game_world):
         candidates = list()
-        candidates.append(NullAction())
+        candidates.append(NullAction(src_player=self))
 
         # hero power
         if self.card_playable_from_hands(self.heropower, game_world):
@@ -236,11 +238,19 @@ class GameWorld:
         str += 'inhands: %r\n' % self[self.player2_name]['inhands']
         return str
 
-    def update_after_action(self):
+    def update_after_action(self, last_action):
+        """ update this copy of game world after the last_action is executed.
+        This update will not change the real player's states. """
         for data in self.data.values():
             for card in data['intable']:
                 if card.health <= 0:
                     data['intable'].remove(card)
+
+        src_player = last_action.src_player
+        for pawn in self[src_player]['intable']:
+            if pawn.last_played_card_effect:
+                if isinstance(last_action, SpellPlay) and pawn.last_played_card_effect == "cast_spell_attack+1":
+                    pawn.attack += 1
 
     def __getitem__(self, player_name):
         return self.data[player_name]
@@ -291,6 +301,7 @@ class Match:
 
             # one action search
             game_world = GameWorld(self.player1, self.player2)
+            match_end = False
             while True:
                 all_acts = player.search_one_action(game_world)
                 act = RandomActionPicker(player).pick_action(all_acts, game_world)
@@ -298,8 +309,11 @@ class Match:
                     break
                 else:
                     act.apply(game_world)
+                    game_world.update_player(self.player1, self.player2)
                     print(game_world)
-            game_world.update_player(self.player1, self.player2)
+                    match_end = self.check_for_match_end()
+                    if match_end:
+                        break
 
             # action sequence search
             # all_act_seqs = ActionSequenceCollection()
@@ -311,7 +325,7 @@ class Match:
             # print(all_act_seqs)
             # RandomActionSeqPicker(player).pick_action_seq_and_apply(all_act_seqs, self.player1, self.player2)
 
-            if self.check_for_match_end():
+            if match_end:
                 break
             print("")
 

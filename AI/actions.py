@@ -7,7 +7,7 @@ class Action:
     def apply(self, game_world):
         """ apply this action to game world and update this game world. """
         self.__apply__(game_world)
-        game_world.update_after_action()
+        game_world.update_after_action(last_action=self)
 
     def __apply__(self, game_world):
         """ the real action taken place """
@@ -17,28 +17,44 @@ class Action:
 class NullAction(Action):
     """ do nothing as an action """
 
+    def __init__(self, src_player):
+        self.src_player = src_player.name
+
     def __repr__(self):
-        return "Null"
+        return "End Turn"
 
 
 class MinionPlay(Action):
     """ Play a minion from inhand to intable """
-    def __init__(self, src_player, src_card):
-        self.src_player = src_player.name
+    def __init__(self, src_card, src_player_name=None, src_player=None, from_inhands=True):
+        assert src_player is not None or src_player_name is not None
+        if src_player:
+            self.src_player = src_player.name
+        else:
+            self.src_player = src_player_name
         self.src_card = src_card
+        self.from_inhands = from_inhands
 
     def __apply__(self, game_world):
-        for card in game_world[self.src_player]['inhands']:
-            if card == self.src_card:
-                game_world[self.src_player]['inhands'].remove(card)
-                game_world[self.src_player]['mana'] -= card.mana_cost
-                if len(game_world[self.src_player]['intable']) < 7:
-                    game_world[self.src_player]['intable'].append(card)
-                    if card.charge:
-                        card.used_this_turn = False
-                    else:
-                        card.used_this_turn = True
-                break
+        if self.from_inhands:
+            card = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
+            game_world[self.src_player]['inhands'].remove(card)
+            game_world[self.src_player]['mana'] -= card.mana_cost
+        else:
+            # when MinionPlay is not from inhands, play self.src_card directly
+            card = self.src_card
+
+        # a table could have at most 7 minions
+        if len(game_world[self.src_player]['intable']) < 7:
+            game_world[self.src_player]['intable'].append(card)
+            if card.charge:
+                card.used_this_turn = False
+            else:
+                card.used_this_turn = True
+            if card.summon:
+                for summon in card.summon:
+                    MinionPlay(src_player_name=self.src_player, from_inhands=False, src_card=Card.init_card(summon))\
+                        .apply(game_world)
 
     def __repr__(self):
         return "MinionPlay(%r)" % self.src_card
@@ -78,6 +94,11 @@ class SpellPlay(Action):
                 if pawn == self.target_unit:
                     game_world[self.target_player]['intable'][i] = Card.init_card('Sheep')
                     break
+        elif sp_eff == 'summon two 0/2 taunt minions':
+            MinionPlay(src_player_name=self.src_player, from_inhands=False,
+                       src_card=Card.init_card('Mirror Image 0/2 Taunt')).apply(game_world)
+            MinionPlay(src_player_name=self.src_player, from_inhands=False,
+                       src_card=Card.init_card('Mirror Image 0/2 Taunt')).apply(game_world)
 
     def __repr__(self):
         if self.target_player:
@@ -107,9 +128,15 @@ class MinionAttack(Action):
         else:
             for pawn in game_world[self.target_player]['intable']:
                 if pawn == self.target_unit:
-                    pawn.health -= self.src_card.attack
+                    if pawn.divine:
+                        pawn.divine = False
+                    else:
+                        pawn.health -= self.src_card.attack
                     self.src_card.health -= pawn.attack
                     break
+
+        if self.src_card.divine:
+            self.src_card.divine = False
 
         self.src_card.used_this_turn = True
 
