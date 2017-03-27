@@ -245,22 +245,5 @@ class RandomActionSeqPicker(ActionSeqPicker):
         return act_seq
 
 
-class ActionPicker:
-    def __init__(self, player):
-        self.player = player.name
 
-    def pick_action(self, actions, game_world):
-        pass
-
-    def pick_action_and_apply(self, actions, game_world):
-        act = self.pick_action(actions)
-        act.apply(game_world)
-
-
-class RandomActionPicker(ActionPicker):
-
-    def pick_action(self, actions, game_world):
-        act = random.choice(actions)
-        print("%r pick %r\n" % (self.player, act))
-        return act
 

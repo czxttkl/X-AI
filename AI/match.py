@@ -2,11 +2,16 @@ import random
 import copy
 from actions import *
 from card import *
+import os.path
+import constant
+import pickle
+from collections import defaultdict
+import numpy
 
 
 class Player:
 
-    def __init__(self, cls, name, first_player, fix_deck=None):
+    def __init__(self, cls, name, first_player, fix_deck=None, **kwargs):
         self.name = name
         self.cls = cls
         self.health = 30
@@ -17,6 +22,11 @@ class Player:
         self.intable = []          # cards on self table
         self.first_player = first_player
         self.opponent = None       # init in match
+        self.preload(**kwargs)     # any preloading job for the player
+
+    def preload(self):
+        """ other initialization for this player"""
+        pass
 
     def init_deck(self, fix_deck):
         self.deck = Deck(fix_deck)
@@ -75,6 +85,14 @@ class Player:
         """ estimate the number of all actions in a turn. """
         print("estimated actions %d" %
               (len(game_world[self.opponent.name]['intable']) + 1) ** (3+len(game_world[self.name]['intable'])))
+
+    def search_and_pick_action(self, game_world):
+        all_acts = self.search_one_action(game_world)
+        return self.pick_action(all_acts, game_world)
+
+    def pick_action(self, all_acts, game_world):
+        """ picking action will be determined by child class of Player"""
+        pass
 
     def search_one_action(self, game_world):
         candidates = list()
@@ -208,8 +226,60 @@ class Player:
             cur_act_seq.pop(game_world)
 
 
+class RandomPlayer(Player):
+    """ A player always picks a random action from available actions """
+
+    def pick_action(self, all_acts, game_world):
+        act = random.choice(all_acts)
+        print("%r pick %r\n" % (self.name, act))
+        return act
+
+
+class QLearningTabularPlayer(Player):
+    """ A player picks action based on Q-learning tabular method. """
+
+    def preload(self, **kwargs):
+        self.gamma = kwargs['gamma']  # discounting factor
+        self.epsilon = kwargs['epsilon']  # epsilon-greedy
+        file_name = "{0}_gamma{1}_epsilon{2}".format(constant.qltabqvalues, self.gamma, self.epsilon)
+
+        # load q values table
+        if os.path.isfile(file_name):
+            with open(file_name, 'r') as f:
+                self.gamma, self.epsilon, self.qvalues = pickle.load(f)
+        else:
+            self.qvalues_tab = defaultdict(lambda: defaultdict(int))
+
+    def state2str(self, game_world):
+        """ convert the game world into a string, which will be used as index in q-value table. """
+        state_str = "self h:{0}, m:{1}, oppo h:{2}, turn:{3}".\
+            format(game_world[self.name]['health'], game_world[self.name]['mana'],
+                   game_world[self.opponent.name]['health'], game_world.turn)
+        inhands_str = "self-inhands:" + str(sorted(game_world[self.name]['inhands']))
+        intable_str = "self-intable:" + str(sorted(game_world[self.name]['intable']))
+        oppo_intable_str = "oppo-intable" + str(sorted(game_world[self.opponent.name]['intable']))
+        return state_str + " " + inhands_str + " " + intable_str + " " + oppo_intable_str
+
+    def action2str(self, action):
+        return str(action)
+
+    def pick_action(self, all_acts, game_world):
+        if len(all_acts) == 1:
+            return all_acts[0]
+
+        state_str = self.state2str(game_world)
+        qvalues = list()
+        for i, act in enumerate(all_acts):
+            act_str = self.action2str(act)
+            qvalues.append((i, state_str, act_str, self.qvalues_tab[state_str][act_str]))
+        max_i, max_state_str, max_act_str, max_qvalue = max(qvalues, key=lambda x: x[3])
+        acts_weights = numpy.zeros(len(all_acts))
+        acts_weights[max_i] = 1. - self.epsilon
+
+
+
 class GameWorld:
-    def __init__(self, player1, player2):
+    def __init__(self, player1, player2, turn):
         self.data = {player1.name: {'intable': player1.intable,
                                     'inhands': player1.inhands,
                                     'health': player1.health,
@@ -223,11 +293,13 @@ class GameWorld:
                                     'heropower': player2.heropower}}
         self.player1_name = player1.name
         self.player2_name = player2.name
+        self.turn = turn
         self.data = copy.deepcopy(self.data)  # make sure game world is a copy of player states
                                               # so altering game world will not really affect player states
 
     def __repr__(self):
-        str = '%r. health: %d, mana: %d\n' % \
+        str = 'Turn %d\n' % self.turn
+        str += '%r. health: %d, mana: %d\n' % \
               (self.player1_name, self[self.player1_name]['health'], self[self.player1_name]['mana'])
         str += 'intable: %r\n' % self[self.player1_name]['intable']
         str += 'inhands: %r\n' % self[self.player1_name]['inhands']
@@ -277,10 +349,12 @@ class GameWorld:
 class Match:
 
     def __init__(self):
-        self.player1 = Player(cls=HeroClass.MAGE, name='player1', first_player=True,
-                              fix_deck=mage_fix_deck)  # player 1 plays first
-        self.player2 = Player(cls=HeroClass.MAGE, name='player2', first_player=False,
-                              fix_deck=mage_fix_deck)
+        self.player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
+                                    fix_deck=mage_fix_deck)  # player 1 plays first
+        # self.player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+        #                             fix_deck=mage_fix_deck)
+        self.player2 = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+                                              fix_deck=mage_fix_deck)
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
 
@@ -300,11 +374,10 @@ class Match:
             print("Turn {0}. {1}".format(self.turn, player))
 
             # one action search
-            game_world = GameWorld(self.player1, self.player2)
+            game_world = GameWorld(self.player1, self.player2, self.turn)
             match_end = False
             while True:
-                all_acts = player.search_one_action(game_world)
-                act = RandomActionPicker(player).pick_action(all_acts, game_world)
+                act = player.search_and_pick_action(game_world)
                 if isinstance(act, NullAction):
                     break
                 else:
