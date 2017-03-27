@@ -3,7 +3,7 @@ from match import *
 
 def main():
     match = Match()
-    match.play_match()
+    match.play_N_match(n=2)
 
 if __name__ == "__main__":
     main()

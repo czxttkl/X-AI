@@ -88,6 +88,9 @@ class Card:
         else:
             return False
 
+    def __lt__(self, other):
+        return self.name < other.name
+
     @staticmethod
     def init_card(name):
         card_args = Card.CARD_DB[name]
