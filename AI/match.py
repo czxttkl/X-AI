@@ -89,7 +89,7 @@ class Match:
         # self.player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
         #                             fix_deck=mage_fix_deck)
         self.player2 = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                                         fix_deck=mage_fix_deck, gamma=0.95, epsilon=0.2, alpha=0.5)
+                                         fix_deck=mage_fix_deck, gamma=0.9, epsilon=0.2, alpha=1.0)
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
         self.last_100_player1_win_lose = deque(maxlen=100)

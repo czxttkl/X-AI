@@ -265,27 +265,106 @@ class RandomPlayer(Player):
         return act
 
 
-class QLearningTabularPlayer(Player):
-    """ A player picks action based on Q-learning tabular method. """
+class QValueTabular:
+    def __init__(self, gamma, epsilon, alpha):
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.alpha = alpha
 
-    def _init_player(self, **kwargs):
-        self.gamma = kwargs['gamma']        # discounting factor
-        self.epsilon = kwargs['epsilon']    # epsilon-greedy
-        self.alpha = kwargs['alpha']        # learning rate
-        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}".\
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}". \
             format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
+
         # load q values table
         if os.path.isfile(file_name):
             with open(file_name, 'rb') as f:
                 self.gamma, self.epsilon, self.alpha, self.num_match, self.qvalues_tab = pickle.load(f)
         else:
             self.num_match = 0
+            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), #(s,a)) tuple
             self.qvalues_tab = dict()
+
+    def __repr__(self):
+        # print q-value table
+        str = "Q-table:\n"
+        for state_str, act_qvalue in self.qvalues_tab.items():
+            str += state_str + "\n"
+            for act_str, (qvalue, num_sa) in act_qvalue.items():
+                str += '\t{0}={1}, {2}\n'.format(act_str, qvalue, num_sa)
+        return str
+
+    def post_match(self):
+        self.num_match += 1
+        logger.warning("total match number: %d" % self.num_match)
+        if self.num_match % constant.qltab_save_freq == 0:
+            self.save()
+
+    def save(self):
+        t1 = time.time()
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}". \
+            format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
+        with open(file_name, 'wb') as f:
+            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.qvalues_tab), f, protocol=4)
+        logger.warning("save q values to disk in %d seconds" % (time.time() - t1))
+
+    def qvalue(self, state_str, act_str):
+        """ Q(s,a) """
+        return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[0]
+
+    def count(self, state_str, act_str):
+        """ number of visits at (s,a) """
+        return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
+
+    def max_qvalue(self, state_str):
+        """ max_a Q(s,a)"""
+        state_qvalues = self.qvalues_tab.get(state_str, dict()).values()
+        if not state_qvalues:
+            max_state_qvalue = 0
+        else:
+            max_state_qvalue = max(state_qvalues, key=lambda x: x[0])
+        return max_state_qvalue
+
+    def update(self, last_state_str, last_act_str, new_state_str, R):
+        """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max Q(s',a)] """
+        # determine max Q(s',a)
+        max_new_state_qvalue = self.max_qvalue(new_state_str)
+
+        # not necessary to write to qvalues_tab if
+        # R == 0 and  max Q(s',a) == 0 and Q(s,a) == 0
+        if R == 0 and max_new_state_qvalue == 0 \
+                and self.qvalue(last_state_str, last_act_str) == 0:
+            return
+
+        if not self.qvalues_tab.get(last_state_str):
+            self.qvalues_tab[last_state_str] = dict()
+
+        update_count = self.count(last_state_str, last_act_str) + 1
+        alpha = self.alpha / update_count
+        update_qvalue = \
+            (1 - alpha) * self.qvalue(last_state_str, last_act_str) + \
+                alpha * (R + self.gamma * max_new_state_qvalue)
+        self.qvalues_tab[last_state_str][last_act_str] = (update_qvalue, update_count)
+
+        logger.warning("Q-learning update. this state: %r, this action: %r" % (last_state_str, last_act_str))
+        logger.warning(
+            "Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
+        logger.warning("Q-learning update. (%f, %d)" % (update_qvalue, update_count))
+
+
+class QLearningTabularPlayer(Player):
+    """ A player picks action based on Q-learning tabular method. """
+
+    def _init_player(self, **kwargs):
+        gamma = kwargs['gamma']        # discounting factor
+        epsilon = kwargs['epsilon']    # epsilon-greedy
+        alpha = kwargs['alpha']        # learning rate
+        self.epsilon = epsilon
+        self.qvalues_tab = QValueTabular(gamma, epsilon, alpha)
 
     def state2str(self, game_world):
         """ convert the game world into a short string, which will be used as index in q-value table. """
-        state_str = "self h:{0}, m:{1}, rem_deck:{2}, oppo h:{3}, mana next turn:{4}, rem_deck:{5}".\
+        state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}".\
             format(game_world[self.name]['health'], game_world[self.name]['mana'], game_world[self.name]['rem_deck'],
+                   int(game_world[self.name]['heropower'].used_this_turn),
                    game_world[self.opponent.name]['health'], self.mana_based_on_turn(game_world.turn + 1),
                    game_world[self.opponent.name]['rem_deck'])
 
@@ -317,7 +396,7 @@ class QLearningTabularPlayer(Player):
             qvalue_tuples = list()
             for i, act in enumerate(all_acts):
                 act_str = self.action2str(act)
-                qvalue = self.qvalues_tab.get(state_str, dict()).get(act_str, 0)
+                qvalue = self.qvalues_tab.qvalue(state_str, act_str)
                 qvalue_tuples.append((i, act_str, qvalue))
                 logger.info("Choice %d (%.2f): %r" % (i, qvalue, act))
 
@@ -341,44 +420,14 @@ class QLearningTabularPlayer(Player):
         else:
             R = 0
 
-        # determine max Q(s',a)
         new_state_str = self.state2str(new_game_world)
-        new_state_qvalues = self.qvalues_tab.get(new_state_str, dict()).values()
-        if not new_state_qvalues:
-            max_new_state_qvalue = 0
-        else:
-            max_new_state_qvalue = max(new_state_qvalues)
-
-        # not necessary to write to qvalues_tab if
-        # R == 0 and Q(s,a) == 0 and max Q(s',a) == 0
-        if R == 0 and max_new_state_qvalue == 0 and \
-            (not self.qvalues_tab.get(self.last_state_str)
-             or not self.qvalues_tab[self.last_state_str].get(self.last_act_str, 0)):
-            return
 
         # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max Q(s',a)]
-        if not self.qvalues_tab.get(self.last_state_str):
-            self.qvalues_tab[self.last_state_str] = dict()
-
-        self.qvalues_tab[self.last_state_str][self.last_act_str] = \
-            (1 - self.alpha) * self.qvalues_tab[self.last_state_str].get(self.last_act_str, 0) + \
-            self.alpha * (R + self.gamma * max_new_state_qvalue)
-
-        logger.warning("Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
-        logger.warning("Q-learning update. this state: %r, this action: %r" % (self.last_state_str, self.last_act_str))
+        self.qvalues_tab.update(self.last_state_str, self.last_act_str, new_state_str, R)
 
     def post_match(self):
         """ called when a match finishes """
-        self.num_match += 1
-        logger.warning("total match number: %d" % self.num_match)
-
-        if self.num_match % constant.qltab_save_freq == 0:
-            t1 = time.time()
-            file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}".\
-                format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
-            with open(file_name, 'wb') as f:
-                pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.qvalues_tab), f, protocol=4)
-            logger.warning("save q values to disk in %d seconds" % (time.time() - t1))
+        self.qvalues_tab.post_match()
 
     def epsilon_greedy(self, qvalue_tuples):
         """ q-values format: a list of tuples (index, act_str, q-value) """
@@ -394,8 +443,6 @@ class QLearningTabularPlayer(Player):
 
     def print_qtable(self):
         # print q-value table
-        logger.warning("Q-table:")
-        for state_str, act_qvalue in self.qvalues_tab.items():
-            logger.warning(state_str)
-            for act_str, qvalue in act_qvalue.items():
-                logger.warning('\t{0}={1}'.format(act_str, qvalue))
+        logger.warning(str(self.qvalues_tab))
+
+
