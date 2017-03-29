@@ -1,6 +1,10 @@
 import random
 from enum import Enum
 import string
+import logging
+
+
+logger = logging.getLogger('hearthstone')
 
 
 class Card:
@@ -53,7 +57,7 @@ class Card:
                  zone='DECK', spell_play_effect=None, last_played_card_effect=None, spell_require_target=False,
                  spell_target_can_be_hero=False, collectible=True, cidx=None):
         # cid is a random string generated to be unique for each card instance
-        self.cid = ''.join(random.choices(string.printable[:-6], k=20))
+        self.cid = ''.join(random.sample(string.printable[:-6], k=30))
         # cidx is a string index for each kind of card
         self.cidx = cidx
         self.name = name
@@ -143,7 +147,7 @@ class HeroClass(Enum):
 class DeckInsufficientException(Exception):
     """ Throw when deck is insufficient to draw cards. """
     def __init__(self, k, deck_remain_size):
-        print("deck is insufficient to be drawn. k={0}, deck size={1}".format(k, deck_remain_size))
+        logger.info("deck is insufficient to be drawn. k={0}, deck size={1}".format(k, deck_remain_size))
 
 
 class Deck:
@@ -154,7 +158,7 @@ class Deck:
             for card_name in fix_deck:
                 card = Card.init_card(card_name)
                 self.indeck.append(card)
-            print("create fix deck (%d): %r" % (self.deck_remain_size, self.indeck))
+            logger.info("create fix deck (%d): %r" % (self.deck_remain_size, self.indeck))
         else:
             # random deck
             pass
@@ -162,6 +166,7 @@ class Deck:
     def draw(self, k=1):
         """ Draw a number of cards """
         if k > self.deck_remain_size:
+            self.indeck = []
             raise DeckInsufficientException(k, self.deck_remain_size)
 
         idc = random.sample(range(self.deck_remain_size), k=k)           # sample: draw without replacement

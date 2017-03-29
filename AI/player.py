@@ -1,12 +1,15 @@
 import numpy
 from card import *
 from actions import *
-from collections import defaultdict
-import functools
 import os.path
 import constant
 import pickle
 import random
+import logging
+import time
+
+
+logger = logging.getLogger('hearthstone')
 
 
 class Player:
@@ -47,7 +50,7 @@ class Player:
         """ other initialization for this player"""
         pass
 
-    def post_action(self, new_game_world: 'GameWorld', game_end: bool):
+    def post_action(self, new_game_world: 'GameWorld', match_end: bool, winner: bool):
         """ other things need to be done after an action is applied. """
         pass
 
@@ -80,7 +83,9 @@ class Player:
         return min((turn - 1) // 2 + 1, 10)
 
     def turn_begin_init(self, turn):
-        """ works to be done when this turn starts:
+        """
+        Return match_end
+        works to be done when this turn starts:
             1. update player's mana
             2. refresh the usability of cards in table
             3. refresh the hero power
@@ -95,8 +100,8 @@ class Player:
             if len(self.inhands) < 10:
                 self.inhands.extend(new_card)
         except DeckInsufficientException:
-            return False   # failure flag because of insufficient deck
-        return True
+            return True     # match ends because deck is insufficient
+        return False
 
     def card_playable_from_hands(self, card, game_world):
         """ whether a card can be played from hands """
@@ -111,11 +116,6 @@ class Player:
                 else:
                     return False
             return game_world[self.name]['mana'] >= card.mana_cost
-
-    def estimate_all_actions(self, game_world):
-        """ estimate the number of all actions in a turn. """
-        print("estimated actions %d" %
-              (len(game_world[self.opponent.name]['intable']) + 1) ** (3+len(game_world[self.name]['intable'])))
 
     def search_and_pick_action(self, game_world) -> 'Action':
         all_acts = self.search_one_action(game_world)
@@ -259,9 +259,9 @@ class RandomPlayer(Player):
 
     def pick_action(self, all_acts, game_world):
         for i, act in enumerate(all_acts):
-            print("Choice %d (%.2f): %r" % (i, 1./len(all_acts), act))
+            logger.info("Choice %d (%.2f): %r" % (i, 1./len(all_acts), act))
         act = random.choice(all_acts)
-        print("%r pick %r\n" % (self.name, act))
+        logger.info("%r pick %r\n" % (self.name, act))
         return act
 
 
@@ -283,14 +283,24 @@ class QLearningTabularPlayer(Player):
             self.qvalues_tab = dict()
 
     def state2str(self, game_world):
-        """ convert the game world into a string, which will be used as index in q-value table. """
+        """ convert the game world into a short string, which will be used as index in q-value table. """
         state_str = "self h:{0}, m:{1}, rem_deck:{2}, oppo h:{3}, mana next turn:{4}, rem_deck:{5}".\
             format(game_world[self.name]['health'], game_world[self.name]['mana'], game_world[self.name]['rem_deck'],
                    game_world[self.opponent.name]['health'], self.mana_based_on_turn(game_world.turn + 1),
                    game_world[self.opponent.name]['rem_deck'])
-        inhands_str = "self-inhands:" + str(sorted(game_world[self.name]['inhands']))
-        intable_str = "self-intable:" + str(sorted(game_world[self.name]['intable']))
-        oppo_intable_str = "oppo-intable" + str(sorted(game_world[self.opponent.name]['intable']))
+
+        # only use cidx list to represent self inhands cards
+        inhands_str = "self-inhands:" + ','.join(map(lambda x: str(x.cidx), sorted(game_world[self.name]['inhands'])))
+
+        # use (cidx, attack, health, divine, taunt) tuple lists to represent intable cards
+        intable_str = "self-intable:" + \
+                      ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                   format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                   sorted(game_world[self.name]['intable'])))
+        oppo_intable_str = "oppo-intable:" + \
+                           ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                    format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                    sorted(game_world[self.opponent.name]['intable'])))
         return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
 
     def action2str(self, action):
@@ -302,29 +312,32 @@ class QLearningTabularPlayer(Player):
         if len(all_acts) == 1:
             choose_act = all_acts[0]
             choose_act_str = self.action2str(choose_act)
-            print("Choice 0: %r" % choose_act)
+            logger.info("Choice 0: %r" % choose_act)
         else:
             qvalue_tuples = list()
             for i, act in enumerate(all_acts):
                 act_str = self.action2str(act)
                 qvalue = self.qvalues_tab.get(state_str, dict()).get(act_str, 0)
                 qvalue_tuples.append((i, act_str, qvalue))
-                print("Choice %d (%.2f): %r" % (i, qvalue, act))
+                logger.info("Choice %d (%.2f): %r" % (i, qvalue, act))
 
             choose_i, choose_act_str, choose_qvalue = self.epsilon_greedy(qvalue_tuples)
             choose_act = all_acts[choose_i]
 
         self.last_state_str = state_str
         self.last_act_str = choose_act_str
-        print("%r pick %r\n" % (self.name, choose_act))
+        logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
 
-    def post_action(self, new_game_world: 'GameWorld', match_end: bool):
+    def post_action(self, new_game_world: 'GameWorld', match_end: bool, winner: bool):
         """ called when an action is applied.
         update Q values """
         # determine reward
         if match_end:
-            R = 1
+            if winner:
+                R = 1
+            else:
+                R = -1
         else:
             R = 0
 
@@ -336,6 +349,13 @@ class QLearningTabularPlayer(Player):
         else:
             max_new_state_qvalue = max(new_state_qvalues)
 
+        # not necessary to write to qvalues_tab if
+        # R == 0 and Q(s,a) == 0 and max Q(s',a) == 0
+        if R == 0 and max_new_state_qvalue == 0 and \
+            (not self.qvalues_tab.get(self.last_state_str)
+             or not self.qvalues_tab[self.last_state_str].get(self.last_act_str, 0)):
+            return
+
         # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max Q(s',a)]
         if not self.qvalues_tab.get(self.last_state_str):
             self.qvalues_tab[self.last_state_str] = dict()
@@ -344,22 +364,21 @@ class QLearningTabularPlayer(Player):
             (1 - self.alpha) * self.qvalues_tab[self.last_state_str].get(self.last_act_str, 0) + \
             self.alpha * (R + self.gamma * max_new_state_qvalue)
 
-        print("Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
-        print("Q-learning update. this state: %r, this action: %r\n" % (self.last_state_str, self.last_act_str))
-        # self.print_qtable()
+        logger.warning("Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
+        logger.warning("Q-learning update. this state: %r, this action: %r" % (self.last_state_str, self.last_act_str))
 
     def post_match(self):
-        # self.print_qtable()
-
+        """ called when a match finishes """
         self.num_match += 1
-        print("total match number: %d" % self.num_match)
+        logger.warning("total match number: %d" % self.num_match)
 
-        if self.num_match % 2000 == 0:
+        if self.num_match % constant.qltab_save_freq == 0:
+            t1 = time.time()
             file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}".\
                 format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
             with open(file_name, 'wb') as f:
                 pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.qvalues_tab), f, protocol=4)
-            print("save q values to disk")
+            logger.warning("save q values to disk in %d seconds" % (time.time() - t1))
 
     def epsilon_greedy(self, qvalue_tuples):
         """ q-values format: a list of tuples (index, act_str, q-value) """
@@ -375,8 +394,8 @@ class QLearningTabularPlayer(Player):
 
     def print_qtable(self):
         # print q-value table
-        print("Q-table:")
+        logger.warning("Q-table:")
         for state_str, act_qvalue in self.qvalues_tab.items():
-            print(state_str)
+            logger.warning(state_str)
             for act_str, qvalue in act_qvalue.items():
-                print('\t{0}={1}'.format(act_str, qvalue))
+                logger.warning('\t{0}={1}'.format(act_str, qvalue))

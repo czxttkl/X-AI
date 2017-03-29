@@ -1,10 +1,14 @@
-import random
-import copy
 from actions import *
 from card import *
 from player import *
 from collections import deque
 import numpy
+import copy
+import logging
+import time
+
+
+logger = logging.getLogger('hearthstone')
 
 
 class GameWorld:
@@ -91,30 +95,37 @@ class Match:
         self.last_100_player1_win_lose = deque(maxlen=100)
 
     def play_N_match(self, n):
+        t1 = time.time()
         for i in range(n):
             self.play_one_match()
         # self.player2.print_qtable()
+        logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
 
     def play_one_match(self):
         turn = 0
         self.player1.reset()
         self.player2.reset()
+        self.winner = None
         player = None
 
         while True:
             turn += 1
-            last_player = player
             player = self.player1 if turn % 2 else self.player2
-            success_flg = player.turn_begin_init(turn)      # update mana, etc. at the beginning of a turn
-            if not success_flg:
-                winner, loser = self.match_end(turn=turn, winner=player.opponent, loser=player, reason='no_card_to_drawn')
-                break
+            logger.info("Turn {0}. {1}".format(turn, player))
 
-            print("Turn {0}. {1}".format(turn, player))
+            match_end = player.turn_begin_init(turn)      # update mana, etc. at the beginning of a turn
+            # match end due to insufficient deck to draw
+            if match_end:
+                game_world = GameWorld(self.player1, self.player2, turn)
+                self.match_end(game_world=game_world, winner=player.opponent, loser=player, reason='no_card_to_drawn')
+                break
+            else:
+                game_world = GameWorld(self.player1, self.player2, turn)
+                if turn > 2:
+                    # update the last end-turn action's Q value
+                    player.post_action(game_world, match_end=False, winner=False)
 
             # one action search
-            game_world = GameWorld(self.player1, self.player2, turn)
-            match_end = False
             while True:
                 act = player.search_and_pick_action(game_world)
                 if isinstance(act, NullAction):
@@ -122,55 +133,45 @@ class Match:
                 else:
                     act.apply(game_world)
                     game_world.update_player(self.player1, self.player2)
-                    print(game_world)
-                    match_end = self.check_for_match_end(turn)
-                    player.post_action(game_world, match_end)
+                    logger.info(game_world)
+                    match_end = self.check_for_match_end(game_world)
                     if match_end:
-                        winner, loser = match_end[0], match_end[1]
                         break
-
-            # action sequence search
-            # all_act_seqs = ActionSequenceCollection()
-            # game_world = GameWorld(self.player1, self.player2)
-            # player.estimate_all_actions(game_world)
-            # player.search_all_actions_in_one_turn(game_world,
-            #                                       cur_act_seq=ActionSequence(game_world),
-            #                                       all_act_seqs=all_act_seqs)
-            # print(all_act_seqs)
-            # RandomActionSeqPicker(player).pick_action_seq_and_apply(all_act_seqs, self.player1, self.player2)
-
-            if isinstance(last_player, QLearningTabularPlayer):
-                game_world.turn += 1
-                game_world[last_player.name]['mana'] = last_player.mana_based_on_turn(game_world.turn)
-                last_player.post_action(game_world, match_end)
+                    else:
+                        player.post_action(game_world, match_end=False, winner=False)
 
             if match_end:
                 break
-            print("")
 
-        self.post_one_match(winner, loser)
+            logger.info("")
 
-    def post_one_match(self, winner, loser):
-        print("-------------------------------------------------------------------------------")
-        winner.post_match()
-        loser.post_match()
-        if winner == self.player1:
+        self.post_one_match()
+
+    def post_one_match(self):
+        self.player1.post_match()
+        self.player2.post_match()
+        if self.winner == self.player1:
             self.last_100_player1_win_lose.append(1)
         else:
             self.last_100_player1_win_lose.append(0)
-        print("last 100 player 1 win rate: {0}".format(numpy.mean(self.last_100_player1_win_lose)))
-        print("-------------------------------------------------------------------------------")
+        logger.warning("last 100 player 1 win rate: {0}".format(numpy.mean(self.last_100_player1_win_lose)))
+        logger.warning("-------------------------------------------------------------------------------")
 
-    def match_end(self, turn, winner, loser, reason):
-        print("match ends at turn %d. winner=%r, loser=%r, reason=%r" % (turn, winner.name, loser.name, reason))
-        return winner, loser
+    def match_end(self, game_world, winner, loser, reason):
+        logger.warning("match ends at turn %d. winner=%r, loser=%r, reason=%r" %
+                       (game_world.turn, winner.name, loser.name, reason))
+        winner.post_action(game_world, match_end=True, winner=True)
+        loser.post_action(game_world, match_end=True, winner=False)
+        self.winner = winner
 
-    def check_for_match_end(self, turn):
-        """ return winner and loser if the match ends. Otherwise return False """
-        if self.player1.health <= 0:
-            return self.match_end(turn=turn, winner=self.player2, loser=self.player1, reason="player1 health<=0")
-        elif self.player2.health <= 0:
-            return self.match_end(turn=turn, winner=self.player1, loser=self.player2, reason="player2 health<=0")
+    def check_for_match_end(self, game_world):
+        """ return True if the match ends. Otherwise return False """
+        if game_world[self.player1.name]['health'] <= 0:
+            self.match_end(game_world=game_world, winner=self.player2, loser=self.player1, reason="player1 health<=0")
+            return True
+        elif game_world[self.player2.name]['health'] <= 0:
+            self.match_end(game_world=game_world, winner=self.player1, loser=self.player2, reason="player2 health<=0")
+            return True
         else:
             return False
 
