@@ -17,7 +17,7 @@ class Player:
     def __init__(self, cls, name, first_player, fix_deck=None, **kwargs):
         self.name = name
         self.cls = cls
-        self.health = 30
+        self.health = constant.start_health
         self.armor = 0
         self.this_turn_mana = 0
         self.fix_deck = fix_deck
@@ -35,7 +35,7 @@ class Player:
 
     def reset(self):
         """ reset this player as a new match starts """
-        self.health = 30
+        self.health = constant.start_health
         self.armor = 0
         self.this_turn_mana = 0
         self._init_heropower()
@@ -320,7 +320,7 @@ class QValueTabular:
         if not state_qvalues:
             max_state_qvalue = 0
         else:
-            max_state_qvalue = max(state_qvalues, key=lambda x: x[0])
+            max_state_qvalue = max(state_qvalues, key=lambda x: x[0])[0]
         return max_state_qvalue
 
     def update(self, last_state_str, last_act_str, new_state_str, R):
@@ -347,7 +347,7 @@ class QValueTabular:
         logger.warning("Q-learning update. this state: %r, this action: %r" % (last_state_str, last_act_str))
         logger.warning(
             "Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
-        logger.warning("Q-learning update. (%f, %d)" % (update_qvalue, update_count))
+        logger.warning("Q-learning update. After update, (qvalue, count) = (%f, %d)" % (update_qvalue, update_count))
 
 
 class QLearningTabularPlayer(Player):
@@ -405,6 +405,8 @@ class QLearningTabularPlayer(Player):
 
         self.last_state_str = state_str
         self.last_act_str = choose_act_str
+        self.last_game_world = game_world
+
         logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
 
@@ -422,7 +424,7 @@ class QLearningTabularPlayer(Player):
 
         new_state_str = self.state2str(new_game_world)
 
-        # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max Q(s',a)]
+        # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')]
         self.qvalues_tab.update(self.last_state_str, self.last_act_str, new_state_str, R)
 
     def post_match(self):

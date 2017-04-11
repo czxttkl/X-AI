@@ -106,21 +106,22 @@ class Match:
         self.player1.reset()
         self.player2.reset()
         self.winner = None
-        player = None
+        self.winner_reason = None
 
         while True:
             turn += 1
             player = self.player1 if turn % 2 else self.player2
-            logger.info("Turn {0}. {1}".format(turn, player))
 
             match_end = player.turn_begin_init(turn)      # update mana, etc. at the beginning of a turn
+            game_world = GameWorld(self.player1, self.player2, turn)
+            logger.info("Turn {0}. {1}".format(turn, player))
+
             # match end due to insufficient deck to draw
             if match_end:
-                game_world = GameWorld(self.player1, self.player2, turn)
-                self.match_end(game_world=game_world, winner=player.opponent, loser=player, reason='no_card_to_drawn')
+                self.winner = player.opponent
+                self.winner_reason = "%r has no card to draw" % player.name
                 break
             else:
-                game_world = GameWorld(self.player1, self.player2, turn)
                 if turn > 2:
                     # update the last end-turn action's Q value
                     player.post_action(game_world, match_end=False, winner=False)
@@ -145,14 +146,16 @@ class Match:
 
             logger.info("")
 
-        self.post_one_match()
+        self.post_one_match(game_world)
 
-    def post_one_match(self):
+    def post_one_match(self, game_world):
         self.player1.post_match()
         self.player2.post_match()
         if self.winner == self.player1:
+            self.match_end(game_world=game_world, winner=self.player1, loser=self.player2, reason=self.winner_reason)
             self.last_100_player1_win_lose.append(1)
         else:
+            self.match_end(game_world=game_world, winner=self.player2, loser=self.player1, reason=self.winner_reason)
             self.last_100_player1_win_lose.append(0)
         logger.warning("last 100 player 1 win rate: {0}".format(numpy.mean(self.last_100_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
@@ -167,10 +170,12 @@ class Match:
     def check_for_match_end(self, game_world):
         """ return True if the match ends. Otherwise return False """
         if game_world[self.player1.name]['health'] <= 0:
-            self.match_end(game_world=game_world, winner=self.player2, loser=self.player1, reason="player1 health<=0")
+            self.winner = self.player2
+            self.winner_reason = "player1 health<=0"
             return True
         elif game_world[self.player2.name]['health'] <= 0:
-            self.match_end(game_world=game_world, winner=self.player1, loser=self.player2, reason="player2 health<=0")
+            self.winner = self.player1
+            self.winner_reason = "player2 health<=0"
             return True
         else:
             return False
