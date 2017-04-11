@@ -130,12 +130,20 @@ class Card:
                 return "MINION:{0}({1}, {2}, {3})".format(self.name, self.mana_cost, self.attack, self.health)
 
 
+# mage_fix_deck = [
+#                  'Mana Wyrm', 'Mirror Image',
+#                  'Bloodfen Raptor', 'Bloodfen Raptor', 'Bluegill Warriors', 'River Crocolisk', 'River Crocolisk',
+#                  'Magma Rager', 'Magma Rager', 'Wolfrider', 'Wolfrider',
+#                  'Chillwind Yeti', 'Chillwind Yeti', 'Fireball', 'Fireball', 'Silvermoon Guardian',
+#                  'Oasis Snapjaw', 'Oasis Snapjaw', 'Polymorph', 'Polymorph', 'Stormwind Knight', 'Stormwind Knight'
+#                  ]
+
+# a test deck with all fireball cards. qlearning player should easily learn to defeat opponents.
 mage_fix_deck = [
-                 'Mana Wyrm', 'Mirror Image',
-                 'Bloodfen Raptor', 'Bloodfen Raptor', 'Bluegill Warriors', 'River Crocolisk', 'River Crocolisk',
-                 'Magma Rager', 'Magma Rager', 'Wolfrider', 'Wolfrider',
-                 'Chillwind Yeti', 'Chillwind Yeti', 'Fireball', 'Fireball', 'Silvermoon Guardian',
-                 'Oasis Snapjaw', 'Oasis Snapjaw', 'Polymorph', 'Polymorph', 'Stormwind Knight', 'Stormwind Knight'
+                 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball',
+                 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball',
+                 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball',
+                 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball',
                  ]
 
 

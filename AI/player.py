@@ -7,6 +7,7 @@ import pickle
 import random
 import logging
 import time
+from collections import namedtuple
 
 
 logger = logging.getLogger('hearthstone')
@@ -164,7 +165,7 @@ class Player:
         return candidates
 
     def search_all_actions_in_one_turn(self, game_world, cur_act_seq, all_act_seqs):
-        """ Search all possible actions in one turn """
+        """ Search all possible actions in one turn using DSP """
         candidates = []
 
         # hero power
@@ -266,7 +267,8 @@ class RandomPlayer(Player):
 
 
 class QValueTabular:
-    def __init__(self, gamma, epsilon, alpha):
+    def __init__(self, player, gamma, epsilon, alpha):
+        self.player = player
         self.gamma = gamma
         self.epsilon = epsilon
         self.alpha = alpha
@@ -280,7 +282,7 @@ class QValueTabular:
                 self.gamma, self.epsilon, self.alpha, self.num_match, self.qvalues_tab = pickle.load(f)
         else:
             self.num_match = 0
-            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), #(s,a)) tuple
+            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
             self.qvalues_tab = dict()
 
     def __repr__(self):
@@ -314,19 +316,19 @@ class QValueTabular:
         """ number of visits at (s,a) """
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
 
-    def max_qvalue(self, state_str):
+    def max_qvalue(self, game_world):
         """ max_a Q(s,a)"""
-        state_qvalues = self.qvalues_tab.get(state_str, dict()).values()
-        if not state_qvalues:
-            max_state_qvalue = 0
-        else:
-            max_state_qvalue = max(state_qvalues, key=lambda x: x[0])[0]
+        state_str = self.player.state2str(game_world)
+        all_acts = self.player.search_one_action(game_world)
+        max_state_qvalue = max(map(lambda act: self.qvalues_tab.get(state_str, dict()).get(act, (0, 0))[0], all_acts))
         return max_state_qvalue
 
-    def update(self, last_state_str, last_act_str, new_state_str, R):
+    def update(self, last_state_str, last_act_str, new_game_world, R):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max Q(s',a)] """
+        new_state_str = self.player.state2str(new_game_world)
+
         # determine max Q(s',a)
-        max_new_state_qvalue = self.max_qvalue(new_state_str)
+        max_new_state_qvalue = self.max_qvalue(new_game_world)
 
         # not necessary to write to qvalues_tab if
         # R == 0 and  max Q(s',a) == 0 and Q(s,a) == 0
@@ -358,7 +360,7 @@ class QLearningTabularPlayer(Player):
         epsilon = kwargs['epsilon']    # epsilon-greedy
         alpha = kwargs['alpha']        # learning rate
         self.epsilon = epsilon
-        self.qvalues_tab = QValueTabular(gamma, epsilon, alpha)
+        self.qvalues_tab = QValueTabular(self, gamma, epsilon, alpha)
 
     def state2str(self, game_world):
         """ convert the game world into a short string, which will be used as index in q-value table. """
@@ -394,18 +396,18 @@ class QLearningTabularPlayer(Player):
             logger.info("Choice 0: %r" % choose_act)
         else:
             qvalue_tuples = list()
-            for i, act in enumerate(all_acts):
+            qvalue_tuple = namedtuple('qvalue_tuple', ['act_idx', 'act_str', 'qvalue'])
+            for act_idx, act in enumerate(all_acts):
                 act_str = self.action2str(act)
                 qvalue = self.qvalues_tab.qvalue(state_str, act_str)
-                qvalue_tuples.append((i, act_str, qvalue))
-                logger.info("Choice %d (%.2f): %r" % (i, qvalue, act))
+                qvalue_tuples.append(qvalue_tuple(act_idx=act_idx, act_str=act_str, qvalue=qvalue))
+                logger.info("Choice %d (%.2f): %r" % (act_idx, qvalue, act))
 
             choose_i, choose_act_str, choose_qvalue = self.epsilon_greedy(qvalue_tuples)
             choose_act = all_acts[choose_i]
 
         self.last_state_str = state_str
         self.last_act_str = choose_act_str
-        self.last_game_world = game_world
 
         logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
@@ -422,23 +424,21 @@ class QLearningTabularPlayer(Player):
         else:
             R = 0
 
-        new_state_str = self.state2str(new_game_world)
-
         # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')]
-        self.qvalues_tab.update(self.last_state_str, self.last_act_str, new_state_str, R)
+        self.qvalues_tab.update(self.last_state_str, self.last_act_str, new_game_world, R)
 
     def post_match(self):
         """ called when a match finishes """
         self.qvalues_tab.post_match()
 
     def epsilon_greedy(self, qvalue_tuples):
-        """ q-values format: a list of tuples (index, act_str, q-value) """
+        """ q-values format: a list of namedtuples: qvalue_tuple(act_idx, act_str, qvalue) """
         # shuffle qvalue_tuples so that max function will break tie randomly
         qvalue_tuples_shuffled = random.sample(qvalue_tuples, len(qvalue_tuples))
-        max_i, max_act_str, max_qvalue = max(qvalue_tuples_shuffled, key=lambda x: x[2])
+        max_act_idx, max_act_str, max_qvalue = max(qvalue_tuples_shuffled, key=lambda x: x.qvalue)
         # now act on original qvalue_tuples
         acts_weights = numpy.full(shape=(len(qvalue_tuples)), fill_value=self.epsilon / (len(qvalue_tuples) - 1))
-        acts_weights[max_i] = 1. - self.epsilon
+        acts_weights[max_act_idx] = 1. - self.epsilon
         idx_list = list(range(len(qvalue_tuples)))
         choose_idx = numpy.random.choice(idx_list, 1, replace=False, p=acts_weights)[0]
         return qvalue_tuples[choose_idx]
