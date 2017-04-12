@@ -1,13 +1,10 @@
-from match import *
-import logging
+from match import Match
+import constant
 
 
 def main():
-    logger = logging.getLogger('hearthstone')
-    logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.INFO)
     match = Match()
-    match.play_N_match(n=3)
+    match.play_N_match(n=constant.play_n_match)
 
 if __name__ == "__main__":
     main()

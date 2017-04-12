@@ -1,11 +1,11 @@
 from actions import *
 from card import *
-from player import *
 from collections import deque
 import numpy
 import copy
 import logging
 import time
+import constant
 
 
 logger = logging.getLogger('hearthstone')
@@ -84,15 +84,13 @@ class GameWorld:
 class Match:
 
     def __init__(self):
-        self.player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
-                                    fix_deck=mage_fix_deck)  # player 1 plays first
+        self.player1 = constant.random_first_play_player
         # self.player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
         #                             fix_deck=mage_fix_deck)
-        self.player2 = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                                         fix_deck=mage_fix_deck, gamma=0.9, epsilon=0.2, alpha=1.0)
+        self.player2 = constant.qlearning_second_play_player
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
-        self.last_100_player1_win_lose = deque(maxlen=100)
+        self.recent_player1_win_lose = deque(maxlen=constant.play1_win_rate_num_games)
 
     def play_N_match(self, n):
         t1 = time.time()
@@ -149,15 +147,16 @@ class Match:
         self.post_one_match(game_world)
 
     def post_one_match(self, game_world):
-        self.player1.post_match()
-        self.player2.post_match()
         if self.winner == self.player1:
             self.match_end(game_world=game_world, winner=self.player1, loser=self.player2, reason=self.winner_reason)
-            self.last_100_player1_win_lose.append(1)
+            self.recent_player1_win_lose.append(1)
         else:
             self.match_end(game_world=game_world, winner=self.player2, loser=self.player1, reason=self.winner_reason)
-            self.last_100_player1_win_lose.append(0)
-        logger.warning("last 100 player 1 win rate: {0}".format(numpy.mean(self.last_100_player1_win_lose)))
+            self.recent_player1_win_lose.append(0)
+        self.player1.post_match()
+        self.player2.post_match()
+        logger.warning("last {0} player 1 win rate: {1}"
+                       .format(constant.play1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
 
     def match_end(self, game_world, winner, loser, reason):
