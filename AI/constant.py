@@ -4,8 +4,8 @@ from player import RandomPlayer, QLearningTabularPlayer
 
 # q learning
 qltabqvalues = 'data/qltabqvalues'
-qltab_save_freq = 5000  # num of matches to save q-learning values once
-gamma = 0.9       # discounting factor
+qltab_save_freq = 50000  # num of matches to save q-learning values once
+gamma = 0.95       # discounting factor
 epsilon = 0.2     # epsilon-greedy
 alpha = 1.0       # learning rate
 
@@ -18,9 +18,9 @@ logger.setLevel(logging.WARNING)
 
 
 # game
-play_n_match = 2000
-play1_win_rate_num_games = 1000
-start_health = 14
+play_n_match = 9999999999
+player1_win_rate_num_games = 1000         # calculate player 1's win rate based on how many recent games
+start_health = 30
 
 mage_fix_deck = [
                  'Mana Wyrm', 'Mirror Image',
@@ -38,13 +38,8 @@ test_fix_deck = [
                  'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball', 'Fireball',
                  ]
 
-random_first_play_player = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
-                                        fix_deck=test_fix_deck)
-qlearning_second_play_player = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                                                      fix_deck=test_fix_deck, gamma=gamma, epsilon=epsilon, alpha=alpha,
-                                                      test=False)
-
-qlearning_first_play_player = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=True,
-                                                     fix_deck=test_fix_deck, gamma=gamma, epsilon=epsilon, alpha=alpha)
-random_second_play_player = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=False,
-                                        fix_deck=test_fix_deck)
+# random player plays first
+player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True, fix_deck=mage_fix_deck)
+player2 = QLearningTabularPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=mage_fix_deck,
+                                 gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+# player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=test_fix_deck)

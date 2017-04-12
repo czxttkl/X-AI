@@ -84,13 +84,11 @@ class GameWorld:
 class Match:
 
     def __init__(self):
-        self.player1 = constant.random_first_play_player
-        # self.player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-        #                             fix_deck=mage_fix_deck)
-        self.player2 = constant.qlearning_second_play_player
+        self.player1 = constant.player1
+        self.player2 = constant.player2
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
-        self.recent_player1_win_lose = deque(maxlen=constant.play1_win_rate_num_games)
+        self.recent_player1_win_lose = deque(maxlen=constant.player1_win_rate_num_games)
 
     def play_N_match(self, n):
         t1 = time.time()
@@ -156,7 +154,7 @@ class Match:
         self.player1.post_match()
         self.player2.post_match()
         logger.warning("last {0} player 1 win rate: {1}"
-                       .format(constant.play1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
+                       .format(constant.player1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
 
     def match_end(self, game_world, winner, loser, reason):
