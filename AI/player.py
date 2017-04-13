@@ -383,7 +383,7 @@ class QValueTabular:
         else:
             return list(map(lambda action: self.qvalue(state_str=state_str, action=action), actions))
 
-    def count(self, state_str, act_str):
+    def count(self, state_str: str, act_str: str):
         """ number of visits at (s,a) """
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
 
@@ -394,7 +394,7 @@ class QValueTabular:
         max_state_qvalue = max(map(lambda action: self.qvalue(state_str=state_str, action=action), all_acts))
         return max_state_qvalue
 
-    def set_qvaluetab(self, state_str, act_str, update_qvalue, update_count):
+    def set_qvaluetab(self, state_str: str, act_str: str, update_qvalue: float, update_count: int):
         if not self.qvalues_tab.get(state_str):
             self.qvalues_tab[state_str] = dict()
         self.qvalues_tab[state_str][act_str] = (update_qvalue, update_count)
@@ -415,7 +415,7 @@ class QValueTabular:
             return
 
         update_count = self.count(last_state_str, last_act_str) + 1
-        alpha = self.alpha / update_count
+        alpha = self.alpha / (update_count ** 0.5)
 
         update_qvalue = (1 - alpha) * old_qvalue + alpha * (R + self.gamma * max_new_state_qvalue)
         self.set_qvaluetab(last_state_str, last_act_str, update_qvalue, update_count)
@@ -479,7 +479,7 @@ class QLearningPlayer(Player):
         """ called when a match finishes """
         self.qvalues_impl.post_match()
 
-    def epsilon_greedy(self, game_world, all_acts):
+    def epsilon_greedy(self, game_world: 'GameWorld', all_acts: List['Action']):
         """ pick actions based on epsilon greedy """
         # (act_idx, a, Q(s,a))
         act_qvalue_tuples = list(zip(range(len(all_acts)),

@@ -9,7 +9,7 @@ ql_exact_data_path = 'data/qltab_exact'
 ql_linear_data_path = 'data/qltab_linear'
 ql_exact_save_freq = 1000  # num of matches to save q-learning tabular values once
 ql_linear_save_freq = 50000  # num of matches to save q-learning linear weights once
-gamma = 0.95       # discounting factor
+gamma = 1.0      # discounting factor
 epsilon = 0.2     # epsilon-greedy
 alpha = 1.0       # learning rate
 
@@ -18,13 +18,13 @@ logger = logging.getLogger('hearthstone')
 logger.addHandler(logging.StreamHandler())
 # logger.addHandler(logging.FileHandler('out.txt', mode='w'))
 logger.setLevel(logging.WARNING)
-# logger.setLevel(logging.INFO)
+logger.setLevel(logging.INFO)
 
 
 # game
-play_n_match = 3000
+play_n_match = 5
 player1_win_rate_num_games = 1000         # calculate player 1's win rate based on how many recent games
-start_health = 14
+start_health = 15
 
 mage_fix_deck = [
                  'Mana Wyrm', 'Mirror Image',
@@ -46,5 +46,5 @@ test_fix_deck = [
 player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True, fix_deck=test_fix_deck)
 player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=test_fix_deck,
                           method='exact', annotation='test_fix_deck',
-                          gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+                          gamma=gamma, epsilon=epsilon, alpha=alpha, test=True)
 # player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=test_fix_deck)
