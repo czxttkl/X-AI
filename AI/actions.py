@@ -1,6 +1,7 @@
 from match import *
 from card import *
 import random
+import copy
 
 
 class Action:
@@ -12,6 +13,9 @@ class Action:
     def __apply__(self, game_world):
         """ the real action taken place """
         pass
+
+    def copy(self):
+        return copy.deepcopy(self)
 
 
 class NullAction(Action):

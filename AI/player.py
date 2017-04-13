@@ -8,7 +8,7 @@ import random
 import logging
 import time
 import sys
-from collections import namedtuple
+from typing import Union, List
 
 
 logger = logging.getLogger('hearthstone')
@@ -272,16 +272,16 @@ class RandomPlayer(Player):
 
 
 class QValueTabular:
-    def __init__(self, player, gamma, epsilon, alpha):
+    def __init__(self, player, gamma, epsilon, alpha, annotation):
         self.player = player
         self.gamma = gamma
         self.epsilon = epsilon
         self.alpha = alpha
         self.state_act_visit_times = 0      # times visiting state-action pairs
         self.num_match = 0                  # number of total matches
+        self.annotation = annotation
 
-        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}". \
-            format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
+        file_name = self.file_name()
 
         # load q values table
         if os.path.isfile(file_name):
@@ -291,6 +291,38 @@ class QValueTabular:
         else:
             # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
             self.qvalues_tab = dict()
+
+    def file_name(self):
+        """ file name to associate with this qvalue table """
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_{4}". \
+            format(constant.ql_exact_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def state2str(self, game_world):
+        """ convert the game world into a short string, which will be used as index in q-value table. """
+        player = self.player
+        state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}".\
+            format(game_world[player.name]['health'], game_world[player.name]['mana'],
+                   game_world[player.name]['rem_deck'], int(game_world[player.name]['heropower'].used_this_turn),
+                   game_world[player.opponent.name]['health'], player.mana_based_on_turn(game_world.turn + 1),
+                   game_world[player.opponent.name]['rem_deck'])
+
+        # only use cidx list to represent self inhands cards
+        inhands_str = "self-inhands:" + ','.join(map(lambda x: str(x.cidx), sorted(game_world[player.name]['inhands'])))
+
+        # use (cidx, attack, health, divine, taunt) tuple lists to represent intable cards
+        intable_str = "self-intable:" + \
+                      ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                   format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                   sorted(game_world[player.name]['intable'])))
+        oppo_intable_str = "oppo-intable:" + \
+                           ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                    format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                    sorted(game_world[player.opponent.name]['intable'])))
+        return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
+
+    def action2str(self, action):
+        return str(action)
 
     def __len__(self):
         return len(self.qvalues_tab)
@@ -305,61 +337,91 @@ class QValueTabular:
         return str
 
     def post_match(self):
+        self.print_qtable_summary()
+        # self.print_qtable()
         self.num_match += 1
         # don't save any update during test
-        if not self.player.test and self.num_match % constant.qltab_save_freq == 0:
+        if not self.player.test and self.num_match % constant.ql_exact_save_freq == 0:
             self.save()
+
+    def print_qtable(self):
+        """ print q-value table """
+        logger.warning(str(self))
+
+    def print_qtable_summary(self):
+        """ print qtable summary """
+        logger.warning("total match number: %d, qvalue table states  %d, state-action visit total %d"
+                       % (self.num_match, len(self), self.state_act_visit_times))
 
     def save(self):
         t1 = time.time()
-        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}". \
-            format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
+        file_name = self.file_name()
         with open(file_name, 'wb') as f:
             pickle.dump((self.gamma, self.epsilon, self.alpha,
                          self.num_match, self.state_act_visit_times, self.qvalues_tab), f, protocol=4)
         logger.warning("save q values to disk in %d seconds" % (time.time() - t1))
 
-    def qvalue(self, state_str, act_str):
+    def qvalue(self, state_str: Union[None, str]=None, act_str: Union[None, str]=None,
+               game_world: Union[None, 'GameWorld']=None, action: Union[None, 'Action']=None):
         """ Q(s,a) """
+        assert (state_str or game_world) and (act_str or action)
+        if not state_str:
+            state_str = self.state2str(game_world)
+        if not act_str:
+            act_str = self.action2str(action)
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[0]
+
+    def qvalues(self, state_str: Union[None, str]=None, act_strs: Union[None, List[str]]=None,
+                      game_world: Union[None, 'GameWorld']=None, actions: Union[None, List['Action']]=None):
+        """ Q(s,a) for all a in act_strs """
+        assert (state_str or game_world) and (act_strs or actions)
+        if not state_str:
+            state_str = self.state2str(game_world)
+
+        if act_strs:
+            return list(map(lambda act_str: self.qvalue(state_str=state_str, act_str=act_str), act_strs))
+        else:
+            return list(map(lambda action: self.qvalue(state_str=state_str, action=action), actions))
 
     def count(self, state_str, act_str):
         """ number of visits at (s,a) """
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
 
-    def max_qvalue(self, game_world):
+    def max_qvalue(self, game_world: 'GameWorld'):
         """ max_a Q(s,a)"""
-        state_str = self.player.state2str(game_world)
+        state_str = self.state2str(game_world)
         all_acts = self.player.search_one_action(game_world)
-        all_acts_strs = list(map(lambda x: self.player.action2str(x), all_acts))
-        max_state_qvalue = max(map(lambda act_str: self.qvalue(state_str, act_str), all_acts_strs))
+        max_state_qvalue = max(map(lambda action: self.qvalue(state_str=state_str, action=action), all_acts))
         return max_state_qvalue
 
-    def update(self, last_state_str, last_act_str, new_game_world, R):
+    def set_qvaluetab(self, state_str, act_str, update_qvalue, update_count):
+        if not self.qvalues_tab.get(state_str):
+            self.qvalues_tab[state_str] = dict()
+        self.qvalues_tab[state_str][act_str] = (update_qvalue, update_count)
+
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
-        new_state_str = self.player.state2str(new_game_world)
+        last_state_str = self.state2str(last_state)
+        last_act_str = self.action2str(last_act)
+        new_state_str = self.state2str(new_game_world)
+        old_qvalue = self.qvalue(state_str=last_state_str, act_str=last_act_str)
 
         # determine max Q(s',a')
         max_new_state_qvalue = self.max_qvalue(new_game_world)
 
         # not necessary to write to qvalues_tab if
         # R == 0 and  max Q(s',a) == 0 and Q(s,a) == 0
-        if R == 0 and max_new_state_qvalue == 0 \
-                and self.qvalue(last_state_str, last_act_str) == 0:
+        if R == 0 and max_new_state_qvalue == 0 and old_qvalue == 0:
             return
-
-        if not self.qvalues_tab.get(last_state_str):
-            self.qvalues_tab[last_state_str] = dict()
 
         update_count = self.count(last_state_str, last_act_str) + 1
         alpha = self.alpha / update_count
-        old_qvalue = self.qvalue(last_state_str, last_act_str)
-        update_qvalue = \
-            (1 - alpha) * self.qvalue(last_state_str, last_act_str) + \
-                alpha * (R + self.gamma * max_new_state_qvalue)
-        self.qvalues_tab[last_state_str][last_act_str] = (update_qvalue, update_count)
+
+        update_qvalue = (1 - alpha) * old_qvalue + alpha * (R + self.gamma * max_new_state_qvalue)
+        self.set_qvaluetab(last_state_str, last_act_str, update_qvalue, update_count)
 
         self.state_act_visit_times += 1
+
         logger.warning("Q-learning update. this state: %r, this action: %r" % (last_state_str, last_act_str))
         logger.warning(
             "Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
@@ -368,7 +430,7 @@ class QValueTabular:
                        (update_qvalue, alpha, old_qvalue, R, self.gamma, max_new_state_qvalue, update_count))
 
 
-class QLearningTabularPlayer(Player):
+class QLearningPlayer(Player):
     """ A player picks action based on Q-learning tabular method. """
 
     def _init_player(self, **kwargs):
@@ -376,56 +438,24 @@ class QLearningTabularPlayer(Player):
         epsilon = kwargs['epsilon']           # epsilon-greedy
         alpha = kwargs['alpha']               # learning rate
         test = kwargs.get('test', False)      # whether in test mode
+        method = kwargs['method']
+        annotation = kwargs['annotation']     # additional note for this player
         self.test = test
         self.epsilon = epsilon
-        self.qvalues_tab = QValueTabular(self, gamma, epsilon, alpha)
-
-    def state2str(self, game_world):
-        """ convert the game world into a short string, which will be used as index in q-value table. """
-        state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}".\
-            format(game_world[self.name]['health'], game_world[self.name]['mana'], game_world[self.name]['rem_deck'],
-                   int(game_world[self.name]['heropower'].used_this_turn),
-                   game_world[self.opponent.name]['health'], self.mana_based_on_turn(game_world.turn + 1),
-                   game_world[self.opponent.name]['rem_deck'])
-
-        # only use cidx list to represent self inhands cards
-        inhands_str = "self-inhands:" + ','.join(map(lambda x: str(x.cidx), sorted(game_world[self.name]['inhands'])))
-
-        # use (cidx, attack, health, divine, taunt) tuple lists to represent intable cards
-        intable_str = "self-intable:" + \
-                      ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
-                                   format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
-                                   sorted(game_world[self.name]['intable'])))
-        oppo_intable_str = "oppo-intable:" + \
-                           ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
-                                    format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
-                                    sorted(game_world[self.opponent.name]['intable'])))
-        return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
-
-    def action2str(self, action):
-        return str(action)
+        if method == 'exact':
+            self.qvalues_impl = QValueTabular(self, gamma, epsilon, alpha, annotation)
+        elif method == 'linear':
+            self.qvalues_impl = QValueLinearApprox(self, gamma, epsilon, alpha, annotation)
 
     def pick_action(self, all_acts, game_world) -> 'Action':
-        state_str = self.state2str(game_world)
-
         if len(all_acts) == 1:
             choose_act = all_acts[0]
-            choose_act_str = self.action2str(choose_act)
             logger.info("Choice 0: %r" % choose_act)
         else:
-            qvalue_tuples = list()
-            qvalue_tuple = namedtuple('qvalue_tuple', ['act_idx', 'act_str', 'qvalue'])
-            for act_idx, act in enumerate(all_acts):
-                act_str = self.action2str(act)
-                qvalue = self.qvalues_tab.qvalue(state_str, act_str)
-                qvalue_tuples.append(qvalue_tuple(act_idx=act_idx, act_str=act_str, qvalue=qvalue))
-                logger.info("Choice %d (%.2f): %r" % (act_idx, qvalue, act))
+            choose_act = self.epsilon_greedy(game_world, all_acts)
 
-            choose_i, choose_act_str, choose_qvalue = self.epsilon_greedy(qvalue_tuples)
-            choose_act = all_acts[choose_i]
-
-        self.last_state_str = state_str
-        self.last_act_str = choose_act_str
+        self.last_state = game_world.copy()
+        self.last_act = choose_act.copy()
 
         logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
@@ -443,34 +473,56 @@ class QLearningTabularPlayer(Player):
             R = 0
 
         # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')]
-        self.qvalues_tab.update(self.last_state_str, self.last_act_str, new_game_world, R)
+        self.qvalues_impl.update(self.last_state, self.last_act, new_game_world, R)
 
     def post_match(self):
         """ called when a match finishes """
-        self.qvalues_tab.post_match()
-        self.print_qtable_summary()
+        self.qvalues_impl.post_match()
 
-    def epsilon_greedy(self, qvalue_tuples):
-        """ q-values format: a list of namedtuples: qvalue_tuple(act_idx, act_str, qvalue) """
-        # shuffle qvalue_tuples so that max function will break tie randomly
-        qvalue_tuples_shuffled = random.sample(qvalue_tuples, len(qvalue_tuples))
-        max_act_idx, max_act_str, max_qvalue = max(qvalue_tuples_shuffled, key=lambda x: x.qvalue)
+    def epsilon_greedy(self, game_world, all_acts):
+        """ pick actions based on epsilon greedy """
+        # (act_idx, a, Q(s,a))
+        act_qvalue_tuples = list(zip(range(len(all_acts)),
+                                     all_acts,
+                                     self.qvalues_impl.qvalues(game_world=game_world, actions=all_acts)))
+
+        for act_idx, act, qvalue in act_qvalue_tuples:
+            logger.info("Choice %d (%.2f): %r" % (act_idx, qvalue, act))
+
+        # shuffle qvalue_tuples so that max function will break tie randomly.
+        # random.sample is without replacement
+        act_qvalue_tuples_shuffled = random.sample(act_qvalue_tuples, len(all_acts))
+        max_act_idx, max_act, max_qvalue = max(act_qvalue_tuples_shuffled, key=lambda x: x[2])
+
         # if in test mode, do not explore, just exploit
         if self.test:
-            return qvalue_tuples[max_act_idx]
+            return max_act
         else:
-            acts_weights = numpy.full(shape=(len(qvalue_tuples)), fill_value=self.epsilon / (len(qvalue_tuples) - 1))
+            acts_weights = numpy.full(shape=len(all_acts), fill_value=self.epsilon / (len(all_acts) - 1))
             acts_weights[max_act_idx] = 1. - self.epsilon
-            idx_list = list(range(len(qvalue_tuples)))
+            idx_list = list(range(len(all_acts)))
+            # choose_idx is the index of selected action in act_qvalue_tuples before shuffle
             choose_idx = numpy.random.choice(idx_list, 1, replace=False, p=acts_weights)[0]
-            return qvalue_tuples[choose_idx]
+            return act_qvalue_tuples[choose_idx][1]
 
-    def print_qtable(self):
-        """ print q-value table """
-        logger.warning(str(self.qvalues_tab))
 
-    def print_qtable_summary(self):
-        """ print qtable summary """
-        logger.warning("total match number: %d, qvalue table states  %d, state-action visit total %d"
-                       % (self.qvalues_tab.num_match, len(self.qvalues_tab), self.qvalues_tab.state_act_visit_times))
+class QValueLinearApprox:
+    def __init__(self, player, gamma, epsilon, alpha, annotation):
+        self.player = player
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.num_match = 0  # number of total matches
+        self.annotation = annotation
+
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_{4}". \
+            format(constant.ql_linear_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+
+        # load q values table
+        if os.path.isfile(file_name):
+            with open(file_name, 'rb') as f:
+                self.gamma, self.epsilon, self.alpha, self.num_match, self.weight = pickle.load(f)
+        else:
+            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
+            self.weight = numpy.zeros(100)
 

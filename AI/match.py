@@ -93,11 +93,11 @@ class Match:
     def play_N_match(self, n):
         t1 = time.time()
         for i in range(n):
-            self.play_one_match()
+            self.play_one_match(i)
         # self.player2.print_qtable()
         logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
 
-    def play_one_match(self):
+    def play_one_match(self, match_idx):
         turn = 0
         self.player1.reset()
         self.player2.reset()
@@ -142,14 +142,16 @@ class Match:
 
             logger.info("")
 
-        self.post_one_match(game_world)
+        self.post_one_match(game_world, match_idx)
 
-    def post_one_match(self, game_world):
+    def post_one_match(self, game_world, match_idx):
         if self.winner == self.player1:
-            self.match_end(game_world=game_world, winner=self.player1, loser=self.player2, reason=self.winner_reason)
+            self.match_end(game_world=game_world, winner=self.player1, loser=self.player2,
+                           match_idx=match_idx, reason=self.winner_reason)
             self.recent_player1_win_lose.append(1)
         else:
-            self.match_end(game_world=game_world, winner=self.player2, loser=self.player1, reason=self.winner_reason)
+            self.match_end(game_world=game_world, winner=self.player2, loser=self.player1,
+                           match_idx=match_idx, reason=self.winner_reason)
             self.recent_player1_win_lose.append(0)
         self.player1.post_match()
         self.player2.post_match()
@@ -157,9 +159,9 @@ class Match:
                        .format(constant.player1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
 
-    def match_end(self, game_world, winner, loser, reason):
-        logger.warning("match ends at turn %d. winner=%r, loser=%r, reason=%r" %
-                       (game_world.turn, winner.name, loser.name, reason))
+    def match_end(self, game_world, winner, loser, match_idx, reason):
+        logger.warning("%dth match ends at turn %d. winner=%r, loser=%r, reason=%r" %
+                       (match_idx, game_world.turn, winner.name, loser.name, reason))
         winner.post_action(game_world, match_end=True, winner=True)
         loser.post_action(game_world, match_end=True, winner=False)
         self.winner = winner
