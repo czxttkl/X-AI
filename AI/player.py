@@ -306,15 +306,11 @@ class QValueTabular:
 
     def post_match(self):
         self.num_match += 1
-        logger.warning("total match number: %d" % self.num_match)
-        if self.num_match % constant.qltab_save_freq == 0:
+        # don't save any update during test
+        if not self.player.test and self.num_match % constant.qltab_save_freq == 0:
             self.save()
 
     def save(self):
-        # don't save any update during test
-        if self.test:
-            return
-
         t1 = time.time()
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}". \
             format(constant.qltabqvalues, self.gamma, self.epsilon, self.alpha)
@@ -475,5 +471,6 @@ class QLearningTabularPlayer(Player):
 
     def print_qtable_summary(self):
         """ print qtable summary """
-        logger.warning("qvalue table states  %d, state-action visit total %d" % (len(self.qvalues_tab), self.qvalues_tab.state_act_visit_times))
+        logger.warning("total match number: %d, qvalue table states  %d, state-action visit total %d"
+                       % (self.qvalues_tab.num_match, len(self.qvalues_tab), self.qvalues_tab.state_act_visit_times))
 
