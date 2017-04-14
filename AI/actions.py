@@ -8,11 +8,26 @@ class Action:
     def apply(self, game_world):
         """ apply this action to game world and update this game world. """
         self.__apply__(game_world)
-        game_world.update_after_action(last_action=self)
+        self.update_after_apply(game_world)
 
     def __apply__(self, game_world):
         """ the real action taken place """
         pass
+
+    def update_after_apply(self, game_world: 'GameWorld'):
+        """ update this game world after this action is executed.
+        The updates include clear dead minions on table, performing last_played_card_effect, etc.
+        This update will not change the real player's states. """
+        for data in game_world.data.values():
+            for card in data['intable']:
+                if card.health <= 0:
+                    data['intable'].remove(card)
+
+        src_player = self.src_player
+        for pawn in game_world[src_player]['intable']:
+            if pawn.last_played_card_effect:
+                if isinstance(self, SpellPlay) and pawn.last_played_card_effect == "cast_spell_attack+1":
+                    pawn.attack += 1
 
     def copy(self):
         return copy.deepcopy(self)

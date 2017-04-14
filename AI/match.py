@@ -45,20 +45,6 @@ class GameWorld:
         str += 'inhands: %r\n' % self[self.player2_name]['inhands']
         return str
 
-    def update_after_action(self, last_action):
-        """ update this copy of game world after the last_action is executed.
-        This update will not change the real player's states. """
-        for data in self.data.values():
-            for card in data['intable']:
-                if card.health <= 0:
-                    data['intable'].remove(card)
-
-        src_player = last_action.src_player
-        for pawn in self[src_player]['intable']:
-            if pawn.last_played_card_effect:
-                if isinstance(last_action, SpellPlay) and pawn.last_played_card_effect == "cast_spell_attack+1":
-                    pawn.attack += 1
-
     def __getitem__(self, player_name):
         return self.data[player_name]
 

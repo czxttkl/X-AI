@@ -18,11 +18,11 @@ logger = logging.getLogger('hearthstone')
 logger.addHandler(logging.StreamHandler())
 # logger.addHandler(logging.FileHandler('out.txt', mode='w'))
 logger.setLevel(logging.WARNING)
-logger.setLevel(logging.INFO)
+# logger.setLevel(logging.INFO)
 
 
 # game
-play_n_match = 5
+play_n_match = 10
 player1_win_rate_num_games = 1000         # calculate player 1's win rate based on how many recent games
 start_health = 15
 
