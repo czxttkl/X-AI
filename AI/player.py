@@ -27,6 +27,7 @@ class Player:
 
         self._init_heropower()
         self._init_deck(fix_deck)
+        self.inhands = []
         self.intable = []          # cards on self table
         self.opponent = None       # this will be set in Match.__init__
         if self.first_player:
@@ -81,7 +82,7 @@ class Player:
         self.inhands.append(Card.init_card('The Coin'))
 
     @staticmethod
-    def mana_based_on_turn( turn):
+    def max_mana_this_turn(turn):
         return min((turn - 1) // 2 + 1, 10)
 
     def turn_begin_init(self, turn):
@@ -92,7 +93,7 @@ class Player:
             2. refresh the usability of cards in table
             3. refresh the hero power
             4. draw new card """
-        self.this_turn_mana = self.mana_based_on_turn(turn)
+        self.this_turn_mana = self.max_mana_this_turn(turn)
         for card in self.intable:
             card.used_this_turn = False
         self.heropower.used_this_turn = False
@@ -299,7 +300,7 @@ class QValueTabular:
         state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}".\
             format(game_world[player.name]['health'], game_world[player.name]['mana'],
                    game_world[player.name]['rem_deck'], int(game_world[player.name]['heropower'].used_this_turn),
-                   game_world[player.opponent.name]['health'], player.mana_based_on_turn(game_world.turn + 1),
+                   game_world[player.opponent.name]['health'], player.max_mana_this_turn(game_world.turn + 1),
                    game_world[player.opponent.name]['rem_deck'])
 
         # only use cidx list to represent self inhands cards
@@ -316,7 +317,8 @@ class QValueTabular:
                                     sorted(game_world[player.opponent.name]['intable'])))
         return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
 
-    def action2str(self, action: 'Action') -> str:
+    @staticmethod
+    def action2str(action: 'Action') -> str:
         return str(action)
 
     def __len__(self):
@@ -375,7 +377,7 @@ class QValueTabular:
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[0]
 
     def qvalues(self, state_str: Union[None, str]=None, act_strs: Union[None, List[str]]=None,
-                      game_world: Union[None, 'GameWorld']=None, actions: Union[None, List['Action']]=None) \
+                game_world: Union[None, 'GameWorld']=None, actions: Union[None, List['Action']]=None) \
             -> List[float]:
         """ Q(s,a) for all a in actions """
         assert (state_str or game_world) and (act_strs or actions)
@@ -444,8 +446,11 @@ class QLearningPlayer(Player):
         test = kwargs.get('test', False)      # whether in test mode
         method = kwargs['method']
         annotation = kwargs['annotation']     # additional note for this player
-        self.test = test
         self.epsilon = epsilon
+        self.test = test
+        self.last_state = None
+        self.last_act = None
+
         if method == 'exact':
             self.qvalues_impl = QValueTabular(self, gamma, epsilon, alpha, annotation)
         elif method == 'linear':
@@ -520,18 +525,24 @@ class QValueLinearApprox:
         self.annotation = annotation
 
         # feature names
-        self.feat_names = ['turn', 'self_h', 'oppo_h', 'self_m',
+        self.feat_names = [
+                           # feature index 0 - 9
+                           'turn', 'self_h', 'oppo_h', 'self_m',
                            'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
                            'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo
                            'self_mn', 'oppo_mn',                # number of minions of self and oppo
+
+                           # feature index 10 - 13
                            'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
                            'self_mn_divine', 'oppo_mn_divine',  # number of minions in divine
 
+                           # feature index 14 - 22
                            'self_tt_mn_attkable', 'self_tt_mn_attk',   # self total minion (attackable) attack
                            'self_tt_mn_h',   # self total minion health
                            'self_tt_mn_taunt_attkable', 'self_tt_mn_taunt_attk', 'self_tt_mn_taunt_h',
                            'self_tt_mn_divine_attkable', 'self_tt_mn_divine_attk', 'self_tt_mn_divine_h',
 
+                           # feature index 23 - 28
                            'oppo_tt_mn_attk', 'oppo_tt_mn_h',
                            'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
                            'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
@@ -587,19 +598,101 @@ class QValueLinearApprox:
 
     def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
         """ Q(s,a) for a in actions """
-        res = map(lambda act: self.qvalue(game_world=act.virtual_apply(game_world), action=act), actions)
-        return list(res)
+        res = map(lambda act: self.qvalue(game_world, action=act), actions)
+        # actually return an iterator
+        return res
 
-    def qvalue(self, game_world: 'GameWorld', action: 'Action') -> float:
+    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False) -> float:
         """ Q(s,a) """
-        features = self.extract_features(game_world)
+        features = self.extract_features(action.virtual_apply(game_world))
         # linear combination of features and weights
-        return numpy.dot(features, self.weight)
+        if return_feature:
+            return numpy.dot(features, self.weight), features
+        else:
+            return numpy.dot(features, self.weight)
 
     def extract_features(self, game_world: 'GameWorld') -> numpy.ndarray:
         """ extract features from game_world"""
-        pass
+        feature = numpy.zeros(self.k)
+        feature[0] = game_world.turn
+        feature[1] = game_world[self.player.name]['health']
+        feature[2] = game_world[self.player.opponent.name]['health']
+        feature[3] = game_world[self.player.name]['mana']
+        feature[4] = self.player.max_mana_this_turn(game_world.turn)
+        feature[5] = self.player.opponent.max_mana_this_turn(game_world.turn + 1)
+        feature[6] = len(game_world[self.player.name]['inhands'])
+        feature[7] = len(game_world[self.player.opponent.name]['inhands'])
+        feature[8] = len(game_world[self.player.name]['intable'])
+        feature[9] = len(game_world[self.player.opponent.name]['intable'])
+
+        self_mn_taunt, oppo_mn_taunt, self_mn_divine, oppo_mn_divine, \
+            self_tt_mn_attkable, self_tt_mn_attk, self_tt_mn_h, \
+            self_tt_mn_taunt_attkable, self_tt_mn_taunt_attk, self_tt_mn_taunt_h, \
+            self_tt_mn_divine_attkable, self_tt_mn_divine_attk, self_tt_mn_divine_h, \
+            oppo_tt_mn_attk, oppo_tt_mn_h, \
+            oppo_tt_mn_taunt_attk, oppo_tt_mn_taunt_h, \
+            oppo_tt_mn_divine_attk, oppo_tt_mn_divine_h = [0] * 19
+
+        self_intable = game_world[self.player.name]['intable']
+        oppo_intable = game_world[self.player.opponent.name]['intable']
+
+        # process self table
+        for card in self_intable:
+            self_tt_mn_attk += card.attack
+            self_tt_mn_h += card.health
+            if not card.used_this_turn:
+                self_tt_mn_attkable += card.attack
+            if card.taunt:
+                self_mn_taunt += 1
+                self_tt_mn_taunt_h += card.health
+                self_tt_mn_taunt_attk += card.attack
+                if not card.used_this_turn:
+                    self_tt_mn_taunt_attkable += card.attack
+            if card.divine:
+                self_mn_divine += 1
+                self_tt_mn_divine_h += card.health
+                self_tt_mn_divine_attk += card.attack
+                if not card.used_this_turn:
+                    self_tt_mn_divine_attkable += card.attack
+
+        # process oppo intable
+        for card in oppo_intable:
+            oppo_tt_mn_attk += card.attack
+            oppo_tt_mn_h += card.health
+            if card.taunt:
+                oppo_mn_taunt += 1
+                oppo_tt_mn_taunt_h += card.health
+                oppo_tt_mn_taunt_attk += card.attack
+            if card.divine:
+                oppo_mn_divine += 1
+                oppo_tt_mn_divine_h += card.health
+                oppo_tt_mn_divine_attk += card.attack
+
+        feature[10] = self_mn_taunt
+        feature[11] = oppo_mn_taunt
+        feature[12] = self_mn_divine
+        feature[13] = oppo_mn_divine
+        feature[14] = self_tt_mn_attkable
+        feature[15] = self_tt_mn_attk
+        feature[16] = self_tt_mn_h
+        feature[17] = self_tt_mn_taunt_attkable
+        feature[18] = self_tt_mn_taunt_attk
+        feature[19] = self_tt_mn_taunt_h
+        feature[20] = self_tt_mn_divine_attkable
+        feature[21] = self_tt_mn_divine_attk
+        feature[22] = self_tt_mn_divine_h
+        feature[23] = oppo_tt_mn_attk
+        feature[24] = oppo_tt_mn_h
+        feature[25] = oppo_tt_mn_taunt_attk
+        feature[26] = oppo_tt_mn_taunt_h
+        feature[27] = oppo_tt_mn_divine_attk
+        feature[28] = oppo_tt_mn_divine_h
 
     def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
-        pass
+        old_qvalue, old_qvalue_features = self.qvalue(last_state, last_act, return_feature=True)
+        max_new_state_qvalue = self.max_qvalue(new_game_world)
+        predict_qvalue = R + self.gamma * max_new_state_qvalue
+        delta = predict_qvalue - old_qvalue
+        self.weight += self.alpha * delta * old_qvalue_features
+
