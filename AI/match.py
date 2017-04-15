@@ -152,7 +152,7 @@ class Match:
         loser.post_action(game_world, match_end=True, winner=False)
         self.winner = winner
 
-    def check_for_match_end(self, game_world):
+    def check_for_match_end(self, game_world: 'GameWorld') -> bool:
         """ return True if the match ends. Otherwise return False """
         if game_world[self.player1.name]['health'] <= 0:
             self.winner = self.player2

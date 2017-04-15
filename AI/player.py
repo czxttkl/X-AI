@@ -281,16 +281,11 @@ class QValueTabular:
         self.num_match = 0                  # number of total matches
         self.annotation = annotation
 
-        file_name = self.file_name()
+        # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
+        self.qvalues_tab = dict()
 
-        # load q values table
-        if os.path.isfile(file_name):
-            with open(file_name, 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, \
-                self.num_match, self.state_act_visit_times, self.qvalues_tab = pickle.load(f)
-        else:
-            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
-            self.qvalues_tab = dict()
+        # load existing tabular if necessary
+        self.load()
 
     def file_name(self):
         """ file name to associate with this qvalue table """
@@ -298,7 +293,7 @@ class QValueTabular:
             format(constant.ql_exact_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
         return file_name
 
-    def state2str(self, game_world):
+    def state2str(self, game_world: 'GameWorld') -> str:
         """ convert the game world into a short string, which will be used as index in q-value table. """
         player = self.player
         state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}".\
@@ -321,7 +316,7 @@ class QValueTabular:
                                     sorted(game_world[player.opponent.name]['intable'])))
         return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
 
-    def action2str(self, action):
+    def action2str(self, action: 'Action') -> str:
         return str(action)
 
     def __len__(self):
@@ -353,6 +348,14 @@ class QValueTabular:
         logger.warning("total match number: %d, qvalue table states  %d, state-action visit total %d"
                        % (self.num_match, len(self), self.state_act_visit_times))
 
+    def load(self):
+        file_name = self.file_name()
+        # load q values table
+        if os.path.isfile(file_name):
+            with open(file_name, 'rb') as f:
+                self.gamma, self.epsilon, self.alpha, self.num_match, self.state_act_visit_times, self.qvalues_tab \
+                    = pickle.load(f)
+
     def save(self):
         t1 = time.time()
         file_name = self.file_name()
@@ -362,7 +365,7 @@ class QValueTabular:
         logger.warning("save q values to disk in %d seconds" % (time.time() - t1))
 
     def qvalue(self, state_str: Union[None, str]=None, act_str: Union[None, str]=None,
-               game_world: Union[None, 'GameWorld']=None, action: Union[None, 'Action']=None):
+               game_world: Union[None, 'GameWorld']=None, action: Union[None, 'Action']=None) -> float:
         """ Q(s,a) """
         assert (state_str or game_world) and (act_str or action)
         if not state_str:
@@ -372,8 +375,9 @@ class QValueTabular:
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[0]
 
     def qvalues(self, state_str: Union[None, str]=None, act_strs: Union[None, List[str]]=None,
-                      game_world: Union[None, 'GameWorld']=None, actions: Union[None, List['Action']]=None):
-        """ Q(s,a) for all a in act_strs """
+                      game_world: Union[None, 'GameWorld']=None, actions: Union[None, List['Action']]=None) \
+            -> List[float]:
+        """ Q(s,a) for all a in actions """
         assert (state_str or game_world) and (act_strs or actions)
         if not state_str:
             state_str = self.state2str(game_world)
@@ -383,11 +387,11 @@ class QValueTabular:
         else:
             return list(map(lambda action: self.qvalue(state_str=state_str, action=action), actions))
 
-    def count(self, state_str: str, act_str: str):
+    def count(self, state_str: str, act_str: str) -> int:
         """ number of visits at (s,a) """
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
 
-    def max_qvalue(self, game_world: 'GameWorld'):
+    def max_qvalue(self, game_world: 'GameWorld') -> float:
         """ max_a Q(s,a)"""
         state_str = self.state2str(game_world)
         all_acts = self.player.search_one_action(game_world)
@@ -515,14 +519,87 @@ class QValueLinearApprox:
         self.num_match = 0  # number of total matches
         self.annotation = annotation
 
+        # feature names
+        self.feat_names = ['turn', 'self_h', 'oppo_h', 'self_m',
+                           'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
+                           'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo
+                           'self_mn', 'oppo_mn',                # number of minions of self and oppo
+                           'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
+                           'self_mn_divine', 'oppo_mn_divine',  # number of minions in divine
+
+                           'self_tt_mn_attkable', 'self_tt_mn_attk',   # self total minion (attackable) attack
+                           'self_tt_mn_h',   # self total minion health
+                           'self_tt_mn_taunt_attkable', 'self_tt_mn_taunt_attk', 'self_tt_mn_taunt_h',
+                           'self_tt_mn_divine_attkable', 'self_tt_mn_divine_attk', 'self_tt_mn_divine_h',
+
+                           'oppo_tt_mn_attk', 'oppo_tt_mn_h',
+                           'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
+                           'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
+                           ]
+
+        self.k = len(self.feat_names)         # number of features
+        # weights for features:
+        self.weight = numpy.zeros(self.k)
+        self.load()
+
+    def state2str(self, game_world: 'GameWorld') -> str:
+        pass
+
+    def action2str(self, action: 'Action') -> str:
+        return str(action)
+
+    def __repr__(self):
+        # print feature weights
+        return 'num_match:' + str(self.num_match) + \
+               ','.join(map(lambda x, y: x + ':' + str(y), zip(self.feat_names, self.weight)))
+
+    def file_name(self):
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_{4}". \
             format(constant.ql_linear_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def load(self):
+        file_name = self.file_name()
 
         # load q values table
         if os.path.isfile(file_name):
             with open(file_name, 'rb') as f:
                 self.gamma, self.epsilon, self.alpha, self.num_match, self.weight = pickle.load(f)
-        else:
-            # key: state_str, value: dict() with key as act_str and value as (Q(s,a), # of times visiting (s,a)) tuple
-            self.weight = numpy.zeros(100)
 
+    def save(self):
+        file_name = self.file_name()
+        with open(file_name, 'wb') as f:
+            pickle.dump((self.gamma, self.epsilon, self.alpha,
+                         self.num_match, self.weight), f, protocol=4)
+
+    def post_match(self):
+        self.num_match += 1
+        logger.warning(str(self))
+        # don't save any update during test
+        if not self.player.test and self.num_match % constant.ql_linear_save_freq == 0:
+            self.save()
+
+    def max_qvalue(self, game_world: 'GameWorld') -> float:
+        """ max_a Q(s,a)"""
+        all_acts = self.player.search_one_action(game_world)
+        max_state_qvalue = max(map(lambda action: self.qvalue(game_world, action), all_acts))
+        return max_state_qvalue
+
+    def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
+        """ Q(s,a) for a in actions """
+        res = map(lambda act: self.qvalue(game_world=act.virtual_apply(game_world), action=act), actions)
+        return list(res)
+
+    def qvalue(self, game_world: 'GameWorld', action: 'Action') -> float:
+        """ Q(s,a) """
+        features = self.extract_features(game_world)
+        # linear combination of features and weights
+        return numpy.dot(features, self.weight)
+
+    def extract_features(self, game_world: 'GameWorld') -> numpy.ndarray:
+        """ extract features from game_world"""
+        pass
+
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
+        """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
+        pass

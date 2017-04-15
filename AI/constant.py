@@ -25,6 +25,7 @@ logger.setLevel(logging.WARNING)
 play_n_match = 10
 player1_win_rate_num_games = 1000         # calculate player 1's win rate based on how many recent games
 start_health = 15
+total_num_cards = 20
 
 mage_fix_deck = [
                  'Mana Wyrm', 'Mirror Image',
@@ -45,6 +46,6 @@ test_fix_deck = [
 # random player plays first
 player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True, fix_deck=test_fix_deck)
 player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=test_fix_deck,
-                          method='exact', annotation='test_fix_deck',
-                          gamma=gamma, epsilon=epsilon, alpha=alpha, test=True)
+                          method='exact', annotation='test_fix_deck_strthl{0}'.format(start_health),
+                          gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
 # player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False, fix_deck=test_fix_deck)

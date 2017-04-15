@@ -6,9 +6,16 @@ import copy
 
 class Action:
     def apply(self, game_world):
-        """ apply this action to game world and update this game world. """
+        """ apply this action to game world and update this game world.
+        Action apply will change the game world (the mirror of player status) but not the real player status """
         self.__apply__(game_world)
         self.update_after_apply(game_world)
+
+    def virtual_apply(self, game_world) -> 'GameWorld':
+        """ apply this action to the copy of game_world. """
+        new_game_world = game_world.copy()
+        self.apply(new_game_world)
+        return new_game_world
 
     def __apply__(self, game_world):
         """ the real action taken place """
@@ -17,7 +24,7 @@ class Action:
     def update_after_apply(self, game_world: 'GameWorld'):
         """ update this game world after this action is executed.
         The updates include clear dead minions on table, performing last_played_card_effect, etc.
-        This update will not change the real player's states. """
+        """
         for data in game_world.data.values():
             for card in data['intable']:
                 if card.health <= 0:
