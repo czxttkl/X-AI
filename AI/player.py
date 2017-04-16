@@ -16,10 +16,11 @@ logger = logging.getLogger('hearthstone')
 
 class Player:
 
-    def __init__(self, cls, name, first_player, fix_deck=None, **kwargs):
+    def __init__(self, cls, name, first_player, start_health, fix_deck=None, **kwargs):
         self.name = name
         self.cls = cls
-        self.health = constant.start_health
+        self.start_health = start_health
+        self.health = self.start_health
         self.armor = 0
         self.this_turn_mana = 0
         self.fix_deck = fix_deck
@@ -27,7 +28,7 @@ class Player:
 
         self._init_heropower()
         self._init_deck(fix_deck)
-        self.inhands = []
+        self.inhands = []          # cards in self hands
         self.intable = []          # cards on self table
         self.opponent = None       # this will be set in Match.__init__
         if self.first_player:
@@ -36,18 +37,21 @@ class Player:
             self.draw_as_second_player()
         self._init_player(**kwargs)     # any preloading job for the player
 
-    def reset(self):
+    def reset(self, test=None):
         """ reset this player as a new match starts """
-        self.health = constant.start_health
+        self.health = self.start_health
         self.armor = 0
         self.this_turn_mana = 0
         self._init_heropower()
         self._init_deck(self.fix_deck)
-        self.intable = []  # cards on self table
+        self.inhands = []          # cards in self hands
+        self.intable = []          # cards on self table
         if self.first_player:
             self.draw_as_first_player()
         else:
             self.draw_as_second_player()
+        if test is not None:
+            self.test = test
 
     def _init_player(self, **kwargs):
         """ other initialization for this player"""
@@ -334,9 +338,9 @@ class QValueTabular:
         return str
 
     def post_match(self):
+        self.num_match += 1
         self.print_qtable_summary()
         # self.print_qtable()
-        self.num_match += 1
         # don't save any update during test
         if not self.player.test and self.num_match % constant.ql_exact_save_freq == 0:
             self.save()
@@ -428,10 +432,10 @@ class QValueTabular:
 
         self.state_act_visit_times += 1
 
-        logger.warning("Q-learning update. this state: %r, this action: %r" % (last_state_str, last_act_str))
-        logger.warning(
+        logger.info("Q-learning update. this state: %r, this action: %r" % (last_state_str, last_act_str))
+        logger.info(
             "Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
-        logger.warning("Q-learning update. Q(s,a) <- (1 - alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s', a')]:   "
+        logger.info("Q-learning update. Q(s,a) <- (1 - alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s', a')]:   "
                        "{0} <- (1 - {1}) * {2} + {1} * [{3} + {4} * {5}], # of (s,a) visits: {6}".format
                        (update_qvalue, alpha, old_qvalue, R, self.gamma, max_new_state_qvalue, update_count))
 
@@ -554,7 +558,8 @@ class QValueLinearApprox:
         self.load()
 
     def state2str(self, game_world: 'GameWorld') -> str:
-        pass
+        return 'num_match:' + str(self.num_match) + \
+               ','.join(map(lambda x, y: x + ':' + str(y), zip(self.feat_names, self.extract_features(game_world))))
 
     def action2str(self, action: 'Action') -> str:
         return str(action)
@@ -694,5 +699,15 @@ class QValueLinearApprox:
         max_new_state_qvalue = self.max_qvalue(new_game_world)
         predict_qvalue = R + self.gamma * max_new_state_qvalue
         delta = predict_qvalue - old_qvalue
+        old_weight = self.weight.copy()
         self.weight += self.alpha * delta * old_qvalue_features
+
+        logger.warning("Q-learning update. this state: %r, this action: %r" %
+                       (self.state2str(last_state), self.action2str(last_act)))
+        logger.warning("Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" %
+                       (self.state2str(new_game_world), max_new_state_qvalue))
+        logger.warning("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a')) * feature(s,a): "
+                       "{0} <- {1} + {2} * ({3} + {4} * {5}) * {6}"
+                       .format(self.weight, old_weight, self.alpha, R, self.gamma,
+                               max_new_state_qvalue, old_qvalue_features))
 

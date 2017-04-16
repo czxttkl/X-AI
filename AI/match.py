@@ -33,6 +33,7 @@ class GameWorld:
                                               # so altering game world will not really affect player states
 
     def __repr__(self):
+        """ representation of this game world, which looks like a simple game UI """
         str = 'Turn %d\n' % self.turn
         str += '%r. health: %d, mana: %d\n' % \
               (self.player1_name, self[self.player1_name]['health'], self[self.player1_name]['mana'])
@@ -69,9 +70,9 @@ class GameWorld:
 
 class Match:
 
-    def __init__(self):
-        self.player1 = constant.player1
-        self.player2 = constant.player2
+    def __init__(self, player1, player2):
+        self.player1 = player1
+        self.player2 = player2
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
         self.recent_player1_win_lose = deque(maxlen=constant.player1_win_rate_num_games)
@@ -85,10 +86,6 @@ class Match:
 
     def play_one_match(self, match_idx):
         turn = 0
-        self.player1.reset()
-        self.player2.reset()
-        self.winner = None
-        self.winner_reason = None
 
         while True:
             turn += 1
@@ -144,6 +141,10 @@ class Match:
         logger.warning("last {0} player 1 win rate: {1}"
                        .format(constant.player1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
+        self.winner = None
+        self.winner_reason = None
+        self.player1.reset()
+        self.player2.reset()
 
     def match_end(self, game_world, winner, loser, match_idx, reason):
         logger.warning("%dth match ends at turn %d. winner=%r, loser=%r, reason=%r" %
