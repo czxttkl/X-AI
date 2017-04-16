@@ -725,8 +725,8 @@ class QValueLinearApprox:
                        self.feature2str(old_qvalue_features))
         # logger.warning("Q-learning update. new_state: %r, max_new_state_qvalue: %f" %
         #                (self.state2str(new_game_world), max_new_state_qvalue))
-        logger.warning("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a')) * feature(s,a): "
-                       "{0} <- {1} + {2} * ({3} + {4} * {5}) * {6}"
+        logger.warning("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a):\n"
+                       "{0} <- \n{1} \n + {2} * ({3} + {4} * {5} - {6}) * {7}"
                        .format(self.weight, old_weight, self.alpha, R, self.gamma,
-                               max_new_state_qvalue, old_qvalue_features))
-
+                               max_new_state_qvalue, old_qvalue, old_qvalue_features))
+        print(".")

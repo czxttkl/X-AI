@@ -6,7 +6,7 @@ import logging
 ql_exact_data_path = 'data/qltab_exact'
 ql_linear_data_path = 'data/qltab_linear'
 ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values once
-ql_linear_save_freq = 200  # num of matches to save q-learning linear weights once
+ql_linear_save_freq = 1  # num of matches to save q-learning linear weights once
 
 # logger
 # logger = logging.getLogger('hearthstone')

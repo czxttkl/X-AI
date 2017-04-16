@@ -3,6 +3,7 @@ import constant
 from card import HeroClass
 from player import RandomPlayer, QLearningPlayer
 import logging
+import numpy
 
 
 def test_rd_vs_ql_sh15_all_fireblast_deck():
@@ -89,6 +90,7 @@ def test_rd_vs_ql_sh30_mage_fix_deck():
 
 def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
+    numpy.set_printoptions(linewidth=1000)
     start_health = 8
     gamma = 1.0  # discounting factor
     epsilon = 0.2  # epsilon-greedy
@@ -104,7 +106,7 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_N_match(n=200)
+    match.play_N_match(n=1)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
