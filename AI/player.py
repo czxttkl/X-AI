@@ -558,16 +558,22 @@ class QValueLinearApprox:
         self.load()
 
     def state2str(self, game_world: 'GameWorld') -> str:
-        return 'num_match:' + str(self.num_match) + \
-               ','.join(map(lambda x, y: x + ':' + str(y), zip(self.feat_names, self.extract_features(game_world))))
+        return 'num_match:' + str(self.num_match) + "," + \
+               ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]), zip(self.feat_names, self.extract_features(game_world))))
 
-    def action2str(self, action: 'Action') -> str:
+    @ staticmethod
+    def action2str(action: 'Action') -> str:
         return str(action)
+
+    def feature2str(self, feature: 'numpy.ndarray') -> str:
+        return 'num_match:' + str(self.num_match) + "," + \
+                                                    ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
+                                                                 zip(self.feat_names, feature)))
 
     def __repr__(self):
         # print feature weights
-        return 'num_match:' + str(self.num_match) + \
-               ','.join(map(lambda x, y: x + ':' + str(y), zip(self.feat_names, self.weight)))
+        return 'num_match:' + str(self.num_match) + "," + \
+               ','.join(map(lambda name_w: name_w[0] + ':' + str(name_w[1]), zip(self.feat_names, self.weight)))
 
     def file_name(self):
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_{4}". \
@@ -608,7 +614,8 @@ class QValueLinearApprox:
         return res
 
     def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False) -> float:
-        """ Q(s,a) """
+        """ Q(s,a)
+         feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
         features = self.extract_features(action.virtual_apply(game_world))
         # linear combination of features and weights
         if return_feature:
@@ -617,7 +624,7 @@ class QValueLinearApprox:
             return numpy.dot(features, self.weight)
 
     def extract_features(self, game_world: 'GameWorld') -> numpy.ndarray:
-        """ extract features from game_world"""
+        """ extract features from game_world """
         feature = numpy.zeros(self.k)
         feature[0] = game_world.turn
         feature[1] = game_world[self.player.name]['health']
@@ -693,9 +700,19 @@ class QValueLinearApprox:
         feature[27] = oppo_tt_mn_divine_attk
         feature[28] = oppo_tt_mn_divine_h
 
+        return feature
+
     def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
-        old_qvalue, old_qvalue_features = self.qvalue(last_state, last_act, return_feature=True)
+        # q value is based on linear combination of weights and afterstate, the state after last_act
+        # is performed on last_state. however, if last_act is NullAction, it is nondeterministic to know
+        # what is the next state. In current implementation, NullAction.apply_virtual return the same
+        # game world. We use new_game_world applied by EndTurn as the afterstate
+        if isinstance(last_act, NullAction):
+            old_qvalue, old_qvalue_features = self.qvalue(new_game_world, last_act, return_feature=True)
+        else:
+            old_qvalue, old_qvalue_features = self.qvalue(last_state, last_act, return_feature=True)
+
         max_new_state_qvalue = self.max_qvalue(new_game_world)
         predict_qvalue = R + self.gamma * max_new_state_qvalue
         delta = predict_qvalue - old_qvalue
@@ -704,8 +721,10 @@ class QValueLinearApprox:
 
         logger.warning("Q-learning update. this state: %r, this action: %r" %
                        (self.state2str(last_state), self.action2str(last_act)))
-        logger.warning("Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" %
-                       (self.state2str(new_game_world), max_new_state_qvalue))
+        logger.warning("Q-learning update. res  state: %r" %
+                       self.feature2str(old_qvalue_features))
+        # logger.warning("Q-learning update. new_state: %r, max_new_state_qvalue: %f" %
+        #                (self.state2str(new_game_world), max_new_state_qvalue))
         logger.warning("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a')) * feature(s,a): "
                        "{0} <- {1} + {2} * ({3} + {4} * {5}) * {6}"
                        .format(self.weight, old_weight, self.alpha, R, self.gamma,

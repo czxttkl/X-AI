@@ -86,7 +86,36 @@ def test_rd_vs_ql_sh30_mage_fix_deck():
     match = Match(player1, player2)
     match.play_N_match(n=100)
 
+
+def test_rd_vs_ql_la_sh8_all_fireblast_deck():
+    """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
+    start_health = 8
+    gamma = 1.0  # discounting factor
+    epsilon = 0.2  # epsilon-greedy
+    alpha = 0.2  # learning rate
+    logger = logging.getLogger('hearthstone')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.INFO)
+    player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
+                           start_health=start_health, fix_deck=constant.all_fireblast_deck, )
+    player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+                              start_health=start_health, fix_deck=constant.all_fireblast_deck,
+                              method='linear', annotation='la_all_fireblast_deck_strthl{0}'.format(start_health),
+                              gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+    # train
+    match = Match(player1, player2)
+    match.play_N_match(n=200)
+    # test
+    logger.setLevel(logging.INFO)
+    player1.reset(test=True)
+    player2.reset(test=True)
+    match = Match(player1, player2)
+    match.play_N_match(n=0)
+
 if __name__ == "__main__":
     # test_rd_vs_ql_sh15_all_fireblast_deck()
-    test_rd_vs_ql_sh8_all_fireblast_deck()
+    # test_rd_vs_ql_sh8_all_fireblast_deck()
+    test_rd_vs_ql_la_sh8_all_fireblast_deck()
+
+
 
