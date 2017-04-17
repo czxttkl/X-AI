@@ -103,7 +103,7 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
                               start_health=start_health, fix_deck=constant.all_fireblast_deck,
                               method='linear', annotation='la_all_fireblast_deck_strthl{0}'.format(start_health),
-                              gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+                              degree=1, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
     match.play_N_match(n=1)
