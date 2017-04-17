@@ -109,7 +109,7 @@ for episode in range(NUM_EPISODES):
 
         state = state_prime
 
-        accumulated_samples += 1
+        accumulated_sample += 1
 
         if done or t == MAX_T - 1:
             if DEBUG_MODE:
@@ -128,14 +128,10 @@ for episode in range(NUM_EPISODES):
 
     if episode % 100 == 0:
         print("At %d episodes" % (episode))
-        print
-        "EXPLORATION_RATE:", EXPLORATION_RATE
-        print
-        "Average of 100:", avg / 100.0
-        print
-        session.run(hidden_weights)
-        print
-        "\n"
+        print("EXPLORATION_RATE:", EXPLORATION_RATE)
+        print("Average of 100:", avg / 100.0)
+        print(session.run(hidden_weights))
+        print("\n")
         avg = 0
 
     if sum(score_100) / 100.0 >= 195:
