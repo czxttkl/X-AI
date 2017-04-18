@@ -58,7 +58,7 @@ class Player:
         """ other initialization for this player"""
         pass
 
-    def post_action(self, new_game_world: 'GameWorld', winner: bool):
+    def post_action(self, new_game_world: 'GameWorld', match_end: bool, winner: bool):
         """ other things need to be done after an action is applied. """
         pass
 
@@ -331,12 +331,12 @@ class QValueTabular:
 
     def __repr__(self):
         # print q-value table
-        str = "Q-table:\n"
+        s = "Q-table:\n"
         for state_str, act_qvalue in self.qvalues_tab.items():
-            str += state_str + "\n"
+            s += state_str + "\n"
             for act_str, (qvalue, num_sa) in act_qvalue.items():
-                str += '\t{0}={1}, {2}\n'.format(act_str, qvalue, num_sa)
-        return str
+                s += '\t{0}={1}, {2}\n'.format(act_str, qvalue, num_sa)
+        return s
 
     def post_match(self):
         self.num_match += 1
@@ -410,7 +410,7 @@ class QValueTabular:
             self.qvalues_tab[state_str] = dict()
         self.qvalues_tab[state_str][act_str] = (update_qvalue, update_count)
 
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', r: float):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
         last_state_str = self.state2str(last_state)
         last_act_str = self.action2str(last_act)
@@ -422,13 +422,13 @@ class QValueTabular:
 
         # not necessary to write to qvalues_tab if
         # R == 0 and  max Q(s',a) == 0 and Q(s,a) == 0
-        if R == 0 and max_new_state_qvalue == 0 and old_qvalue == 0:
+        if r == 0 and max_new_state_qvalue == 0 and old_qvalue == 0:
             return
 
         update_count = self.count(last_state_str, last_act_str) + 1
         alpha = self.alpha / (update_count ** 0.5)
 
-        update_qvalue = (1 - alpha) * old_qvalue + alpha * (R + self.gamma * max_new_state_qvalue)
+        update_qvalue = (1 - alpha) * old_qvalue + alpha * (r + self.gamma * max_new_state_qvalue)
         self.set_qvaluetab(last_state_str, last_act_str, update_qvalue, update_count)
 
         self.state_act_visit_times += 1
@@ -437,8 +437,19 @@ class QValueTabular:
         logger.info(
             "Q-learning update. new_state_str: %r, max_new_state_qvalue: %f" % (new_state_str, max_new_state_qvalue))
         logger.info("Q-learning update. Q(s,a) <- (1 - alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s', a')]:   "
-                       "{0} <- (1 - {1}) * {2} + {1} * [{3} + {4} * {5}], # of (s,a) visits: {6}".format
-                       (update_qvalue, alpha, old_qvalue, R, self.gamma, max_new_state_qvalue, update_count))
+                    "{0} <- (1 - {1}) * {2} + {1} * [{3} + {4} * {5}], # of (s,a) visits: {6}".format
+                    (update_qvalue, alpha, old_qvalue, r, self.gamma, max_new_state_qvalue, update_count))
+
+    @ staticmethod
+    def determine_r(match_end, winner):
+        """ determine reward """
+        r = 0
+        if match_end:
+            if winner:
+                r = 1
+            else:
+                r = -1
+        return r
 
 
 class QLearningPlayer(Player):
@@ -475,13 +486,10 @@ class QLearningPlayer(Player):
         logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
 
-    def post_action(self, new_game_world: 'GameWorld', winner: bool):
+    def post_action(self, new_game_world: 'GameWorld', match_end: bool, winner: bool):
         """ called when an action is applied.
         update Q values """
-        # we set reward always to 0
-        # we let terminal state (win for this player) with q value 1
-        # we let terminal state (win for this player's opponent) with q value -1
-        R = 0
+        R = self.qvalues_impl.determine_r(match_end, winner)
         # update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')]
         self.qvalues_impl.update(self.last_state, self.last_act, new_game_world, R)
 
@@ -531,8 +539,8 @@ class QValueLinearApprox:
                            # feature index 0 - 9
                            'turn', 'self_h', 'oppo_h', 'self_m',
                            'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
-                           'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo
-                           'self_mn', 'oppo_mn',                # number of minions of self and oppo
+                           'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo inhands
+                           'self_mn', 'oppo_mn',                # number of minions of self and oppo intable
 
                            # feature index 10 - 13
                            'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
@@ -548,6 +556,9 @@ class QValueLinearApprox:
                            'oppo_tt_mn_attk', 'oppo_tt_mn_h',
                            'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
                            'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
+
+                           # feature index 29 - 30
+                           'self_rem_deck', 'oppo_rem_deck',
                            ]
 
         self.poly = PolynomialFeatures(degree=self.degree, include_bias=True, interaction_only=False)
@@ -564,7 +575,8 @@ class QValueLinearApprox:
         self.load()
 
     def state2str(self, game_world: 'GameWorld') -> str:
-        return ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]), zip(self.feat_names, self.extract_raw_features(game_world))))
+        return ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
+                            zip(self.feat_names, self.extract_raw_features(game_world))))
 
     @ staticmethod
     def action2str(action: 'Action') -> str:
@@ -614,7 +626,7 @@ class QValueLinearApprox:
 
     def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
         """ Q(s,a) for a in actions """
-        res = map(lambda act: self.qvalue(game_world, action=act), actions)
+        res = map(lambda act: self.qvalue(game_world, act), actions)
         # actually return an iterator
         return res
 
@@ -626,24 +638,28 @@ class QValueLinearApprox:
         # 2. features of the current state if it is an end-turn action
         if not isinstance(action, NullAction):
             game_world = action.virtual_apply(game_world)
+        features = self.extract_raw_features(game_world)
+        features = self.raw_feature_to_full_feature(features, action)
 
         if game_world[self.player.name]['health'] <= 0:
             qvalue = -1
         elif game_world[self.player.opponent.name]['health'] <= 0:
             qvalue = 1
         else:
-            features = self.extract_raw_features(game_world)
-            features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
-            if isinstance(action, NullAction):
-                features = numpy.hstack((numpy.zeros_like(features), features))
-            else:
-                features = numpy.hstack((features, numpy.zeros_like(features)))
             qvalue = numpy.dot(features, self.weight)
 
         if return_feature:
             return qvalue, features
         else:
             return qvalue
+
+    def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
+        features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
+        if isinstance(action, NullAction):
+            features = numpy.hstack((numpy.zeros_like(features), features))
+        else:
+            features = numpy.hstack((features, numpy.zeros_like(features)))
+        return features
 
     def extract_raw_features(self, game_world: 'GameWorld') -> numpy.ndarray:
         """ extract features from game_world """
@@ -722,15 +738,26 @@ class QValueLinearApprox:
         feature[27] = oppo_tt_mn_divine_attk
         feature[28] = oppo_tt_mn_divine_h
 
+        feature[29] = game_world[self.player.name]['rem_deck']
+        feature[30] = game_world[self.player.opponent.name]['rem_deck']
+
         return feature
 
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', R: float):
+    @ staticmethod
+    def determine_r(match_end: bool, winner: bool):
+        """ determine reward """
+        # we set reward always to 0
+        # we let terminal state (win for this player) with q value 1
+        # we let terminal state (win for this player's opponent) with q value -1
+        return 0
+
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld', r: float):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
         # q value is based on linear combination of weights and features
         old_qvalue, old_qvalue_features = self.qvalue(last_state, last_act, return_feature=True)
 
         max_new_state_qvalue = self.max_qvalue(new_game_world)
-        predict_qvalue = R + self.gamma * max_new_state_qvalue
+        predict_qvalue = r + self.gamma * max_new_state_qvalue
         delta = predict_qvalue - old_qvalue
         old_weight = self.weight.copy()
         self.weight += self.alpha * delta * old_qvalue_features
@@ -742,5 +769,5 @@ class QValueLinearApprox:
                     (self.state2str(new_game_world), max_new_state_qvalue))
         logger.info("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a):\n"
                     "{0} <- \n{1} \n + {2} * ({3} + {4} * {5} - {6}) * {7}"
-                    .format(self.weight, old_weight, self.alpha, R, self.gamma,
+                    .format(self.weight, old_weight, self.alpha, r, self.gamma,
                             max_new_state_qvalue, old_qvalue, old_qvalue_features))

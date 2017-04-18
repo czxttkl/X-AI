@@ -76,8 +76,10 @@ class Match:
         self.player1.opponent = self.player2
         self.player2.opponent = self.player1
         self.recent_player1_win_lose = deque(maxlen=constant.player1_win_rate_num_games)
+        self.winner = None
+        self.winner_reason = None
 
-    def play_N_match(self, n):
+    def play_n_match(self, n):
         t1 = time.time()
         for i in range(n):
             self.play_one_match(i)
@@ -103,7 +105,7 @@ class Match:
             else:
                 if turn > 2:
                     # update the last end-turn action's Q value
-                    player.post_action(game_world, winner=False)
+                    player.post_action(game_world, match_end=False, winner=False)
 
             # one action search
             while True:
@@ -118,7 +120,7 @@ class Match:
                     if match_end:
                         break
                     else:
-                        player.post_action(game_world, winner=False)
+                        player.post_action(game_world, match_end=False, winner=False)
 
             if match_end:
                 break
@@ -149,8 +151,8 @@ class Match:
     def match_end(self, game_world, winner, loser, match_idx, reason):
         logger.warning("%dth match ends at turn %d. winner=%r, loser=%r, reason=%r" %
                        (match_idx, game_world.turn, winner.name, loser.name, reason))
-        winner.post_action(game_world, winner=True)
-        loser.post_action(game_world, winner=False)
+        winner.post_action(game_world, match_end=True, winner=True)
+        loser.post_action(game_world, match_end=True, winner=False)
         self.winner = winner
 
     def check_for_match_end(self, game_world: 'GameWorld') -> bool:

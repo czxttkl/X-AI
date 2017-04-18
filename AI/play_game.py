@@ -25,13 +25,13 @@ def test_rd_vs_ql_sh15_all_fireblast_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_N_match(n=5000)
+    match.play_n_match(n=5000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_N_match(n=10)
+    match.play_n_match(n=10)
 
 
 def test_rd_vs_ql_sh8_all_fireblast_deck():
@@ -53,13 +53,13 @@ def test_rd_vs_ql_sh8_all_fireblast_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_N_match(n=5000)
+    match.play_n_match(n=5000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_N_match(n=100)
+    match.play_n_match(n=100)
 
 
 def test_rd_vs_ql_sh30_mage_fix_deck():
@@ -79,20 +79,19 @@ def test_rd_vs_ql_sh30_mage_fix_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_N_match(n=99999999999)
+    match.play_n_match(n=99999999999)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_N_match(n=100)
+    match.play_n_match(n=100)
 
 
 def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
-    numpy.set_printoptions(linewidth=1000)
     start_health = 8
-    gamma = 1.0  # discounting factor
+    gamma = 0.9  # discounting factor
     epsilon = 0.2  # epsilon-greedy
     alpha = 0.2  # learning rate
     logger = logging.getLogger('hearthstone')
@@ -106,15 +105,17 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
                               degree=1, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_N_match(n=1)
+    match.play_n_match(n=1)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_N_match(n=0)
+    match.play_n_match(n=0)
 
 if __name__ == "__main__":
+    numpy.set_printoptions(linewidth=1000, precision=3)
+
     # test_rd_vs_ql_sh15_all_fireblast_deck()
     # test_rd_vs_ql_sh8_all_fireblast_deck()
     test_rd_vs_ql_la_sh8_all_fireblast_deck()
