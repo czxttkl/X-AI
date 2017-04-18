@@ -93,7 +93,7 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     start_health = 8
     gamma = 0.9  # discounting factor
     epsilon = 0.2  # epsilon-greedy
-    alpha = 0.2  # learning rate
+    alpha = 0.1  # learning rate
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)

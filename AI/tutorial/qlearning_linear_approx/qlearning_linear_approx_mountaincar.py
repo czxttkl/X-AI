@@ -4,6 +4,12 @@ mountain car example written in a python file
 https://github.com/openai/gym/wiki/MountainCar-v0
 https://gym.openai.com/envs/MountainCar-v0
 https://github.com/dennybritz/reinforcement-learning/tree/master/FA
+
+some findings:
+1. the best result is acheived when using the four RBFSampler as feature transformer and set
+SGDClassifier's eta0 as 0.1
+1. if I use polynomial transformation, the result is not good.
+2. learning rate is also an important parameter to tune
 """
 import gym
 import itertools
@@ -12,6 +18,7 @@ import numpy as np
 import sys
 import sklearn.pipeline
 import sklearn.preprocessing
+from sklearn.preprocessing import PolynomialFeatures
 import numpy
 
 if "../" not in sys.path:
@@ -36,12 +43,14 @@ scaler.fit(observation_examples)
 # Used to converte a state to a featurizes represenation.
 # We use RBF kernels with different variances to cover different parts of the space
 featurizer = sklearn.pipeline.FeatureUnion([
-        ("rbf1", RBFSampler(gamma=5.0, n_components=100)),
-        ("rbf2", RBFSampler(gamma=2.0, n_components=100)),
-        ("rbf3", RBFSampler(gamma=1.0, n_components=100)),
-        ("rbf4", RBFSampler(gamma=0.5, n_components=100))
+        # ("rbf1", RBFSampler(gamma=5.0, n_components=100)),
+        # ("rbf2", RBFSampler(gamma=2.0, n_components=100)),
+        # ("rbf3", RBFSampler(gamma=1.0, n_components=100)),
+        # ("rbf4", RBFSampler(gamma=0.5, n_components=100)),
+        ("poly2", PolynomialFeatures(degree=5, include_bias=True, interaction_only=False)),
         ])
-featurizer.fit(scaler.transform(observation_examples))
+# featurizer.fit(scaler.transform(observation_examples))
+featurizer.fit(observation_examples)
 
 
 class Estimator():
@@ -55,7 +64,7 @@ class Estimator():
         # into the features, but this way it's easier to code up.
         self.models = []
         for _ in range(env.action_space.n):
-            model = SGDRegressor(learning_rate="constant")
+            model = SGDRegressor(learning_rate="constant", eta0=0.1)
             # We need to call partial_fit once to initialize the model
             # or we get a NotFittedError when trying to make a prediction
             # This is quite hacky.
@@ -67,6 +76,7 @@ class Estimator():
         Returns the featurized representation for a state.
         """
         scaled = scaler.transform([state])
+        # scaled = state.reshape((1, state.shape[0]))
         featurized = featurizer.transform(scaled)
         return featurized[0]
 
@@ -183,15 +193,15 @@ def q_learning(env, estimator, num_episodes, discount_factor=1.0, epsilon=0.1, e
             # Q-Value TD Target
             td_target = reward + discount_factor * np.max(q_values_next)
 
-            print("episode {0}, step {1}. w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a):\n old w: {2} \n {3} * ({4} - {5}) \n feature(s,a): {6}".format(
-                      i_episode, t, estimator.models[action].coef_, estimator.models[action].alpha,
-                      td_target, estimator.predict(state, action), estimator.featurize_state(state)))
+            # print("episode {0}, step {1}. w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a):\n old w: {2} \n {3} * ({4} - {5}) \n feature(s,a): {6}".format(
+            #           i_episode, t, estimator.models[action].coef_, estimator.models[action].alpha,
+            #           td_target, estimator.predict(state, action), estimator.featurize_state(state)))
 
             # Update the function approximator using our target
             estimator.update(state, action, td_target)
 
-            print("new w: {0}".format(estimator.models[action].coef_))
-            print("----------------------------------------------------------------------------\n")
+            # print("new w: {0}".format(estimator.models[action].coef_))
+            # print("----------------------------------------------------------------------------\n")
 
             print("\rStep {} @ Episode {}/{} ({})".format(t, i_episode + 1, num_episodes, last_reward), end="")
 
@@ -209,6 +219,6 @@ estimator = Estimator()
 # to the exploration of all states.
 stats = q_learning(env, estimator, 100, epsilon=0.0)
 plotting.plot_cost_to_go_mountain_car(env, estimator)
-
+plotting.plot_episode_stats(stats, smoothing_window=25)
 
 
