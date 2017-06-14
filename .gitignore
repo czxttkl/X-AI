@@ -1,3 +1,11 @@
 __pycache__
 CardDefs.xml
+
+# intellij
 .idea
+
+# python bytecode
+*.pyc
+
+# vizdoom config file 
+AI/tutorial/actor-critic/_vizdoom.ini
