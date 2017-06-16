@@ -6,6 +6,7 @@ import copy
 import logging
 import time
 import constant
+from player import Player
 
 
 logger = logging.getLogger('hearthstone')
@@ -66,6 +67,10 @@ class GameWorld:
         player2.health = self[player2.name]['health']
         player2.this_turn_mana = self[player2.name]['mana']
         player2.heropower = self[player2.name]['heropower']
+
+    def get_health(self, player_name=None):
+        assert player_name and type(player_name) is str
+        return self[player_name]['health']
 
 
 class Match:

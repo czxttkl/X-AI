@@ -25,7 +25,7 @@ def test_rd_vs_ql_sh15_all_fireblast_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=5000)
+    match.play_n_match(n=4000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
@@ -53,7 +53,7 @@ def test_rd_vs_ql_sh8_all_fireblast_deck():
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=5000)
+    match.play_n_match(n=1000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
@@ -105,20 +105,20 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
                               degree=1, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=1)
+    match.play_n_match(n=10)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_n_match(n=0)
+    match.play_n_match(n=2)
 
 if __name__ == "__main__":
     numpy.set_printoptions(linewidth=1000, precision=3)
 
     # test_rd_vs_ql_sh15_all_fireblast_deck()
-    # test_rd_vs_ql_sh8_all_fireblast_deck()
-    test_rd_vs_ql_la_sh8_all_fireblast_deck()
+    test_rd_vs_ql_sh8_all_fireblast_deck()
+    # test_rd_vs_ql_la_sh8_all_fireblast_deck()
 
 
 
