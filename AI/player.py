@@ -447,14 +447,31 @@ class QValueTabular:
 
     def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
         """ determine reward """
-        r = -1 + \
-            old_state.get_health(self.player.opponent.name) - new_state.get_health(self.player.opponent.name)
-        # r = 0
-        # if match_end:
-        #     if winner:
-        #         r = 1
-        #     else:
-        #         r = -1
+        # there are two schemas of rewards.
+
+        # first, r_bias + relative opponent health decrease
+        # if r_bias is set too small (very negative), then player will always choose end_turn to avoid further actions,
+        # because every action adds up a negative bias
+        # r_bias = -100
+        # if r_bias is set too large (very positive), then player will be encouraged to play longer by
+        #  using more actions.
+        # r_bias = 100
+        # when r_bias equals to zero, we simply look at how much damage the action cause.
+        # however setting r_bias = 0 is not ideal in test_rd_vs_ql_sh8_all_fireblast_deck() because it encourages to
+        # use hero_power very early to cause that one health damage instead of waiting for fireblast
+        # r_bias = 0
+        # the ideal reward should be set to -1 in the case of test_rd_vs_ql_sh8_all_fireblast_deck()
+        # r_bias = -1
+        # r = r_bias + \
+        #     old_state.get_health(self.player.opponent.name) - new_state.get_health(self.player.opponent.name)
+
+        # second schema, terminal reward, 1 for win, -1 for loss
+        r = 0
+        if match_end:
+            if winner:
+                r = 1
+            else:
+                r = -1
         return r
 
 
@@ -755,6 +772,7 @@ class QValueLinearApprox:
         """ determine reward """
         r = -1 + \
             old_state.get_health(self.player.opponent.name) - new_state.get_health(self.player.opponent.name)
+
         # r = 0
         # if match_end:
         #     if winner:

@@ -117,8 +117,8 @@ if __name__ == "__main__":
     numpy.set_printoptions(linewidth=1000, precision=3)
 
     # test_rd_vs_ql_sh15_all_fireblast_deck()
-    test_rd_vs_ql_sh8_all_fireblast_deck()
-    # test_rd_vs_ql_la_sh8_all_fireblast_deck()
+    # test_rd_vs_ql_sh8_all_fireblast_deck()
+    test_rd_vs_ql_la_sh8_all_fireblast_deck()
 
 
 
