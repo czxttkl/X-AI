@@ -488,6 +488,8 @@ class QLearningPlayer(Player):
         alpha = kwargs['alpha']               # learning rate
         test = kwargs.get('test', False)      # whether in test mode
         degree = kwargs.get('degree', 1)      # degree for polynomial feature transformation
+        hidden_dim = kwargs.get('hidden_dim', 10)
+                                              # hidden unit number in DQN
         method = kwargs['method']
         annotation = kwargs['annotation']     # additional note for this player
         self.epsilon = epsilon
@@ -499,6 +501,8 @@ class QLearningPlayer(Player):
             self.qvalues_impl = QValueTabular(self, gamma, epsilon, alpha, annotation)
         elif method == 'linear':
             self.qvalues_impl = QValueLinearApprox(self, degree, gamma, epsilon, alpha, annotation)
+        elif method == 'dqn':
+            self.qvalues_impl = QValueDQNApprox(self, hidden_dim, gamma, epsilon, alpha, annotation)
 
     def pick_action(self, all_acts, game_world) -> 'Action':
         if len(all_acts) == 1:
@@ -551,58 +555,114 @@ class QLearningPlayer(Player):
 
 
 class QValueFunctionApprox:
-    def __init__(self, player, degree, gamma, epsilon, alpha, annotation):
-        self.player = player
-        self.degree = degree          # polynomial degree for feature transforming
-        self.gamma = gamma            # discount factor
-        self.epsilon = epsilon        # epsilon-greedy rate
-        self.alpha = alpha            # learning rate
-        self.num_match = 0            # number of total matches
-        self.annotation = annotation  # annotation added in model file name
-        self.weight = None            # will be initialized in init_and_load()
+    feat_names = [
+        'self_h', 'oppo_h',
+        'self_mn', 'oppo_mn',  # number of minions of self and oppo intable
+    ]
 
-        # feature names
-        # self.feat_names = [
-        #                    # feature index 0 - 9
-        #                    'turn', 'self_h', 'oppo_h', 'self_m',
-        #                    'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
-        #                    'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo inhands
-        #                    'self_mn', 'oppo_mn',                # number of minions of self and oppo intable
-        #
-        #                    # feature index 10 - 13
-        #                    'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
-        #                    'self_mn_divine', 'oppo_mn_divine',  # number of minions in divine
-        #
-        #                    # feature index 14 - 22
-        #                    'self_tt_mn_attkable', 'self_tt_mn_attk',   # self total minion (attackable) attack
-        #                    'self_tt_mn_h',   # self total minion health
-        #                    'self_tt_mn_taunt_attkable', 'self_tt_mn_taunt_attk', 'self_tt_mn_taunt_h',
-        #                    'self_tt_mn_divine_attkable', 'self_tt_mn_divine_attk', 'self_tt_mn_divine_h',
-        #
-        #                    # feature index 23 - 28
-        #                    'oppo_tt_mn_attk', 'oppo_tt_mn_h',
-        #                    'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
-        #                    'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
-        #
-        #                    # feature index 29 - 30
-        #                    'self_rem_deck', 'oppo_rem_deck',
-        #                    ]
+    # feature names
+    # self.feat_names = [
+    #                    # feature index 0 - 9
+    #                    'turn', 'self_h', 'oppo_h', 'self_m',
+    #                    'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
+    #                    'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo inhands
+    #                    'self_mn', 'oppo_mn',                # number of minions of self and oppo intable
+    #
+    #                    # feature index 10 - 13
+    #                    'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
+    #                    'self_mn_divine', 'oppo_mn_divine',  # number of minions in divine
+    #
+    #                    # feature index 14 - 22
+    #                    'self_tt_mn_attkable', 'self_tt_mn_attk',   # self total minion (attackable) attack
+    #                    'self_tt_mn_h',   # self total minion health
+    #                    'self_tt_mn_taunt_attkable', 'self_tt_mn_taunt_attk', 'self_tt_mn_taunt_h',
+    #                    'self_tt_mn_divine_attkable', 'self_tt_mn_divine_attk', 'self_tt_mn_divine_h',
+    #
+    #                    # feature index 23 - 28
+    #                    'oppo_tt_mn_attk', 'oppo_tt_mn_h',
+    #                    'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
+    #                    'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
+    #
+    #                    # feature index 29 - 30
+    #                    'self_rem_deck', 'oppo_rem_deck',
+    #                    ]
 
-        self.feat_names = [
-            'self_h', 'oppo_h',
-            'self_mn', 'oppo_mn',  # number of minions of self and oppo intable
-        ]
-
-        self.poly = PolynomialFeatures(degree=self.degree, include_bias=False, interaction_only=False)
-        # features consist of two parts:
-        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
-        # 2. features of the current state if it is a end-turn action
-        poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
-        # num of total features. First part for non-end-turn action. Second part for end-turn action.
-        self.k = poly_k * 2
-        # num of raw features
-        self.raw_k = len(self.feat_names)
-        self.init_and_load()
+    # feature[0] = game_world.turn
+    # feature[1] = game_world[self.player.name]['health']
+    # feature[2] = game_world[self.player.opponent.name]['health']
+    # feature[3] = game_world[self.player.name]['mana']
+    # feature[4] = self.player.max_mana_this_turn(game_world.turn)
+    # feature[5] = self.player.opponent.max_mana_this_turn(game_world.turn + 1)
+    # feature[6] = len(game_world[self.player.name]['inhands'])
+    # feature[7] = len(game_world[self.player.opponent.name]['inhands'])
+    # feature[8] = len(game_world[self.player.name]['intable'])
+    # feature[9] = len(game_world[self.player.opponent.name]['intable'])
+    #
+    # self_mn_taunt, oppo_mn_taunt, self_mn_divine, oppo_mn_divine, \
+    #     self_tt_mn_attkable, self_tt_mn_attk, self_tt_mn_h, \
+    #     self_tt_mn_taunt_attkable, self_tt_mn_taunt_attk, self_tt_mn_taunt_h, \
+    #     self_tt_mn_divine_attkable, self_tt_mn_divine_attk, self_tt_mn_divine_h, \
+    #     oppo_tt_mn_attk, oppo_tt_mn_h, \
+    #     oppo_tt_mn_taunt_attk, oppo_tt_mn_taunt_h, \
+    #     oppo_tt_mn_divine_attk, oppo_tt_mn_divine_h = [0] * 19
+    #
+    # self_intable = game_world[self.player.name]['intable']
+    # oppo_intable = game_world[self.player.opponent.name]['intable']
+    #
+    # # process self table
+    # for card in self_intable:
+    #     self_tt_mn_attk += card.attack
+    #     self_tt_mn_h += card.health
+    #     if not card.used_this_turn:
+    #         self_tt_mn_attkable += card.attack
+    #     if card.taunt:
+    #         self_mn_taunt += 1
+    #         self_tt_mn_taunt_h += card.health
+    #         self_tt_mn_taunt_attk += card.attack
+    #         if not card.used_this_turn:
+    #             self_tt_mn_taunt_attkable += card.attack
+    #     if card.divine:
+    #         self_mn_divine += 1
+    #         self_tt_mn_divine_h += card.health
+    #         self_tt_mn_divine_attk += card.attack
+    #         if not card.used_this_turn:
+    #             self_tt_mn_divine_attkable += card.attack
+    #
+    # # process oppo intable
+    # for card in oppo_intable:
+    #     oppo_tt_mn_attk += card.attack
+    #     oppo_tt_mn_h += card.health
+    #     if card.taunt:
+    #         oppo_mn_taunt += 1
+    #         oppo_tt_mn_taunt_h += card.health
+    #         oppo_tt_mn_taunt_attk += card.attack
+    #     if card.divine:
+    #         oppo_mn_divine += 1
+    #         oppo_tt_mn_divine_h += card.health
+    #         oppo_tt_mn_divine_attk += card.attack
+    #
+    # feature[10] = self_mn_taunt
+    # feature[11] = oppo_mn_taunt
+    # feature[12] = self_mn_divine
+    # feature[13] = oppo_mn_divine
+    # feature[14] = self_tt_mn_attkable
+    # feature[15] = self_tt_mn_attk
+    # feature[16] = self_tt_mn_h
+    # feature[17] = self_tt_mn_taunt_attkable
+    # feature[18] = self_tt_mn_taunt_attk
+    # feature[19] = self_tt_mn_taunt_h
+    # feature[20] = self_tt_mn_divine_attkable
+    # feature[21] = self_tt_mn_divine_attk
+    # feature[22] = self_tt_mn_divine_h
+    # feature[23] = oppo_tt_mn_attk
+    # feature[24] = oppo_tt_mn_h
+    # feature[25] = oppo_tt_mn_taunt_attk
+    # feature[26] = oppo_tt_mn_taunt_h
+    # feature[27] = oppo_tt_mn_divine_attk
+    # feature[28] = oppo_tt_mn_divine_h
+    #
+    # feature[29] = game_world[self.player.name]['rem_deck']
+    # feature[30] = game_world[self.player.opponent.name]['rem_deck']
 
     def init_and_load(self):
         pass
@@ -675,88 +735,11 @@ class QValueFunctionApprox:
         feature = numpy.zeros(self.raw_k)
         feature[:] = game_world[self.player.name]['health'], game_world[self.player.opponent.name]['health'], \
                      len(game_world[self.player.name]['intable']), len(game_world[self.player.opponent.name]['intable'])
-
-        # feature[0] = game_world.turn
-        # feature[1] = game_world[self.player.name]['health']
-        # feature[2] = game_world[self.player.opponent.name]['health']
-        # feature[3] = game_world[self.player.name]['mana']
-        # feature[4] = self.player.max_mana_this_turn(game_world.turn)
-        # feature[5] = self.player.opponent.max_mana_this_turn(game_world.turn + 1)
-        # feature[6] = len(game_world[self.player.name]['inhands'])
-        # feature[7] = len(game_world[self.player.opponent.name]['inhands'])
-        # feature[8] = len(game_world[self.player.name]['intable'])
-        # feature[9] = len(game_world[self.player.opponent.name]['intable'])
-        #
-        # self_mn_taunt, oppo_mn_taunt, self_mn_divine, oppo_mn_divine, \
-        #     self_tt_mn_attkable, self_tt_mn_attk, self_tt_mn_h, \
-        #     self_tt_mn_taunt_attkable, self_tt_mn_taunt_attk, self_tt_mn_taunt_h, \
-        #     self_tt_mn_divine_attkable, self_tt_mn_divine_attk, self_tt_mn_divine_h, \
-        #     oppo_tt_mn_attk, oppo_tt_mn_h, \
-        #     oppo_tt_mn_taunt_attk, oppo_tt_mn_taunt_h, \
-        #     oppo_tt_mn_divine_attk, oppo_tt_mn_divine_h = [0] * 19
-        #
-        # self_intable = game_world[self.player.name]['intable']
-        # oppo_intable = game_world[self.player.opponent.name]['intable']
-        #
-        # # process self table
-        # for card in self_intable:
-        #     self_tt_mn_attk += card.attack
-        #     self_tt_mn_h += card.health
-        #     if not card.used_this_turn:
-        #         self_tt_mn_attkable += card.attack
-        #     if card.taunt:
-        #         self_mn_taunt += 1
-        #         self_tt_mn_taunt_h += card.health
-        #         self_tt_mn_taunt_attk += card.attack
-        #         if not card.used_this_turn:
-        #             self_tt_mn_taunt_attkable += card.attack
-        #     if card.divine:
-        #         self_mn_divine += 1
-        #         self_tt_mn_divine_h += card.health
-        #         self_tt_mn_divine_attk += card.attack
-        #         if not card.used_this_turn:
-        #             self_tt_mn_divine_attkable += card.attack
-        #
-        # # process oppo intable
-        # for card in oppo_intable:
-        #     oppo_tt_mn_attk += card.attack
-        #     oppo_tt_mn_h += card.health
-        #     if card.taunt:
-        #         oppo_mn_taunt += 1
-        #         oppo_tt_mn_taunt_h += card.health
-        #         oppo_tt_mn_taunt_attk += card.attack
-        #     if card.divine:
-        #         oppo_mn_divine += 1
-        #         oppo_tt_mn_divine_h += card.health
-        #         oppo_tt_mn_divine_attk += card.attack
-        #
-        # feature[10] = self_mn_taunt
-        # feature[11] = oppo_mn_taunt
-        # feature[12] = self_mn_divine
-        # feature[13] = oppo_mn_divine
-        # feature[14] = self_tt_mn_attkable
-        # feature[15] = self_tt_mn_attk
-        # feature[16] = self_tt_mn_h
-        # feature[17] = self_tt_mn_taunt_attkable
-        # feature[18] = self_tt_mn_taunt_attk
-        # feature[19] = self_tt_mn_taunt_h
-        # feature[20] = self_tt_mn_divine_attkable
-        # feature[21] = self_tt_mn_divine_attk
-        # feature[22] = self_tt_mn_divine_h
-        # feature[23] = oppo_tt_mn_attk
-        # feature[24] = oppo_tt_mn_h
-        # feature[25] = oppo_tt_mn_taunt_attk
-        # feature[26] = oppo_tt_mn_taunt_h
-        # feature[27] = oppo_tt_mn_divine_attk
-        # feature[28] = oppo_tt_mn_divine_h
-        #
-        # feature[29] = game_world[self.player.name]['rem_deck']
-        # feature[30] = game_world[self.player.opponent.name]['rem_deck']
-
         return feature
 
     def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
         """ determine reward """
+        # also see QValueTabular.determine_r for explanation
         r = 0
         if match_end:
             if winner:
@@ -768,22 +751,92 @@ class QValueFunctionApprox:
 
 class QValueDQNApprox(QValueFunctionApprox):
     """ use deep q network for function approximation """
+    def __init__(self, player, hidden_dim, gamma, epsilon, alpha, annotation):
+        self.player = player
+        self.hidden_dim = hidden_dim  # hidden dim of 1-layer deep q network
+        self.gamma = gamma            # discount factor
+        self.epsilon = epsilon        # epsilon-greedy rate
+        self.alpha = alpha            # learning rate
+        self.num_match = 0            # number of total matches
+        self.annotation = annotation  # annotation added in model file name
+        self.model = None             # Keras model. will be initialized in init_and_load()
+        self.lag_model = None         # Keras model. sync with self.model every while
+                                      # used in max_a' Q(s', a')
+
+        self.batch_size = 64
+        self.memory_size = 2000
+        self.memory = deque(maxlen=self.memory_size)
+        # features consist of two parts:
+        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
+        # 2. features of the current state if it is a end-turn action
+        # num of raw features
+        self.raw_k = len(self.feat_names)
+        # num of total features. First part for non-end-turn action. Second part for end-turn action.
+        self.k = self.raw_k * 2
+        self.init_and_load()
+
+    def file_name_pickle(self):
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.pickle". \
+            format(constant.ql_dqn_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def file_name_h5(self):
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.h5". \
+            format(constant.ql_dqn_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def init_and_load(self):
+        self.model = self.init_weight()
+        # when model is saved, it is saved to two separate files:
+        # one for basic information, the other for keras
+        if os.path.isfile(self.file_name_pickle()):
+            with open(self.file_name_pickle(), 'rb') as f:
+                self.gamma, self.epsilon, self.alpha, self.num_match = pickle.load(f)
+            self.model.load_weights(self.file_name_h5())
+
+    def save(self):
+        file_name = self.file_name()
+        with open(self.file_name_pickle(), 'wb') as f:
+            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match), f, protocol=4)
+        self.model.save_weights(self.file_name_h5())
 
     def init_weight(self):
         model = Sequential()
-        model.add(Dense(24, input_dim=self.state_size, activation='relu',
-                        kernel_initializer='he_uniform'))
-        model.add(Dense(24, activation='relu',
-                        kernel_initializer='he_uniform'))
-        model.add(Dense(self.action_size, activation='linear',
-                        kernel_initializer='he_uniform'))
+        model.add(Dense(self.hidden_dim, input_dim=self.k, activation='relu', kernel_initializer='he_uniform'))
+        model.add(Dense(1, activation='tanh', kernel_initializer='he_uniform'))
         model.summary()
-        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        print(model.get_weights())
+        model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
         return model
+
+    def __repr__(self):
+        # print feature weights
+        return 'num_match:' + str(self.num_match) + "," + self.model.get_weights()
 
 
 class QValueLinearApprox(QValueFunctionApprox):
     """ use linear function approximation. however always observe weights grow to infinity """
+
+    def __init__(self, player, degree, gamma, epsilon, alpha, annotation):
+        self.player = player
+        self.degree = degree          # polynomial degree for feature transforming
+        self.gamma = gamma            # discount factor
+        self.epsilon = epsilon        # epsilon-greedy rate
+        self.alpha = alpha            # learning rate
+        self.num_match = 0            # number of total matches
+        self.annotation = annotation  # annotation added in model file name
+        self.weight = None            # will be initialized in init_and_load()
+
+        self.poly = PolynomialFeatures(degree=self.degree, include_bias=False, interaction_only=False)
+        # features consist of two parts:
+        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
+        # 2. features of the current state if it is a end-turn action
+        poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
+        # num of total features. First part for non-end-turn action. Second part for end-turn action.
+        self.k = poly_k * 2
+        # num of raw features
+        self.raw_k = len(self.feat_names)
+        self.init_and_load()
 
     def init_weight(self):
         return numpy.zeros(self.k)

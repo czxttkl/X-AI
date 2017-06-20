@@ -3,8 +3,9 @@
 import logging
 
 # q learning
-ql_exact_data_path = 'data/qltab_exact'
-ql_linear_data_path = 'data/qltab_linear'
+ql_exact_data_path = 'data/ql_tab'
+ql_linear_data_path = 'data/ql_linear'
+ql_dqn_data_path = 'data/ql_dqn'
 ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values once
 ql_linear_save_freq = 100  # num of matches to save q-learning linear weights once
 
