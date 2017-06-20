@@ -7,6 +7,7 @@ import logging
 import time
 import constant
 from player import Player
+from typing import Union
 
 
 logger = logging.getLogger('hearthstone')
@@ -68,9 +69,35 @@ class GameWorld:
         player2.this_turn_mana = self[player2.name]['mana']
         player2.heropower = self[player2.name]['heropower']
 
-    def get_health(self, player_name=None):
-        assert player_name and type(player_name) is str
-        return self[player_name]['health']
+    def health(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['health']
+
+    def mana(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['mana']
+
+    def rem_deck(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['rem_deck']
+
+    def hp_used(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['heropower'].used_this_turn
+
+    def inhands(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['inhands']
+
+    def intable(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return self[player]['intable']
 
 
 class Match:

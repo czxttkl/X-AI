@@ -10,6 +10,10 @@ import time
 import sys
 from typing import Union, List
 from sklearn.preprocessing import PolynomialFeatures
+from collections import deque
+from keras.layers import Dense
+from keras.optimizers import Adam
+from keras.models import Sequential
 
 
 logger = logging.getLogger('hearthstone')
@@ -546,15 +550,16 @@ class QLearningPlayer(Player):
             return act_qvalue_tuples[choose_idx][1]
 
 
-class QValueLinearApprox:
+class QValueFunctionApprox:
     def __init__(self, player, degree, gamma, epsilon, alpha, annotation):
         self.player = player
-        self.degree = degree  # polynomial degree for feature transforming
-        self.gamma = gamma
-        self.epsilon = epsilon
-        self.alpha = alpha
-        self.num_match = 0  # number of total matches
-        self.annotation = annotation
+        self.degree = degree          # polynomial degree for feature transforming
+        self.gamma = gamma            # discount factor
+        self.epsilon = epsilon        # epsilon-greedy rate
+        self.alpha = alpha            # learning rate
+        self.num_match = 0            # number of total matches
+        self.annotation = annotation  # annotation added in model file name
+        self.weight = None            # will be initialized in init_and_load()
 
         # feature names
         # self.feat_names = [
@@ -593,17 +598,61 @@ class QValueLinearApprox:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is a end-turn action
         poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
-        # num of total features
+        # num of total features. First part for non-end-turn action. Second part for end-turn action.
         self.k = poly_k * 2
         # num of raw features
         self.raw_k = len(self.feat_names)
-        # weights for features:
-        self.weight = numpy.zeros(self.k)
-        self.load()
+        self.init_and_load()
+
+    def init_and_load(self):
+        pass
+
+    def save(self):
+        pass
+
+    def file_name(self):
+        pass
+
+    def post_match(self):
+        pass
+
+    def max_qvalue(self, game_world: 'GameWorld') -> float:
+        pass
+
+    def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
+        pass
+
+    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
+        pass
+
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
+               r: float, match_end: bool, test: bool):
+        pass
 
     def state2str(self, game_world: 'GameWorld') -> str:
-        return ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
-                            zip(self.feat_names, self.extract_raw_features(game_world))))
+        """ convert the game world into a short string """
+        player = self.player
+        oppo = self.player.opponent
+        state_str = "self h:{0}, m:{1}, rem_deck:{2}, hp_used: {3}, oppo h:{4}, mana next turn:{5}, rem_deck:{6}". \
+                        format(game_world.health(player), game_world.mana(player),
+                               game_world.rem_deck(player), game_world.hp_used(player),
+                               game_world.health(oppo), player.max_mana_this_turn(game_world.turn + 1),
+                               game_world.rem_deck(oppo))
+
+        # only use cidx list to represent self inhands cards
+        inhands_str = "self-inhands:" + ','.join(
+            map(lambda x: str(x.cidx), sorted(game_world.inhands(player))))
+
+        # use (cidx, attack, health, divine, taunt) tuple lists to represent intable cards
+        intable_str = "self-intable:" + \
+                      ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                   format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                   sorted(game_world.intable(player))))
+        oppo_intable_str = "oppo-intable:" + \
+                           ','.join(map(lambda x: '({0}, {1}, {2}, {3}, {4})'.
+                                        format(x.cidx, x.attack, x.health, int(x.divine), int(x.taunt)),
+                                        sorted(game_world.intable(oppo))))
+        return state_str + ", " + inhands_str + ", " + intable_str + ", " + oppo_intable_str
 
     @ staticmethod
     def action2str(action: 'Action') -> str:
@@ -614,77 +663,15 @@ class QValueLinearApprox:
                                                     ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
                                                                  zip(self.feat_names, feature)))
 
-    def __repr__(self):
-        # print feature weights
-        return 'num_match:' + str(self.num_match) + "," + \
-               ','.join(map(lambda name_w: name_w[0] + ':' + str(name_w[1]), zip(self.feat_names, self.weight)))
-
-    def file_name(self):
-        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_{4}". \
-            format(constant.ql_linear_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
-        return file_name
-
-    def load(self):
-        file_name = self.file_name()
-
-        # load q values table
-        if os.path.isfile(file_name):
-            with open(file_name, 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, self.num_match, self.weight = pickle.load(f)
-
-    def save(self):
-        file_name = self.file_name()
-        with open(file_name, 'wb') as f:
-            pickle.dump((self.gamma, self.epsilon, self.alpha,
-                         self.num_match, self.weight), f, protocol=4)
-
-    def post_match(self):
-        self.num_match += 1
-        logger.warning(str(self))
-        # don't save any update during test
-        if not self.player.test and self.num_match % constant.ql_linear_save_freq == 0:
-            self.save()
-
-    def max_qvalue(self, game_world: 'GameWorld') -> float:
-        """ max_a Q(s,a)"""
-        all_acts = self.player.search_one_action(game_world)
-        max_state_qvalue = max(map(lambda action: self.qvalue(game_world, action), all_acts))
-        return max_state_qvalue
-
-    def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
-        """ Q(s,a) for a in actions """
-        res = map(lambda act: self.qvalue(game_world, act), actions)
-        # actually return an iterator
-        return res
-
-    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
-        """ Q(s,a)
-         feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
-        # features consist of two parts:
-        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
-        # 2. features of the current state if it is an end-turn action
+    def extract_raw_features(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
+        """
+        extract features from game_world
+        if it is an end-turn action, we extract the feature from current game world
+        otherwise, we extract the feature from the game world AFTER the action is applied
+        """
         if not isinstance(action, NullAction):
             game_world = action.virtual_apply(game_world)
 
-        features = self.extract_raw_features(game_world)
-        features = self.raw_feature_to_full_feature(features, action)
-        qvalue = numpy.dot(features, self.weight)
-
-        if return_feature:
-            return qvalue, features
-        else:
-            return qvalue
-
-    def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
-        features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
-        if isinstance(action, NullAction):
-            features = numpy.hstack((numpy.zeros_like(features), features))
-        else:
-            features = numpy.hstack((features, numpy.zeros_like(features)))
-        return features
-
-    def extract_raw_features(self, game_world: 'GameWorld') -> numpy.ndarray:
-        """ extract features from game_world """
         feature = numpy.zeros(self.raw_k)
         feature[:] = game_world[self.player.name]['health'], game_world[self.player.opponent.name]['health'], \
                      len(game_world[self.player.name]['intable']), len(game_world[self.player.opponent.name]['intable'])
@@ -770,16 +757,105 @@ class QValueLinearApprox:
 
     def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
         """ determine reward """
-        r = -1 + \
-            old_state.get_health(self.player.opponent.name) - new_state.get_health(self.player.opponent.name)
-
-        # r = 0
-        # if match_end:
-        #     if winner:
-        #         r = 1
-        #     else:
-        #         r = -1
+        r = 0
+        if match_end:
+            if winner:
+                r = 1
+            else:
+                r = -1
         return r
+
+
+class QValueDQNApprox(QValueFunctionApprox):
+    """ use deep q network for function approximation """
+
+    def init_weight(self):
+        model = Sequential()
+        model.add(Dense(24, input_dim=self.state_size, activation='relu',
+                        kernel_initializer='he_uniform'))
+        model.add(Dense(24, activation='relu',
+                        kernel_initializer='he_uniform'))
+        model.add(Dense(self.action_size, activation='linear',
+                        kernel_initializer='he_uniform'))
+        model.summary()
+        model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
+        return model
+
+
+class QValueLinearApprox(QValueFunctionApprox):
+    """ use linear function approximation. however always observe weights grow to infinity """
+
+    def init_weight(self):
+        return numpy.zeros(self.k)
+
+    def __repr__(self):
+        # print feature weights
+        return 'num_match:' + str(self.num_match) + "," + \
+               ','.join(map(lambda name_w: name_w[0] + ':' + str(name_w[1]), zip(self.feat_names, self.weight)))
+
+    def file_name(self):
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_linear_{4}". \
+            format(constant.ql_linear_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def init_and_load(self):
+        # load q values weight
+        if os.path.isfile(self.file_name()):
+            with open(self.file_name(), 'rb') as f:
+                self.gamma, self.epsilon, self.alpha, self.num_match, self.weight = pickle.load(f)
+        else:
+            self.weight = self.init_weight()
+
+    def save(self):
+        file_name = self.file_name()
+        with open(file_name, 'wb') as f:
+            pickle.dump((self.gamma, self.epsilon, self.alpha,
+                         self.num_match, self.weight), f, protocol=4)
+
+    def post_match(self):
+        """ perform model storage, or output some info """
+        self.num_match += 1
+        logger.warning('QValueLinearApprox post match:' + str(self))
+        # don't save any update during test
+        if not self.player.test and self.num_match % constant.ql_linear_save_freq == 0:
+            self.save()
+
+    def max_qvalue(self, game_world: 'GameWorld') -> float:
+        """ max_a Q(s,a)"""
+        all_acts = self.player.search_one_action(game_world)
+        max_state_qvalue = max(map(lambda action: self.qvalue(game_world, action), all_acts))
+        return max_state_qvalue
+
+    def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
+        """ Q(s,a) for a in actions """
+        res = map(lambda act: self.qvalue(game_world, act), actions)
+        # actually return an iterator
+        return res
+
+    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
+        """ Q(s,a)
+         feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
+        features = self.extract_raw_features(game_world, action)
+        features = self.raw_feature_to_full_feature(features, action)
+        qvalue = numpy.dot(features, self.weight)
+
+        if return_feature:
+            return qvalue, features
+        else:
+            return qvalue
+
+    def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
+        """
+        features consist of two parts:
+        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
+        # 2. features of the current state if it is an end-turn action
+        """
+        features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
+        if isinstance(action, NullAction):
+            features = numpy.hstack((numpy.zeros_like(features), features))
+        else:
+            features = numpy.hstack((features, numpy.zeros_like(features)))
+        return features
 
     def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
                r: float, match_end: bool, test: bool):
