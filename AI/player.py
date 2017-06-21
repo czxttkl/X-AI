@@ -15,7 +15,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.models import Sequential
 
-
+numpy.set_printoptions(threshold=10)
 logger = logging.getLogger('hearthstone')
 
 
@@ -558,8 +558,13 @@ class QValueFunctionApprox:
     feat_names = [
         'self_h', 'oppo_h',
         'self_mn', 'oppo_mn',  # number of minions of self and oppo intable
+        'self_m', 'self_max_m',
+        'oppo_next_m',
     ]
 
+    def __init__(self, player):
+        self.player = player
+        self.num_match = 0
     # feature names
     # self.feat_names = [
     #                    # feature index 0 - 9
@@ -680,7 +685,10 @@ class QValueFunctionApprox:
         pass
 
     def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
-        pass
+        """ Q(s,a) for a in actions """
+        res = map(lambda act: self.qvalue(game_world, act), actions)
+        # actually return an iterator
+        return res
 
     def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
         pass
@@ -725,17 +733,48 @@ class QValueFunctionApprox:
 
     def extract_raw_features(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
         """
-        extract features from game_world
+        extract raw features from state-action pair
         if it is an end-turn action, we extract the feature from current game world
         otherwise, we extract the feature from the game world AFTER the action is applied
         """
         if not isinstance(action, NullAction):
             game_world = action.virtual_apply(game_world)
+        player = self.player
+        oppo = self.player.opponent
 
-        feature = numpy.zeros(self.raw_k)
-        feature[:] = game_world[self.player.name]['health'], game_world[self.player.opponent.name]['health'], \
-                     len(game_world[self.player.name]['intable']), len(game_world[self.player.opponent.name]['intable'])
+        feature = numpy.zeros(len(self.feat_names))
+        feature[:] = \
+            game_world.health(player), game_world.health(oppo), \
+            game_world.len_intable(player), game_world.len_intable(oppo), \
+            game_world.mana(player), player.max_mana_this_turn(game_world.turn), \
+            oppo.max_mana_this_turn(game_world.turn + 1)
+
         return feature
+
+    def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
+        """
+        full features consist of two parts:
+        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
+        # 2. features of the current state if it is an end-turn action
+        """
+        if isinstance(action, NullAction):
+            features = numpy.hstack((numpy.zeros_like(features), features))
+        else:
+            features = numpy.hstack((features, numpy.zeros_like(features)))
+        return features
+
+    def to_feature(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
+        """ convert this state-action into a full feature array """
+        features = self.extract_raw_features(game_world, action)
+        features = self.raw_feature_to_full_feature(features, action)
+        return features
+
+    def to_feature_over_acts(self, game_world: 'GameWorld'):
+        """ """
+        all_acts = self.player.search_one_action(game_world)
+        features_over_acts = numpy.array(
+            list(map(lambda action: self.to_feature(game_world, action), all_acts)))
+        return features_over_acts
 
     def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
         """ determine reward """
@@ -762,17 +801,16 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.model = None             # Keras model. will be initialized in init_and_load()
         self.lag_model = None         # Keras model. sync with self.model every while
                                       # used in max_a' Q(s', a')
-
+        self.train_hist = deque(maxlen=500)
+                                      # Keras model train loss value. update after every fit
         self.batch_size = 64
-        self.memory_size = 2000
+        self.memory_size = 500
         self.memory = deque(maxlen=self.memory_size)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is a end-turn action
-        # num of raw features
-        self.raw_k = len(self.feat_names)
         # num of total features. First part for non-end-turn action. Second part for end-turn action.
-        self.k = self.raw_k * 2
+        self.k = len(self.feat_names) * 2
         self.init_and_load()
 
     def file_name_pickle(self):
@@ -787,17 +825,21 @@ class QValueDQNApprox(QValueFunctionApprox):
 
     def init_and_load(self):
         self.model = self.init_weight()
+        self.lag_model = self.init_weight()
         # when model is saved, it is saved to two separate files:
         # one for basic information, the other for keras
         if os.path.isfile(self.file_name_pickle()):
             with open(self.file_name_pickle(), 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, self.num_match = pickle.load(f)
+                self.gamma, self.epsilon, self.alpha, self.num_match, self.memory = pickle.load(f)
             self.model.load_weights(self.file_name_h5())
+        self.sync_lag_model()
+
+    def sync_lag_model(self):
+        self.lag_model.set_weights(self.model.get_weights())
 
     def save(self):
-        file_name = self.file_name()
         with open(self.file_name_pickle(), 'wb') as f:
-            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match), f, protocol=4)
+            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.memory), f, protocol=4)
         self.model.save_weights(self.file_name_h5())
 
     def init_weight(self):
@@ -806,12 +848,117 @@ class QValueDQNApprox(QValueFunctionApprox):
         model.add(Dense(1, activation='tanh', kernel_initializer='he_uniform'))
         model.summary()
         print(model.get_weights())
-        model.compile(loss='mse', optimizer=Adam(lr=self.alpha))
+        model.compile(loss='mse', optimizer=Adam(lr=self.alpha), metrics=['accuracy'])
         return model
 
+    def append_memory(self, features, last_act, reward, next_features_over_acts, match_end):
+        if reward != 0:
+            self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
+        # else:
+        #     # gradually accept zero reward intermediate state
+        #     thres = 60. / numpy.log(self.num_match)
+        #     seed = numpy.random.random()
+        #     if seed > thres:
+        #         self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
+
+    def post_match(self):
+        self.sync_lag_model()
+        self.num_match += 1
+        logger.warning('QValueDQNApprox post match:' + str(self))
+        # don't save any update during test
+        if not self.player.test and self.num_match % constant.ql_dqn_save_freq == 0:
+            self.save()
+
+    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
+        """ Q(s,a)
+         feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
+        # model.predict only takes 2D array
+        features = self.to_feature(game_world, action).reshape((1, -1))
+        qvalue = self.model.predict(features)[0, 0]
+        if return_feature:
+            return qvalue, features
+        else:
+            return qvalue
+
     def __repr__(self):
+        mem_r = [m[2] for m in self.memory]
+        unique, counts = numpy.unique(mem_r, return_counts=True)
+        s = 'num_match:{0}, num_memory:{1}, memory rewards: {2}, train_loss_size:{3}, mean:{4} \n'.\
+                   format(self.num_match, len(self.memory), dict(zip(unique, counts)),
+                          len(self.train_hist), numpy.mean(self.train_hist))
         # print feature weights
-        return 'num_match:' + str(self.num_match) + "," + self.model.get_weights()
+        # s += 'model weights: \n{0}\n {1}\n {2} {3}\nlag_model weights: \n{4}\n {5}\n {6} {7}'.\
+        #            format(self.model.get_weights()[0], self.model.get_weights()[1],
+        #                   self.model.get_weights()[2].flatten(), self.model.get_weights()[3],
+        #                   self.lag_model.get_weights()[0], self.lag_model.get_weights()[1],
+        #                   self.lag_model.get_weights()[2].flatten(), self.lag_model.get_weights()[3])
+        return s
+
+    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
+               r: float, match_end: bool, test: bool):
+        features = self.to_feature(last_state, last_act)
+        next_features_over_acts = self.to_feature_over_acts(new_game_world)
+        self.append_memory(features, last_act, r, next_features_over_acts, match_end)
+
+        # train model
+        # if memory is not full, continue to collect data
+        if len(self.memory) < self.memory_size:
+            return
+        mini_batch = random.sample(self.memory, self.batch_size)
+        features = numpy.zeros((self.batch_size, self.k))
+        target = numpy.zeros(self.batch_size)
+
+        for i in range(self.batch_size):
+            features[i] = mini_batch[i][0]
+            r = mini_batch[i][2]
+            next_features_over_acts = mini_batch[i][3]
+            match_end = mini_batch[i][4]
+            if match_end:
+                target[i] = r
+            else:
+                # in Double DQN, action selection is from model
+                max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
+                # target q(s', a') is from lag_model
+                max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
+                target[i] = r + self.gamma * max_q_s_a
+
+        # logger.info("Q-learning update. model weight before update: {0}".format(self.model.get_weights()))
+
+        # only update in training phase
+        if not test:
+            prev_weight = self.model.get_weights()[0]
+            prev_train_acc = self.model.evaluate(features, target, verbose=0)[1]
+            prev_test_acc = self.evaluate_model_on_memory()
+            loss = self.model.fit(features, target, batch_size=self.batch_size, epochs=1, verbose=0).history['loss']
+            post_weight = self.model.get_weights()[0]
+            post_train_acc = self.model.evaluate(features, target, verbose=0)[1]
+            post_test_acc = self.evaluate_model_on_memory()
+            self.train_hist.append(loss)
+            logger.warning("Q-learning update model weight update change: {0}, prev train acc: {1}, prev memory acc {2}, post train acc: {3}, post memory acc: {4}".format(
+                numpy.sum((post_weight - prev_weight)**2), prev_train_acc, prev_test_acc, post_train_acc, post_test_acc))
+            # logger.info("Q-learning update. model weight after update: {0}".format(self.model.get_weights()))
+
+    def evaluate_model_on_memory(self):
+        """ evaluate model on whole memory """
+        features = numpy.zeros((len(self.memory), self.k))
+        target = numpy.zeros(len(self.memory))
+
+        for i, m in enumerate(self.memory):
+            features[i] = m[0]
+            r = m[2]
+            next_features_over_acts = m[3]
+            match_end = m[4]
+            if match_end:
+                target[i] = r
+            else:
+                # in Double DQN, action selection is from model
+                max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
+                # target q(s', a') is from lag_model
+                max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
+                target[i] = r + self.gamma * max_q_s_a
+
+        whole_memory_loss, whole_memory_acc = self.model.evaluate(features, target, verbose=0)
+        return whole_memory_acc
 
 
 class QValueLinearApprox(QValueFunctionApprox):
@@ -834,8 +981,6 @@ class QValueLinearApprox(QValueFunctionApprox):
         poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
         # num of total features. First part for non-end-turn action. Second part for end-turn action.
         self.k = poly_k * 2
-        # num of raw features
-        self.raw_k = len(self.feat_names)
         self.init_and_load()
 
     def init_weight(self):
@@ -879,17 +1024,10 @@ class QValueLinearApprox(QValueFunctionApprox):
         max_state_qvalue = max(map(lambda action: self.qvalue(game_world, action), all_acts))
         return max_state_qvalue
 
-    def qvalues(self, game_world: 'GameWorld', actions: List['Action']) -> List[float]:
-        """ Q(s,a) for a in actions """
-        res = map(lambda act: self.qvalue(game_world, act), actions)
-        # actually return an iterator
-        return res
-
     def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
         """ Q(s,a)
          feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
-        features = self.extract_raw_features(game_world, action)
-        features = self.raw_feature_to_full_feature(features, action)
+        features = self.to_feature(game_world, action)
         qvalue = numpy.dot(features, self.weight)
 
         if return_feature:
@@ -899,10 +1037,11 @@ class QValueLinearApprox(QValueFunctionApprox):
 
     def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
         """
-        features consist of two parts:
+        full features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is an end-turn action
         """
+        # Compare to parent implementation, QValueLinearApprox has poly transform features
         features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
         if isinstance(action, NullAction):
             features = numpy.hstack((numpy.zeros_like(features), features))

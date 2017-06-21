@@ -99,6 +99,16 @@ class GameWorld:
             player = player.name
         return self[player]['intable']
 
+    def len_intable(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return len(self[player]['intable'])
+
+    def len_inhands(self, player: Union[Player, str]):
+        if isinstance(player, Player):
+            player = player.name
+        return len(self[player]['inhands'])
+
 
 class Match:
 
@@ -134,25 +144,22 @@ class Match:
                 self.winner = player.opponent
                 self.winner_reason = "%r has no card to draw" % player.name
                 break
-            else:
-                if turn > 2:
-                    # update the last end-turn action's Q value
-                    player.post_action(game_world, match_end=False, winner=False)
+
+            if turn > 2:
+                # update the last end-turn action's Q value
+                player.post_action(game_world, match_end=False, winner=False)
 
             # one action search
-            while True:
-                act = player.search_and_pick_action(game_world)
-                if isinstance(act, NullAction):
+            act = player.search_and_pick_action(game_world)
+            while not isinstance(act, NullAction):
+                act.apply(game_world)
+                game_world.update_player(self.player1, self.player2)
+                logger.info(game_world)
+                match_end = self.check_for_match_end(game_world)
+                if match_end:
                     break
-                else:
-                    act.apply(game_world)
-                    game_world.update_player(self.player1, self.player2)
-                    logger.info(game_world)
-                    match_end = self.check_for_match_end(game_world)
-                    if match_end:
-                        break
-                    else:
-                        player.post_action(game_world, match_end=False, winner=False)
+                player.post_action(game_world, match_end=False, winner=False)
+                act = player.search_and_pick_action(game_world)
 
             if match_end:
                 break
@@ -173,7 +180,8 @@ class Match:
         self.player1.post_match()
         self.player2.post_match()
         logger.warning("last {0} player 1 win rate: {1}"
-                       .format(constant.player1_win_rate_num_games, numpy.mean(self.recent_player1_win_lose)))
+                       .format(len(self.recent_player1_win_lose),
+                               numpy.mean(self.recent_player1_win_lose)))
         logger.warning("-------------------------------------------------------------------------------")
         self.winner = None
         self.winner_reason = None

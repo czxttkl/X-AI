@@ -91,9 +91,9 @@ def test_rd_vs_ql_sh30_mage_fix_deck():
 def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
     start_health = 8
-    gamma = 0.9  # discounting factor
+    gamma = 0.95   # discounting factor
     epsilon = 0.2  # epsilon-greedy
-    alpha = 0.1  # learning rate
+    alpha = 0.1    # learning rate
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
@@ -113,12 +113,39 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     match = Match(player1, player2)
     match.play_n_match(n=2)
 
+
+def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
+    """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
+    start_health = 15
+    gamma = 0.95   # discounting factor
+    epsilon = 0.5  # epsilon-greedy
+    alpha = 0.1    # learning rate
+    logger = logging.getLogger('hearthstone')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.WARNING)
+    player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
+                           start_health=start_health, fix_deck=constant.all_fireblast_deck, )
+    player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+                              start_health=start_health, fix_deck=constant.all_fireblast_deck,
+                              method='dqn', annotation='_all_fireblast_deck_strthl{0}'.format(start_health),
+                              hidden_dim=20, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+    # train
+    match = Match(player1, player2)
+    match.play_n_match(n=0)
+    # test
+    logger.setLevel(logging.INFO)
+    player1.reset(test=True)
+    player2.reset(test=True)
+    match = Match(player1, player2)
+    match.play_n_match(n=200)
+
+
 if __name__ == "__main__":
     numpy.set_printoptions(linewidth=1000, precision=3)
 
-    test_rd_vs_ql_sh15_all_fireblast_deck()
+    # test_rd_vs_ql_sh15_all_fireblast_deck()
     # test_rd_vs_ql_sh8_all_fireblast_deck()
     # test_rd_vs_ql_la_sh8_all_fireblast_deck()
-
+    test_rd_vs_ql_dqn_sh15_all_fireblast_deck()
 
 
