@@ -115,10 +115,10 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
 
 
 def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
-    """ test q learning linear approximation with start health=8 and deck=all_fireblast deck """
+    """ test q learningdqn with start health=15 and deck=all_fireblast deck """
     start_health = 15
     gamma = 0.95   # discounting factor
-    epsilon = 0.5  # epsilon-greedy
+    epsilon = 0.1  # epsilon-greedy
     alpha = 0.1    # learning rate
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
@@ -131,13 +131,13 @@ def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
                               hidden_dim=20, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=0)
+    match.play_n_match(n=100)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_n_match(n=200)
+    match.play_n_match(n=100)
 
 
 if __name__ == "__main__":
