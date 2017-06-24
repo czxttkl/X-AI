@@ -566,6 +566,7 @@ class QValueFunctionApprox:
     def __init__(self, player):
         self.player = player
         self.num_match = 0
+        self.init_and_load()
     # feature names
     # self.feat_names = [
     #                    # feature index 0 - 9
@@ -727,10 +728,10 @@ class QValueFunctionApprox:
     def action2str(action: 'Action') -> str:
         return str(action)
 
-    def feature2str(self, feature: 'numpy.ndarray') -> str:
-        return 'num_match:' + str(self.num_match) + "," + \
-                                                    ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
-                                                                 zip(self.feat_names, feature)))
+    # def feature2str(self, feature: 'numpy.ndarray') -> str:
+    #     return 'num_match:' + str(self.num_match) + "," + \
+    #                                                 ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
+    #                                                              zip(self.feat_names, feature)))
 
     def extract_raw_features(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
         """
@@ -793,7 +794,6 @@ class QValueFunctionApprox:
 class QValueDQNApprox(QValueFunctionApprox):
     """ use deep q network for function approximation """
     def __init__(self, player, hidden_dim, gamma, epsilon, alpha, annotation):
-        self.player = player
         self.hidden_dim = hidden_dim  # hidden dim of 1-layer deep q network
         self.gamma = gamma            # discount factor
         self.epsilon = epsilon        # epsilon-greedy rate
@@ -808,12 +808,13 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.batch_size = 64
         self.memory_size = 1000
         self.memory = deque(maxlen=self.memory_size)
+
+        self.k = len(self.feat_names) * 2
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is a end-turn action
         # num of total features. First part for non-end-turn action. Second part for end-turn action.
-        self.k = len(self.feat_names) * 2
-        self.init_and_load()
+        super().__init__(player)
 
     def file_name_pickle(self):
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.pickle". \
@@ -974,7 +975,6 @@ class QValueLinearApprox(QValueFunctionApprox):
     """ use linear function approximation. however always observe weights grow to infinity """
 
     def __init__(self, player, degree, gamma, epsilon, alpha, annotation):
-        self.player = player
         self.degree = degree          # polynomial degree for feature transforming
         self.gamma = gamma            # discount factor
         self.epsilon = epsilon        # epsilon-greedy rate
@@ -990,7 +990,7 @@ class QValueLinearApprox(QValueFunctionApprox):
         poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
         # num of total features. First part for non-end-turn action. Second part for end-turn action.
         self.k = poly_k * 2
-        self.init_and_load()
+        super().__init__(player)
 
     def init_weight(self):
         return numpy.zeros(self.k)

@@ -131,7 +131,7 @@ def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
                               hidden_dim=50, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=10000)
+    match.play_n_match(n=0)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
@@ -143,9 +143,9 @@ def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
 if __name__ == "__main__":
     numpy.set_printoptions(linewidth=1000, precision=5)
 
-    # test_rd_vs_ql_sh15_all_fireblast_deck()
+    test_rd_vs_ql_sh15_all_fireblast_deck()
     # test_rd_vs_ql_sh8_all_fireblast_deck()
     # test_rd_vs_ql_la_sh8_all_fireblast_deck()
-    test_rd_vs_ql_dqn_sh15_all_fireblast_deck()
+    # test_rd_vs_ql_dqn_sh15_all_fireblast_deck()
 
 
