@@ -8,7 +8,7 @@ ql_linear_data_path = 'data/ql_linear'
 ql_dqn_data_path = 'data/ql_dqn'
 ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values once
 ql_linear_save_freq = 100  # num of matches to save q-learning linear weights once
-ql_dqn_save_freq = 100     # num of matches to save q-learning DQN weights once
+ql_dqn_save_freq = 10     # num of matches to save q-learning DQN weights once
 
 # logger
 # logger = logging.getLogger('hearthstone')

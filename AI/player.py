@@ -12,7 +12,7 @@ from typing import Union, List
 from sklearn.preprocessing import PolynomialFeatures
 from collections import deque
 from keras.layers import Dense
-from keras.optimizers import Adam
+from keras.optimizers import Adam,SGD
 from keras.models import Sequential
 
 numpy.set_printoptions(threshold=10)
@@ -806,7 +806,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.train_hist = deque(maxlen=500)
                                       # Keras model train loss value. update after every fit
         self.batch_size = 64
-        self.memory_size = 100
+        self.memory_size = 1000
         self.memory = deque(maxlen=self.memory_size)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
@@ -851,18 +851,19 @@ class QValueDQNApprox(QValueFunctionApprox):
         model.add(Dense(1, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
         print(model.get_weights())
-        model.compile(loss='mse', optimizer=Adam(lr=self.alpha), metrics=['accuracy'])
+        model.compile(loss='mse', optimizer=SGD(lr=self.alpha), metrics=['accuracy'])
         return model
 
     def append_memory(self, features, last_act, reward, next_features_over_acts, match_end):
-        if reward != 0:
-            self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        else:
-            # gradually accept zero reward intermediate state
-            thres = 60. / numpy.log(self.num_match + 2)
-            seed = numpy.random.random()
-            if seed > thres:
-                self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
+        self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
+        # if reward != 0:
+        #     self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
+        # else:
+        #     # gradually accept zero reward intermediate state
+        #     thres = 60. / numpy.log(self.num_match + 2)
+        #     seed = numpy.random.random()
+        #     if seed > thres:
+        #         self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
 
     def post_match(self):
         self.sync_lag_model()
@@ -888,7 +889,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         unique, counts = numpy.unique(mem_r, return_counts=True)
         s = 'num_match:{0}, num_memory:{1}, memory rewards: {2}, train_loss_size:{3}, mean:{4} \n'.\
                    format(self.num_match, len(self.memory), dict(zip(unique, counts)),
-                          len(self.train_hist), numpy.mean(self.train_hist))
+                          len(self.train_hist), numpy.mean(self.train_hist) if len(self.train_hist) else 0)
         # print feature weights
         # s += 'model weights: \n{0}\n {1}\n {2} {3}\nlag_model weights: \n{4}\n {5}\n {6} {7}'.\
         #            format(self.model.get_weights()[0], self.model.get_weights()[1],
@@ -899,6 +900,10 @@ class QValueDQNApprox(QValueFunctionApprox):
 
     def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
                r: float, match_end: bool, test: bool):
+        # only update in training phase
+        if test:
+            return
+
         features = self.to_feature(last_state, last_act)
         next_features_over_acts = self.to_feature_over_acts(new_game_world)
         self.append_memory(features, last_act, r, next_features_over_acts, match_end)
@@ -907,6 +912,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         # if memory is not full, continue to collect data
         if len(self.memory) < self.memory_size:
             return
+
         mini_batch = random.sample(self.memory, self.batch_size)
         features = numpy.zeros((self.batch_size, self.k))
         target = numpy.zeros(self.batch_size)
@@ -919,27 +925,27 @@ class QValueDQNApprox(QValueFunctionApprox):
             if match_end:
                 target[i] = r
             else:
-                # in Double DQN, action selection is from model
-                max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
-                # target q(s', a') is from lag_model
+                # Double DQN
+                # action selection is from model, target q(s', a') is from lag_model
+                # max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
+                # max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
+                # normal DQN
+                max_a_idx = numpy.argmax(self.lag_model.predict(next_features_over_acts))
                 max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
                 target[i] = r + self.gamma * max_q_s_a
 
-        # logger.info("Q-learning update. model weight before update: {0}".format(self.model.get_weights()))
-
-        # only update in training phase
-        if not test:
-            prev_weight = self.model.get_weights()[0]
-            prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
-            prev_test_loss = self.evaluate_model_on_memory()[0]
-            loss = self.model.fit(features, target, batch_size=self.batch_size, epochs=1, verbose=0).history['loss']
-            post_weight = self.model.get_weights()[0]
-            post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
-            post_test_loss = self.evaluate_model_on_memory()[0]
-            self.train_hist.append(loss)
-            logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, prev memory loss:{2}, post train loss:{3}, post memory loss:{4}".format(
-                numpy.sum((post_weight - prev_weight)**2), prev_train_loss, prev_test_loss, post_train_loss, post_test_loss))
-            # logger.info("Q-learning update. model weight after update: {0}".format(self.model.get_weights()))
+        prev_weight = self.model.get_weights()[0]
+        prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
+        # prev_test_loss = self.evaluate_model_on_memory()[0]
+        loss = self.model.fit(features, target, batch_size=self.batch_size, epochs=1, verbose=0).history['loss']
+        post_weight = self.model.get_weights()[0]
+        post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
+        # post_test_loss = self.evaluate_model_on_memory()[0]
+        self.train_hist.append(loss)
+        # logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, prev memory loss:{2}, post train loss:{3}, post memory loss:{4}".format(
+        #     numpy.sum((post_weight - prev_weight)**2), prev_train_loss, prev_test_loss, post_train_loss, post_test_loss))
+        logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, post train loss:{2}".format(
+            numpy.sum((post_weight - prev_weight)**2), prev_train_loss, post_train_loss))
 
     def evaluate_model_on_memory(self):
         """ evaluate model on whole memory """
