@@ -14,6 +14,7 @@ from collections import deque
 from keras.layers import Dense
 from keras.optimizers import Adam,SGD
 from keras.models import Sequential
+from memory import Memory
 
 numpy.set_printoptions(threshold=10)
 logger = logging.getLogger('hearthstone')
@@ -276,6 +277,14 @@ class RandomPlayer(Player):
     def pick_action(self, all_acts, game_world):
         for i, act in enumerate(all_acts):
             logger.info("Choice %d (%.2f): %r" % (i, 1./len(all_acts), act))
+            # cheat
+            if game_world.turn == 3 and isinstance(act, HeroPowerAttack):
+                logger.info("CHEAT: %r pick %r\n" % (self.name, act))
+                return act
+            elif game_world.turn == 7 and isinstance(act, SpellPlay):
+                logger.info("CHEAT: %r pick %r\n" % (self.name, act))
+                return act
+
         act = random.choice(all_acts)
         logger.info("%r pick %r\n" % (self.name, act))
         return act
@@ -534,9 +543,6 @@ class QLearningPlayer(Player):
                                      all_acts,
                                      self.qvalues_impl.qvalues(game_world=game_world, actions=all_acts)))
 
-        for act_idx, act, qvalue in act_qvalue_tuples:
-            logger.info("Choice %d (%.2f): %r" % (act_idx, qvalue, act))
-
         # shuffle qvalue_tuples so that max function will break tie randomly.
         # random.sample is without replacement
         act_qvalue_tuples_shuffled = random.sample(act_qvalue_tuples, len(all_acts))
@@ -544,10 +550,19 @@ class QLearningPlayer(Player):
 
         # if in test mode, do not explore, just exploit
         if self.test:
+            for act_idx, act, qvalue in act_qvalue_tuples:
+                logger.info("Choice %d (%.3f): %r" % (act_idx, qvalue, act))
             return max_act
         else:
-            acts_weights = numpy.full(shape=len(all_acts), fill_value=self.epsilon / (len(all_acts) - 1))
-            acts_weights[max_act_idx] = 1. - self.epsilon
+            # epsilon = max(self.epsilon, min(3.9 / numpy.log(self.qvalues_impl.num_match + 1), 0.5))
+            epsilon = self.epsilon
+            acts_weights = numpy.full(shape=len(all_acts), fill_value=epsilon / (len(all_acts) - 1))
+            acts_weights[max_act_idx] = 1. - epsilon
+
+            for act_idx, act, qvalue in act_qvalue_tuples:
+                logger.info("Choice %d (%.3f, %.3f): %r" %
+                            (act_idx, qvalue, acts_weights[act_idx], act))
+
             idx_list = list(range(len(all_acts)))
             # choose_idx is the index of selected action in act_qvalue_tuples before shuffle
             choose_idx = numpy.random.choice(idx_list, 1, replace=False, p=acts_weights)[0]
@@ -557,9 +572,7 @@ class QLearningPlayer(Player):
 class QValueFunctionApprox:
     feat_names = [
         'self_h', 'oppo_h',
-        'self_mn', 'oppo_mn',       # number of minions of self and oppo intable
-        'self_m', 'self_max_m',
-        'oppo_next_m',
+        'self_m',
         'self_hp_used'              # whether self hero power used
     ]
 
@@ -739,18 +752,49 @@ class QValueFunctionApprox:
         if it is an end-turn action, we extract the feature from current game world
         otherwise, we extract the feature from the game world AFTER the action is applied
         """
-        if not isinstance(action, NullAction):
-            game_world = action.virtual_apply(game_world)
         player = self.player
         oppo = self.player.opponent
 
-        feature = numpy.zeros(len(self.feat_names))
-        feature[:] = \
-            game_world.health(player), game_world.health(oppo), \
-            game_world.len_intable(player), game_world.len_intable(oppo), \
-            game_world.mana(player), player.max_mana_this_turn(game_world.turn), \
-            oppo.max_mana_this_turn(game_world.turn + 1), \
-            game_world.hp_used(player)
+        # prepare 20 turns (actually 19 since turn starts from 1)
+        turn_feature = numpy.zeros(20)
+        turn_feature[game_world.turn] = 1
+        # health feature
+        self_h_feature = numpy.zeros((player.start_health+1))
+        self_h_feature[game_world.health(player)] = 1
+        oppo_h_feature = numpy.zeros((oppo.start_health+1))
+        oppo_h_feature[game_world.health(oppo)] = 1
+        # mana feature
+        self_m_feature = numpy.zeros(11)
+        self_m_feature[game_world.mana(player)] = 1
+        oppo_m_feature = numpy.zeros(11)
+        oppo_m_feature[game_world.mana(oppo)] = 1
+        # hp used feature
+        self_hp_used = numpy.array([game_world.hp_used(player)])
+        # spell coin in hand feature
+        self_spell_coin_inhands = numpy.array([game_world.inhands_has_card(player, 'The Coin')])
+        # action feature
+        action_feature = numpy.zeros(4)
+        if isinstance(action, NullAction):
+            action_feature[0] = 1
+        elif isinstance(action, HeroPowerAttack):
+            action_feature[1] = 1
+        elif action.src_card.name == 'Fireball':
+            action_feature[2] = 1
+        elif action.src_card.name =='The Coin':
+            action_feature[3] = 1
+
+        # logger.info("features:")
+        # logger.info(turn_feature)
+        # logger.info(self_h_feature)
+        # logger.info(oppo_h_feature)
+        # logger.info(self_m_feature)
+        # logger.info(oppo_m_feature)
+        # logger.info(self_hp_used)
+        # logger.info(action_feature)
+        # logger.info('----------------------------------------')
+        feature = numpy.hstack([turn_feature, self_h_feature, oppo_h_feature,
+                                self_m_feature, oppo_m_feature,
+                                self_hp_used, self_spell_coin_inhands, action_feature])
 
         return feature
 
@@ -769,7 +813,7 @@ class QValueFunctionApprox:
     def to_feature(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
         """ convert this state-action into a full feature array """
         features = self.extract_raw_features(game_world, action)
-        features = self.raw_feature_to_full_feature(features, action)
+        # features = self.raw_feature_to_full_feature(features, action)
         return features
 
     def to_feature_over_acts(self, game_world: 'GameWorld'):
@@ -805,16 +849,16 @@ class QValueDQNApprox(QValueFunctionApprox):
                                       # used in max_a' Q(s', a')
         self.train_hist = deque(maxlen=500)
                                       # Keras model train loss value. update after every fit
-        self.batch_size = 64
-        self.memory_size = 1000
-        self.memory = deque(maxlen=self.memory_size)
-
-        self.k = len(self.feat_names) * 2
+        self.k = constant.ql_dqn_k
+        super().__init__(player)
+        self.memory = Memory(neg_reward_size=constant.ql_dqn_mem_neg_size, pos_reward_size=constant.ql_dqn_mem_pos_size,
+                             neu_reward_size=constant.ql_dqn_mem_neu_size, neg_batch_size=constant.ql_dqn_neg_batch_size,
+                             pos_batch_size=constant.ql_dqn_pos_batch_size, neu_batch_size=constant.ql_dqn_neu_batch_size,
+                             k=self.k, gamma=self.gamma, model=self.model, lag_model=self.lag_model)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is a end-turn action
         # num of total features. First part for non-end-turn action. Second part for end-turn action.
-        super().__init__(player)
 
     def file_name_pickle(self):
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.pickle". \
@@ -833,7 +877,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         # one for basic information, the other for keras
         if os.path.isfile(self.file_name_pickle()):
             with open(self.file_name_pickle(), 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, self.num_match, self.memory = pickle.load(f)
+                self.gamma, self.epsilon, self.alpha, self.num_match= pickle.load(f)
             self.model.load_weights(self.file_name_h5())
         self.sync_lag_model()
 
@@ -842,29 +886,18 @@ class QValueDQNApprox(QValueFunctionApprox):
 
     def save(self):
         with open(self.file_name_pickle(), 'wb') as f:
-            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.memory), f, protocol=4)
+            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match), f, protocol=4)
         self.model.save_weights(self.file_name_h5())
 
     def init_weight(self):
         model = Sequential()
-        model.add(Dense(self.hidden_dim, input_dim=self.k, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(self.hidden_dim, activation='relu', kernel_initializer='he_uniform'))
+        model.add(Dense(self.hidden_dim, input_dim=self.k, activation='sigmoid', kernel_initializer='he_uniform'))
+        model.add(Dense(self.hidden_dim, activation='sigmoid', kernel_initializer='he_uniform'))
         model.add(Dense(1, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
         print(model.get_weights())
         model.compile(loss='mse', optimizer=SGD(lr=self.alpha), metrics=['accuracy'])
         return model
-
-    def append_memory(self, features, last_act, reward, next_features_over_acts, match_end):
-        self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        # if reward != 0:
-        #     self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        # else:
-        #     # gradually accept zero reward intermediate state
-        #     thres = 60. / numpy.log(self.num_match + 2)
-        #     seed = numpy.random.random()
-        #     if seed > thres:
-        #         self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
 
     def post_match(self):
         self.sync_lag_model()
@@ -886,10 +919,8 @@ class QValueDQNApprox(QValueFunctionApprox):
             return qvalue
 
     def __repr__(self):
-        mem_r = [m[2] for m in self.memory]
-        unique, counts = numpy.unique(mem_r, return_counts=True)
-        s = 'num_match:{0}, num_memory:{1}, memory rewards: {2}, train_loss_size:{3}, mean:{4} \n'.\
-                   format(self.num_match, len(self.memory), dict(zip(unique, counts)),
+        s = 'num_match:{0}, {1}, train_loss_size:{2}, mean:{3} \n'.\
+                   format(self.num_match, self.memory,
                           len(self.train_hist), numpy.mean(self.train_hist) if len(self.train_hist) else 0)
         # print feature weights
         # s += 'model weights: \n{0}\n {1}\n {2} {3}\nlag_model weights: \n{4}\n {5}\n {6} {7}'.\
@@ -907,38 +938,19 @@ class QValueDQNApprox(QValueFunctionApprox):
 
         features = self.to_feature(last_state, last_act)
         next_features_over_acts = self.to_feature_over_acts(new_game_world)
-        self.append_memory(features, last_act, r, next_features_over_acts, match_end)
+        self.memory.append(features, last_act, r, next_features_over_acts, match_end)
 
-        # train model
         # if memory is not full, continue to collect data
-        if len(self.memory) < self.memory_size:
+        if not self.memory.full():
             return
 
-        mini_batch = random.sample(self.memory, self.batch_size)
-        features = numpy.zeros((self.batch_size, self.k))
-        target = numpy.zeros(self.batch_size)
-
-        for i in range(self.batch_size):
-            features[i] = mini_batch[i][0]
-            r = mini_batch[i][2]
-            next_features_over_acts = mini_batch[i][3]
-            match_end = mini_batch[i][4]
-            if match_end:
-                target[i] = r
-            else:
-                # Double DQN
-                # action selection is from model, target q(s', a') is from lag_model
-                # max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
-                # max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
-                # normal DQN
-                max_a_idx = numpy.argmax(self.lag_model.predict(next_features_over_acts))
-                max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
-                target[i] = r + self.gamma * max_q_s_a
+        # train model
+        features, target = self.memory.sample()
 
         prev_weight = self.model.get_weights()[0]
         prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
         # prev_test_loss = self.evaluate_model_on_memory()[0]
-        loss = self.model.fit(features, target, batch_size=self.batch_size, epochs=1, verbose=0).history['loss']
+        loss = self.model.fit(features, target, batch_size=len(target), epochs=1, verbose=0).history['loss']
         post_weight = self.model.get_weights()[0]
         post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
         # post_test_loss = self.evaluate_model_on_memory()[0]

@@ -102,12 +102,20 @@ class GameWorld:
     def len_intable(self, player: Union[Player, str]):
         if isinstance(player, Player):
             player = player.name
-        return len(self[player]['intable'])
+        return len(self.intable(player))
 
     def len_inhands(self, player: Union[Player, str]):
         if isinstance(player, Player):
             player = player.name
-        return len(self[player]['inhands'])
+        return len(self.inhands(player))
+
+    def inhands_has_card(self, player, card_name):
+        if isinstance(player, Player):
+            player = player.name
+        for card in self.inhands(player):
+            if card.name == card_name:
+                return True
+        return False
 
 
 class Match:

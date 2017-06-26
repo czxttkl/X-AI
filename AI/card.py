@@ -10,7 +10,7 @@ logger = logging.getLogger('hearthstone')
 class Card:
     CARD_DB = {
         'The Coin':
-            {'mana_cost':0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True, 'is_minion': False, 'cidx': 0},
+            {'mana_cost': 0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True, 'is_minion': False, 'cidx': 0},
         'Mage_Hero_Fireblast':
             {'attack': 1, 'mana_cost': 2, 'heropower': True, 'is_minion': False, 'cidx': 1},
 

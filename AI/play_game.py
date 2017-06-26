@@ -114,12 +114,12 @@ def test_rd_vs_ql_la_sh8_all_fireblast_deck():
     match.play_n_match(n=2)
 
 
-def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
+def test_rd_vs_ql_dqn_sh7_all_fireblast_deck():
     """ test q learningdqn with start health=15 and deck=all_fireblast deck """
     start_health = 7
-    gamma = 1.0   # discounting factor
-    epsilon = 0.1  # epsilon-greedy
-    alpha = 0.001    # learning rate
+    gamma = 1.0     # discounting factor
+    epsilon = 0.5   # epsilon-greedy
+    alpha = 0.01    # learning rate
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.WARNING)
@@ -141,11 +141,11 @@ def test_rd_vs_ql_dqn_sh15_all_fireblast_deck():
 
 
 if __name__ == "__main__":
-    numpy.set_printoptions(linewidth=1000, precision=5)
+    numpy.set_printoptions(linewidth=1000, precision=5, threshold=1000)
 
-    test_rd_vs_ql_sh15_all_fireblast_deck()
+    # test_rd_vs_ql_sh15_all_fireblast_deck()
     # test_rd_vs_ql_sh8_all_fireblast_deck()
     # test_rd_vs_ql_la_sh8_all_fireblast_deck()
-    # test_rd_vs_ql_dqn_sh15_all_fireblast_deck()
+    test_rd_vs_ql_dqn_sh7_all_fireblast_deck()
 
 
