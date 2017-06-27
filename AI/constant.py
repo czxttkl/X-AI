@@ -14,8 +14,8 @@ ql_dqn_pos_batch_size = 20
 ql_dqn_neg_batch_size = 20
 ql_dqn_neu_batch_size = 20
 ql_dqn_k = 64
-ql_dqn_mem_pos_size = 100
-ql_dqn_mem_neg_size = 100
+ql_dqn_mem_pos_size = 50
+ql_dqn_mem_neg_size = 50
 ql_dqn_mem_neu_size = 3000
 
 

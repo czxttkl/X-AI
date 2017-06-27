@@ -741,10 +741,18 @@ class QValueFunctionApprox:
     def action2str(action: 'Action') -> str:
         return str(action)
 
-    # def feature2str(self, feature: 'numpy.ndarray') -> str:
-    #     return 'num_match:' + str(self.num_match) + "," + \
-    #                                                 ','.join(map(lambda name_f: name_f[0] + ':' + str(name_f[1]),
-    #                                                              zip(self.feat_names, feature)))
+    def feature2str(self, feature: 'numpy.ndarray') -> str:
+        turn = numpy.where(feature[:20] == 1)[0][0]
+        self_h = numpy.where(feature[20:28])[0][0]
+        oppo_h = numpy.where(feature[28:36])[0][0]
+        self_m = numpy.where(feature[36:47])[0][0]
+        oppo_m = numpy.where(feature[47:58])[0][0]
+        self_hp_used = feature[58]
+        self_spell_coin_inhands = feature[59]
+        act = ['EndTurn', 'HeroPower', 'Fireball', 'Coin'][numpy.where(feature[-4:] == 1)[0][0]]
+        s = 'turn:{0},self_h:{1},oppo_h:{2},self_m:{3},oppo_m:{4},self_hp_used:{5},self_spell_coin_inhands:{6},act:{7}'.\
+            format(turn, self_h, oppo_h, self_m, oppo_m, self_hp_used, self_spell_coin_inhands, act)
+        return s
 
     def extract_raw_features(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
         """
@@ -850,11 +858,11 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.train_hist = deque(maxlen=500)
                                       # Keras model train loss value. update after every fit
         self.k = constant.ql_dqn_k
-        super().__init__(player)
         self.memory = Memory(neg_reward_size=constant.ql_dqn_mem_neg_size, pos_reward_size=constant.ql_dqn_mem_pos_size,
                              neu_reward_size=constant.ql_dqn_mem_neu_size, neg_batch_size=constant.ql_dqn_neg_batch_size,
                              pos_batch_size=constant.ql_dqn_pos_batch_size, neu_batch_size=constant.ql_dqn_neu_batch_size,
-                             k=self.k, gamma=self.gamma, model=self.model, lag_model=self.lag_model)
+                             qvalues_impl=self)
+        super().__init__(player)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
         # 2. features of the current state if it is a end-turn action
@@ -862,6 +870,11 @@ class QValueDQNApprox(QValueFunctionApprox):
 
     def file_name_pickle(self):
         file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.pickle". \
+            format(constant.ql_dqn_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
+        return file_name
+
+    def file_name_memory(self):
+        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_dqn_{4}.mem". \
             format(constant.ql_dqn_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
         return file_name
 
@@ -873,12 +886,13 @@ class QValueDQNApprox(QValueFunctionApprox):
     def init_and_load(self):
         self.model = self.init_weight()
         self.lag_model = self.init_weight()
-        # when model is saved, it is saved to two separate files:
-        # one for basic information, the other for keras
+        # when model is saved, it is saved to three separate files:
+        # one for basic information, one for keras, the other for memory
         if os.path.isfile(self.file_name_pickle()):
             with open(self.file_name_pickle(), 'rb') as f:
                 self.gamma, self.epsilon, self.alpha, self.num_match= pickle.load(f)
             self.model.load_weights(self.file_name_h5())
+            self.memory.load()
         self.sync_lag_model()
 
     def sync_lag_model(self):
@@ -888,11 +902,12 @@ class QValueDQNApprox(QValueFunctionApprox):
         with open(self.file_name_pickle(), 'wb') as f:
             pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match), f, protocol=4)
         self.model.save_weights(self.file_name_h5())
+        self.memory.save()
 
     def init_weight(self):
         model = Sequential()
-        model.add(Dense(self.hidden_dim, input_dim=self.k, activation='sigmoid', kernel_initializer='he_uniform'))
-        model.add(Dense(self.hidden_dim, activation='sigmoid', kernel_initializer='he_uniform'))
+        model.add(Dense(self.hidden_dim, input_dim=self.k, activation='relu', kernel_initializer='he_uniform'))
+        model.add(Dense(self.hidden_dim, activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(1, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
         print(model.get_weights())
@@ -949,38 +964,12 @@ class QValueDQNApprox(QValueFunctionApprox):
 
         prev_weight = self.model.get_weights()[0]
         prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
-        # prev_test_loss = self.evaluate_model_on_memory()[0]
         loss = self.model.fit(features, target, batch_size=len(target), epochs=1, verbose=0).history['loss']
         post_weight = self.model.get_weights()[0]
         post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
-        # post_test_loss = self.evaluate_model_on_memory()[0]
         self.train_hist.append(loss)
-        # logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, prev memory loss:{2}, post train loss:{3}, post memory loss:{4}".format(
-        #     numpy.sum((post_weight - prev_weight)**2), prev_train_loss, prev_test_loss, post_train_loss, post_test_loss))
         logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, post train loss:{2}".format(
             numpy.sum((post_weight - prev_weight)**2), prev_train_loss, post_train_loss))
-
-    def evaluate_model_on_memory(self):
-        """ evaluate model on whole memory """
-        features = numpy.zeros((len(self.memory), self.k))
-        target = numpy.zeros(len(self.memory))
-
-        for i, m in enumerate(self.memory):
-            features[i] = m[0]
-            r = m[2]
-            next_features_over_acts = m[3]
-            match_end = m[4]
-            if match_end:
-                target[i] = r
-            else:
-                # in Double DQN, action selection is from model
-                max_a_idx = numpy.argmax(self.model.predict(next_features_over_acts))
-                # target q(s', a') is from lag_model
-                max_q_s_a = self.lag_model.predict(next_features_over_acts)[max_a_idx]
-                target[i] = r + self.gamma * max_q_s_a
-
-        whole_memory_loss, whole_memory_acc = self.model.evaluate(features, target, verbose=0)
-        return whole_memory_loss, whole_memory_acc
 
 
 class QValueLinearApprox(QValueFunctionApprox):
