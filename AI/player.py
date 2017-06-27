@@ -277,14 +277,14 @@ class RandomPlayer(Player):
     def pick_action(self, all_acts, game_world):
         for i, act in enumerate(all_acts):
             logger.info("Choice %d (%.2f): %r" % (i, 1./len(all_acts), act))
-            # cheat
-            if game_world.turn == 3 and isinstance(act, HeroPowerAttack):
-                logger.info("CHEAT: %r pick %r\n" % (self.name, act))
-                return act
-            elif game_world.turn == 7 and isinstance(act, SpellPlay):
-                logger.info("CHEAT: %r pick %r\n" % (self.name, act))
-                return act
-
+            # cheat by letting random player plays heropower and spell
+            # whenever possible in first few turns
+            # if game_world.turn == 3 and isinstance(act, HeroPowerAttack):
+            #     logger.info("CHEAT: %r pick %r\n" % (self.name, act))
+            #     return act
+            # elif game_world.turn == 7 and isinstance(act, SpellPlay):
+            #     logger.info("CHEAT: %r pick %r\n" % (self.name, act))
+            #     return act
         act = random.choice(all_acts)
         logger.info("%r pick %r\n" % (self.name, act))
         return act
@@ -855,12 +855,13 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.model = None             # Keras model. will be initialized in init_and_load()
         self.lag_model = None         # Keras model. sync with self.model every while
                                       # used in max_a' Q(s', a')
-        self.train_hist = deque(maxlen=500)
+        self.train_hist = deque(maxlen=constant.ql_dqn_train_loss_hist_size)
                                       # Keras model train loss value. update after every fit
         self.k = constant.ql_dqn_k
-        self.memory = Memory(neg_reward_size=constant.ql_dqn_mem_neg_size, pos_reward_size=constant.ql_dqn_mem_pos_size,
-                             neu_reward_size=constant.ql_dqn_mem_neu_size, neg_batch_size=constant.ql_dqn_neg_batch_size,
-                             pos_batch_size=constant.ql_dqn_pos_batch_size, neu_batch_size=constant.ql_dqn_neu_batch_size,
+        self.memory = Memory(neg_reward_size=constant.ql_dqn_mem_neg_size,
+                             pos_reward_size=constant.ql_dqn_mem_pos_size,
+                             neg_batch_size=constant.ql_dqn_neg_batch_size,
+                             pos_batch_size=constant.ql_dqn_pos_batch_size,
                              qvalues_impl=self)
         super().__init__(player)
         # features consist of two parts:
@@ -890,7 +891,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         # one for basic information, one for keras, the other for memory
         if os.path.isfile(self.file_name_pickle()):
             with open(self.file_name_pickle(), 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, self.num_match= pickle.load(f)
+                self.gamma, self.epsilon, self.alpha, self.num_match, self.train_hist = pickle.load(f)
             self.model.load_weights(self.file_name_h5())
             self.memory.load()
         self.sync_lag_model()
@@ -900,7 +901,7 @@ class QValueDQNApprox(QValueFunctionApprox):
 
     def save(self):
         with open(self.file_name_pickle(), 'wb') as f:
-            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match), f, protocol=4)
+            pickle.dump((self.gamma, self.epsilon, self.alpha, self.num_match, self.train_hist), f, protocol=4)
         self.model.save_weights(self.file_name_h5())
         self.memory.save()
 
@@ -962,14 +963,14 @@ class QValueDQNApprox(QValueFunctionApprox):
         # train model
         features, target = self.memory.sample()
 
-        prev_weight = self.model.get_weights()[0]
-        prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
+        # prev_weight = self.model.get_weights()[0]
+        # prev_train_loss = self.model.evaluate(features, target, verbose=0)[0]
         loss = self.model.fit(features, target, batch_size=len(target), epochs=1, verbose=0).history['loss']
-        post_weight = self.model.get_weights()[0]
-        post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
+        # post_weight = self.model.get_weights()[0]
+        # post_train_loss = self.model.evaluate(features, target, verbose=0)[0]
         self.train_hist.append(loss)
-        logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, post train loss:{2}".format(
-            numpy.sum((post_weight - prev_weight)**2), prev_train_loss, post_train_loss))
+        # logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, post train loss:{2}".format(
+        #     numpy.sum((post_weight - prev_weight)**2), prev_train_loss, post_train_loss))
 
 
 class QValueLinearApprox(QValueFunctionApprox):

@@ -8,16 +8,14 @@ ql_linear_data_path = 'data/ql_linear'
 ql_dqn_data_path = 'data/ql_dqn'
 ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values once
 ql_linear_save_freq = 100  # num of matches to save q-learning linear weights once
-ql_dqn_save_freq = 10     # num of matches to save q-learning DQN weights once
+ql_dqn_save_freq = 100     # num of matches to save q-learning DQN weights once
 
 ql_dqn_pos_batch_size = 20
 ql_dqn_neg_batch_size = 20
-ql_dqn_neu_batch_size = 20
-ql_dqn_k = 64
+ql_dqn_k = 80
 ql_dqn_mem_pos_size = 50
 ql_dqn_mem_neg_size = 50
-ql_dqn_mem_neu_size = 3000
-
+ql_dqn_train_loss_hist_size = 500
 
 # logger
 # logger = logging.getLogger('hearthstone')

@@ -8,23 +8,14 @@ class Memory:
     """
     Memory used for experience replay
     """
-    def __init__(self, neg_reward_size, pos_reward_size, neu_reward_size,
-                 neg_batch_size, pos_batch_size, neu_batch_size,
-                 qvalues_impl):
+    def __init__(self, neg_reward_size, pos_reward_size, neg_batch_size, pos_batch_size, qvalues_impl):
         self.neg_reward_size = neg_reward_size
         self.pos_reward_size = pos_reward_size
-        self.neu_reward_size = neu_reward_size
-
         self.neg_batch_size = neg_batch_size
         self.pos_batch_size = pos_batch_size
-        self.neu_batch_size = neu_batch_size
-
         self.neg_memory = deque(maxlen=self.neg_reward_size)
         self.pos_memory = deque(maxlen=self.pos_reward_size)
-        self.neu_memory = deque(maxlen=self.neu_reward_size)
-
         self.qvalues_impl = qvalues_impl
-
         self.buffer = []
 
     def full(self):
@@ -34,8 +25,8 @@ class Memory:
         return False
 
     def __repr__(self):
-        return "memory pos: {0}, neg: {1}, neural: {2}".format(
-            len(self.pos_memory), len(self.neg_memory), len(self.neu_memory))
+        return "memory pos: {0}, neg: {1}".format(
+            len(self.pos_memory), len(self.neg_memory))
 
     def sample_minibatch(self, mem, size):
         mini_batch = random.sample(mem, size)
@@ -64,7 +55,6 @@ class Memory:
     def sample(self):
         features_pos, target_pos = self.sample_minibatch(self.pos_memory, self.pos_batch_size)
         features_neg, target_neg = self.sample_minibatch(self.neg_memory, self.neg_batch_size)
-        # features_neu, target_neu = self.sample_minibatch(self.neu_memory, self.neu_batch_size)
         features = numpy.vstack((features_pos, features_neg))
         target = numpy.concatenate((target_pos, target_neg))
         idx = list(range(len(target)))
@@ -73,11 +63,11 @@ class Memory:
 
     def save(self):
         with open(self.qvalues_impl.file_name_memory(), 'wb') as f:
-            pickle.dump((self.pos_memory, self.neg_memory, self.neu_memory), f, protocol=4)
+            pickle.dump((self.pos_memory, self.neg_memory), f, protocol=4)
 
     def load(self):
         with open(self.qvalues_impl.file_name_memory(), 'rb') as f:
-            self.pos_memory, self.neg_memory, self.neu_memory = pickle.load(f)
+            self.pos_memory, self.neg_memory = pickle.load(f)
 
     def append(self, features, last_act, reward, next_features_over_acts, match_end):
         self.buffer.append([features, last_act, reward, next_features_over_acts, match_end])
