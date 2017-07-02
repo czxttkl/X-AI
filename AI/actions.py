@@ -5,6 +5,11 @@ import copy
 
 
 class Action:
+
+    def __init__(self, src_player, src_card):
+        self.src_player = src_player.name
+        self.src_card = src_card
+
     def apply(self, game_world):
         """ apply this action to game world and update this game world.
         Action apply will change the game world (the mirror of player status) but not the real player status """
@@ -23,18 +28,24 @@ class Action:
 
     def update_after_apply(self, game_world: 'GameWorld'):
         """ update this game world after this action is executed.
-        The updates include clear dead minions on table, performing last_played_card_effect, etc.
+        1. The updates include clear dead minions on table,
+        2. performing last_played_card_effect, etc.
+        3. save to player's used cards
         """
-        for data in game_world.data.values():
-            for card in data['intable']:
-                if card.health <= 0:
-                    data['intable'].remove(card)
+        for player in game_world.data.keys():
+            new_intable = []
+            for card in game_world.intable(player):
+                if card.health > 0:
+                    new_intable.append(card)
+            game_world.update_intable(player, new_intable)
 
-        src_player = self.src_player
-        for pawn in game_world[src_player]['intable']:
+        for pawn in game_world.intable(self.src_player):
             if pawn.last_played_card_effect:
                 if isinstance(self, SpellPlay) and pawn.last_played_card_effect == "cast_spell_attack+1":
                     pawn.attack += 1
+
+        if isinstance(self, SpellPlay) or isinstance(self, MinionPlay):
+            game_world.add_count_to_used_cards(self.src_player, card_name=self.src_card.name)
 
     def copy(self):
         return copy.deepcopy(self)
@@ -43,43 +54,36 @@ class Action:
 class NullAction(Action):
     """ do nothing as an action """
 
-    def __init__(self, src_player):
-        self.src_player = src_player.name
-
     def __repr__(self):
         return "End Turn"
 
 
 class MinionPlay(Action):
     """ Play a minion from inhand to intable """
-    def __init__(self, src_card, src_player_name=None, src_player=None, from_inhands=True):
-        assert src_player is not None or src_player_name is not None
-        if src_player:
-            self.src_player = src_player.name
-        else:
-            self.src_player = src_player_name
+    def __init__(self, src_card, src_player=None, from_inhands=True):
+        self.src_player = src_player.name
         self.src_card = src_card
         self.from_inhands = from_inhands
 
-    def __apply__(self, game_world):
+    def __apply__(self, game_world: 'GameWorld'):
         if self.from_inhands:
-            new_minion = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
-            game_world[self.src_player]['inhands'].remove(new_minion)
-            game_world[self.src_player]['mana'] -= new_minion.mana_cost
+            new_minion = Card.find_card(game_world.inhands(self.src_player), self.src_card)
+            game_world.play_card_from_inhands(self.src_player, new_minion)
+            game_world.dec_mana(new_minion.mana_cost)
         else:
             # when MinionPlay is not from inhands, play self.src_card directly
             new_minion = self.src_card
 
         # a table could have at most 7 minions
-        if len(game_world[self.src_player]['intable']) < 7:
-            game_world[self.src_player]['intable'].append(new_minion)
+        if game_world.len_intable(self.src_player) < 7:
+            game_world.play_card_to_intable(self.src_player, new_minion)
             if new_minion.charge:
                 new_minion.used_this_turn = False
             else:
                 new_minion.used_this_turn = True
             if new_minion.summon:
                 for summon in new_minion.summon:
-                    MinionPlay(src_player_name=self.src_player, from_inhands=False, src_card=Card.init_card(summon))\
+                    MinionPlay(src_player=self.src_player, from_inhands=False, src_card=Card.init_card(summon))\
                         .apply(game_world)
 
     def __repr__(self):
@@ -87,37 +91,39 @@ class MinionPlay(Action):
 
 
 class SpellPlay(Action):
+
     def __init__(self, src_player, src_card, target_player=None, target_unit=None):
         self.src_player = src_player.name
         self.src_card = src_card
-        self.target_player = target_player
-        self.target_unit = target_unit
         if target_player:
             self.target_player = target_player.name
+        else:
+            self.target_player = None
+        self.target_unit = target_unit
 
-    def __apply__(self, game_world):
-        card = Card.find_card(game_world[self.src_player]['inhands'], self.src_card)
-        game_world[self.src_player]['inhands'].remove(card)
-        game_world[self.src_player]['mana'] -= card.mana_cost
+    def __apply__(self, game_world: 'GameWorld'):
+        new_spell = Card.find_card(game_world.inhands(self.src_player), self.src_card)
+        game_world.play_card_from_inhands(self.src_player, new_spell)
+        game_world.dec_mana(self.src_player, new_spell.mana_cost)
         self.spell_effect(game_world)
 
-    def spell_effect(self, game_world):
+    def spell_effect(self, game_world: 'GameWorld'):
         sp_eff = self.src_card.spell_play_effect
         if sp_eff == 'this_turn_mana+1':
-            game_world[self.src_player]['mana'] += 1
+            game_world.incr_mana(self.src_player, 1)
         elif sp_eff == 'damage_to_a_target_6':
             if self.target_unit == 'hero':
-                game_world[self.target_player]['health'] -= 6
+                game_world.dec_health(self.target_player, 6)
             else:
-                target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+                target_pawn = Card.find_card(game_world.intable(self.target_player), self.target_unit)
                 target_pawn.health -= 6
         elif sp_eff == 'transform_to_a_1/1sheep':
-            target_pawn_idx = Card.find_card_idx(game_world[self.target_player]['intable'], self.target_unit)
-            game_world[self.target_player]['intable'][target_pawn_idx] = Card.init_card('Sheep')
+            game_world.replace_intable_minion(player=self.target_player,
+                                              old_card=self.target_unit, new_card=Card.init_card('Sheep'))
         elif sp_eff == 'summon two 0/2 taunt minions':
-            MinionPlay(src_player_name=self.src_player, from_inhands=False,
+            MinionPlay(src_player=self.src_player, from_inhands=False,
                        src_card=Card.init_card('Mirror Image 0/2 Taunt')).apply(game_world)
-            MinionPlay(src_player_name=self.src_player, from_inhands=False,
+            MinionPlay(src_player=self.src_player, from_inhands=False,
                        src_card=Card.init_card('Mirror Image 0/2 Taunt')).apply(game_world)
 
     def __repr__(self):
@@ -129,20 +135,21 @@ class SpellPlay(Action):
 
 
 class MinionAttack(Action):
+
     def __init__(self, src_player, target_player, target_unit, src_card):
         self.src_player = src_player.name
         self.target_player = target_player.name
         self.target_unit = target_unit
         self.src_card = src_card
 
-    def __apply__(self, game_world):
+    def __apply__(self, game_world: 'GameWorld'):
         assert self.src_card.is_minion
-        pawn = Card.find_card(game_world[self.src_player]['intable'], self.src_card)
+        pawn = Card.find_card(game_world.intable(self.src_player), self.src_card)
 
         if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= pawn.attack
+            game_world.dec_health(self.target_player, pawn.attack)
         else:
-            target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+            target_pawn = Card.find_card(game_world.intable(self.target_player), self.target_unit)
             if target_pawn.divine:
                 target_pawn.divine = False
             else:
@@ -160,19 +167,20 @@ class MinionAttack(Action):
 
 
 class HeroPowerAttack(Action):
-    def __init__(self, src_player, target_player, target_unit):
+
+    def __init__(self, src_player, src_card, target_player, target_unit):
         self.src_player = src_player.name
+        self.src_card = src_card
         self.target_player = target_player.name
         self.target_unit = target_unit
 
-    def __apply__(self, game_world):
-        heropower = game_world[self.src_player]['heropower']  # need to find src card in the new game world
-
-        game_world[self.src_player]['mana'] -= heropower.mana_cost
+    def __apply__(self, game_world: 'GameWorld'):
+        heropower = game_world.hero_power(self.src_player)  # need to find src card in the new game world
+        game_world.dec_mana(self.src_player, heropower.mana_cost)
         if self.target_unit == 'hero':
-            game_world[self.target_player]['health'] -= heropower.attack
+            game_world.dec_health(self.target_player, heropower.attack)
         else:
-            target_pawn = Card.find_card(game_world[self.target_player]['intable'], self.target_unit)
+            target_pawn = Card.find_card(game_world.intable(self.target_player), self.target_unit)
             if target_pawn.divine:
                 target_pawn.divine = False
             else:

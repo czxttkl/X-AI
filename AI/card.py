@@ -10,56 +10,64 @@ logger = logging.getLogger('hearthstone')
 class Card:
     CARD_DB = {
         'The Coin':
-            {'mana_cost': 0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True, 'is_minion': False, 'cidx': 0},
+            {'mana_cost': 0, 'spell_play_effect': 'this_turn_mana+1', 'is_spell': True, 'is_minion': False},
         'Mage_Hero_Fireblast':
-            {'attack': 1, 'mana_cost': 2, 'heropower': True, 'is_minion': False, 'cidx': 1},
+            {'attack': 1, 'mana_cost': 2, 'heropower': True, 'is_minion': False},
 
         'Sheep':
-            {'attack': 1, 'health': 1, 'collectible': False, 'cidx': 2},
+            {'attack': 1, 'health': 1, 'collectible': False},
         'Mirror Image 0/2 Taunt':
-            {'attack': 0, 'health': 2, 'taunt': True, 'collectible': False, 'cidx': 3},
+            {'attack': 0, 'health': 2, 'taunt': True, 'collectible': False},
 
         'Mirror Image':
             {'mana_cost': 1, 'is_spell': True, 'is_minion': False,
-             'spell_play_effect': 'summon two 0/2 taunt minions', 'cidx': 4},
+             'spell_play_effect': 'summon two 0/2 taunt minions'},
         'Mana Wyrm':
             {'attack': 1, 'health': 3, 'mana_cost': 1, 'last_played_card_effect': 'cast_spell_attack+1',
-             'cidx': 5},  # effect is checked after every move
+             },  # effect is checked after every move
 
         'Bloodfen Raptor':
-            {'attack': 3, 'health': 2, 'mana_cost': 2, 'cidx': 6},
+            {'attack': 3, 'health': 2, 'mana_cost': 2},
         'Bluegill Warriors':
-            {'attack': 2, 'health': 1, 'mana_cost': 2, 'charge': True, 'cidx': 7},
+            {'attack': 2, 'health': 1, 'mana_cost': 2, 'charge': True},
         'River Crocolisk':
-            {'attack': 2, 'health': 3, 'mana_cost': 2, 'cidx': 8},
+            {'attack': 2, 'health': 3, 'mana_cost': 2},
         'Magma Rager':
-            {'attack': 5, 'health': 1, 'mana_cost': 3, 'cidx': 9},
+            {'attack': 5, 'health': 1, 'mana_cost': 3},
         'Wolfrider':
-            {'attack': 3, 'health': 1, 'mana_cost': 3, 'charge': True, 'cidx': 10},
+            {'attack': 3, 'health': 1, 'mana_cost': 3, 'charge': True},
         'Chillwind Yeti':
-            {'attack': 4, 'health': 5, 'mana_cost': 4, 'cidx': 11},
+            {'attack': 4, 'health': 5, 'mana_cost': 4},
         'Fireball':
             {'mana_cost': 4, 'is_spell': True, 'is_minion': False, 'spell_play_effect': 'damage_to_a_target_6',
-             'spell_require_target': True, 'spell_target_can_be_hero': True, 'cidx': 12},
+             'spell_require_target': True, 'spell_target_can_be_hero': True},
         'Oasis Snapjaw':
-            {'attack': 2, 'health': 7, 'mana_cost': 4, 'cidx': 13},
+            {'attack': 2, 'health': 7, 'mana_cost': 4},
         'Polymorph':
             {'mana_cost': 4, 'is_spell': True, 'is_minion': False, 'spell_play_effect': 'transform_to_a_1/1sheep',
-             'spell_require_target': True, 'spell_target_can_be_hero': False, 'cidx': 14},
+             'spell_require_target': True, 'spell_target_can_be_hero': False},
         'Stormwind Knight':
-            {'attack': 2, 'health': 5, 'mana_cost': 4, 'charge': True, 'cidx': 15},
+            {'attack': 2, 'health': 5, 'mana_cost': 4, 'charge': True},
         'Silvermoon Guardian':
-            {'attack': 3, 'health': 3, 'divine': True, 'mana_cost': 4, 'cidx': 16}
+            {'attack': 3, 'health': 3, 'divine': True, 'mana_cost': 4}
     }
+
+    # cidx is a string index for each kind of card
+    # idx 0 is reserved for endturn action
+    name2cidx_dict = {name:(idx+1) for idx, name in enumerate(CARD_DB)}
+    cidx2name_dict = {(idx+1):name for idx, name in enumerate(CARD_DB)}
+    # number of all different cards (including Heropower and EndTurn)
+    # CARD_DB has no EndTurn card. That's why we need to plus 1 in the return.
+    all_diff_cards_size = len(CARD_DB) + 1
 
     def __init__(self, name=None, attack=None, mana_cost=None, health=None, heropower=False, divine=False, taunt=False,
                  used_this_turn=True, deterministic=True, is_spell=False, is_minion=True, charge=False, summon=None,
                  zone='DECK', spell_play_effect=None, last_played_card_effect=None, spell_require_target=False,
-                 spell_target_can_be_hero=False, collectible=True, cidx=None):
+                 spell_target_can_be_hero=False, collectible=True):
         # cid is a random string generated to be unique for each card instance
         self.cid = ''.join(random.sample(string.printable[:-6], k=30))
-        # cidx is a string index for each kind of card
-        self.cidx = cidx
+        self.cidx = self.name2cidx_dict[name]
+
         self.name = name
         self.mana_cost = mana_cost
         self.heropower = heropower

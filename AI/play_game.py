@@ -12,6 +12,8 @@ def test_rd_vs_ql_exact_all_fireblast_deck():
 
     1. if start_health set to 15, Q-learning should learn to
     use three heropowers in turn 1 - 3 and then use all fireblasts.
+    or: not use Coin in the first turn, use hero power in second turn, and start to use
+    Coin + fireblast in the third turn, and only firefblast afterwards
     2. if start_health set to 7, Q-learning should learn to not use Coin in the
      2nd turn, use heropower in the 4th turn, and use Coin then Fireblast in
      the 6th turn
@@ -120,13 +122,13 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=2000)
+    match.play_n_match(n=1000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_n_match(n=10)
+    match.play_n_match(n=100)
 
 
 if __name__ == "__main__":

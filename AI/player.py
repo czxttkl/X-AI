@@ -10,7 +10,7 @@ import time
 import sys
 from typing import Union, List
 from sklearn.preprocessing import PolynomialFeatures
-from collections import deque
+from collections import deque, defaultdict
 from keras.layers import Dense
 from keras.optimizers import Adam,SGD
 from keras.models import Sequential
@@ -34,16 +34,17 @@ class Player:
 
         self._init_heropower()
         self._init_deck(fix_deck)
-        self.inhands = []          # cards in self hands
-        self.intable = []          # cards on self table
-        self.opponent = None       # this will be set in Match.__init__
+        self.inhands = []                    # cards in self hands
+        self.intable = []                    # cards on self table
+        self.used_cards = defaultdict(int)   # used card counts. key: cidx, value: used counts
+        self.opponent = None                 # this will be set in Match.__init__
         if self.first_player:
             self.draw_as_first_player()
         else:
             self.draw_as_second_player()
         self._init_player(**kwargs)     # any preloading job for the player
 
-    def reset(self, test=None):
+    def reset(self, test=False):
         """ reset this player as a new match starts """
         self.health = self.start_health
         self.armor = 0
@@ -52,11 +53,12 @@ class Player:
         self._init_deck(self.fix_deck)
         self.inhands = []          # cards in self hands
         self.intable = []          # cards on self table
+        self.used_cards = defaultdict(int)   # used card counts. key: cidx, value: used counts
         if self.first_player:
             self.draw_as_first_player()
         else:
             self.draw_as_second_player()
-        if test is not None:
+        if test:
             self.test = test
 
     def _init_player(self, **kwargs):
@@ -79,8 +81,8 @@ class Player:
             self.heropower = Card.init_card('Mage_Hero_Fireblast')
 
     def __repr__(self):
-        return "%r health:%d, mana:%d, in table:%r, in hands:%r" \
-               % (self.name, self.health, self.this_turn_mana, self.intable, self.inhands)
+        return "%r health:%d, mana:%d, in table:%r, in hands:%r, used_cards:%r" \
+               % (self.name, self.health, self.this_turn_mana, self.intable, self.inhands, self.used_cards)
 
     def draw_as_first_player(self):
         assert self.first_player
@@ -140,17 +142,19 @@ class Player:
 
     def search_one_action(self, game_world):
         candidates = list()
-        candidates.append(NullAction(src_player=self))
+        candidates.append(NullAction(src_player=self, src_card=None))
 
         # return directly if game_world ends
-        if game_world[self.opponent.name]['health'] <= 0 or game_world[self.name]['health'] <= 0:
+        if game_world.health(self.opponent) <= 0 or game_world.health(self) <= 0:
             return candidates
 
         # hero power
         if self.card_playable_from_hands(self.heropower, game_world):
-            candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit='hero'))
-            for oppo_pawn in game_world[self.opponent.name]['intable']:
-                candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit=oppo_pawn))
+            candidates.append(HeroPowerAttack(src_player=self, src_card=self.heropower,
+                                              target_player=self.opponent, target_unit='hero'))
+            for oppo_pawn in game_world.intable(self.opponent):
+                candidates.append(HeroPowerAttack(src_player=self, src_card=self.heropower,
+                                                  target_player=self.opponent, target_unit=oppo_pawn))
 
         # play inhands
         for card in game_world[self.name]['inhands']:
@@ -742,16 +746,32 @@ class QValueFunctionApprox:
         return str(action)
 
     def feature2str(self, feature: 'numpy.ndarray') -> str:
-        turn = numpy.where(feature[:20] == 1)[0][0]
-        self_h = numpy.where(feature[20:28])[0][0]
-        oppo_h = numpy.where(feature[28:36])[0][0]
-        self_m = numpy.where(feature[36:47])[0][0]
-        oppo_m = numpy.where(feature[47:58])[0][0]
-        self_hp_used = feature[58]
-        self_spell_coin_inhands = feature[59]
-        act = ['EndTurn', 'HeroPower', 'Fireball', 'Coin'][numpy.where(feature[-4:] == 1)[0][0]]
-        s = 'turn:{0},self_h:{1},oppo_h:{2},self_m:{3},oppo_m:{4},self_hp_used:{5},self_spell_coin_inhands:{6},act:{7}'.\
-            format(turn, self_h, oppo_h, self_m, oppo_m, self_hp_used, self_spell_coin_inhands, act)
+        feature_size = len(feature)
+        half_feature_size = feature_size // 2
+        # determine whether it is afterstate (non end turn) or current state (feature)
+        if numpy.any(feature[-half_feature_size:]):
+            feature = feature[-half_feature_size:]
+        else:
+            feature = feature[:half_feature_size]
+
+        self_h = numpy.where(feature[0:31])[0][0]
+        oppo_h = numpy.where(feature[31:62])[0][0]
+        self_m = numpy.where(feature[62:73])[0][0]
+        self_hp_used = feature[73]
+        self_used_cards_feature = feature[74:74+Card.all_diff_cards_size]
+        oppo_used_cards_feature = feature[(74+Card.all_diff_cards_size):(74+2*Card.all_diff_cards_size)]
+
+        self_used_cards_str = ''
+        oppo_used_cards_str = ''
+        for i in range(1, Card.all_diff_cards_size):
+            if self_used_cards_feature[i]:
+                self_used_cards_str += Card.cidx2name_dict[i] + ":" + str(self_used_cards_feature[i]) + ';'
+            if oppo_used_cards_feature[i]:
+                oppo_used_cards_str += Card.cidx2name_dict[i] + ":" + str(oppo_used_cards_feature[i]) + ';'
+
+        s = 'self_h:{0},oppo_h:{1},self_m:{2},self_hp_used:{3},self_used_cards:{4}oppo_used_cards:{5}'.\
+            format(self_h, oppo_h, self_m, self_hp_used, self_used_cards_str, oppo_used_cards_str)
+
         return s
 
     def extract_raw_features(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
@@ -760,49 +780,40 @@ class QValueFunctionApprox:
         if it is an end-turn action, we extract the feature from current game world
         otherwise, we extract the feature from the game world AFTER the action is applied
         """
+        if not isinstance(action, NullAction):
+            game_world = action.virtual_apply(game_world)
+
         player = self.player
         oppo = self.player.opponent
 
-        # prepare 20 turns (actually 19 since turn starts from 1)
-        turn_feature = numpy.zeros(20)
-        turn_feature[game_world.turn] = 1
         # health feature
-        self_h_feature = numpy.zeros((player.start_health+1))
+        self_h_feature = numpy.zeros(31)
         self_h_feature[game_world.health(player)] = 1
-        oppo_h_feature = numpy.zeros((oppo.start_health+1))
+        oppo_h_feature = numpy.zeros(31)
         oppo_h_feature[game_world.health(oppo)] = 1
         # mana feature
         self_m_feature = numpy.zeros(11)
         self_m_feature[game_world.mana(player)] = 1
-        oppo_m_feature = numpy.zeros(11)
-        oppo_m_feature[game_world.mana(oppo)] = 1
         # hp used feature
         self_hp_used = numpy.array([game_world.hp_used(player)])
-        # spell coin in hand feature
-        self_spell_coin_inhands = numpy.array([game_world.inhands_has_card(player, 'The Coin')])
-        # action feature
-        action_feature = numpy.zeros(4)
-        if isinstance(action, NullAction):
-            action_feature[0] = 1
-        elif isinstance(action, HeroPowerAttack):
-            action_feature[1] = 1
-        elif action.src_card.name == 'Fireball':
-            action_feature[2] = 1
-        elif action.src_card.name =='The Coin':
-            action_feature[3] = 1
-
+        # used card feature
+        self_used_cards_feature = numpy.zeros(Card.all_diff_cards_size)
+        for card_name, count in game_world.used_cards(player).items():
+            self_used_cards_feature[Card.name2cidx_dict[card_name]] = count
+        oppo_used_cards_feature = numpy.zeros(Card.all_diff_cards_size)
+        for card_name, count in game_world.used_cards(oppo).items():
+            oppo_used_cards_feature[Card.name2cidx_dict[card_name]] = count
         # logger.info("features:")
-        # logger.info(turn_feature)
         # logger.info(self_h_feature)
         # logger.info(oppo_h_feature)
         # logger.info(self_m_feature)
-        # logger.info(oppo_m_feature)
         # logger.info(self_hp_used)
-        # logger.info(action_feature)
+        # logger.info(self_used_cards_feature)
+        # logger.info(oppo_used_cards_feature)
         # logger.info('----------------------------------------')
-        feature = numpy.hstack([turn_feature, self_h_feature, oppo_h_feature,
-                                self_m_feature, oppo_m_feature,
-                                self_hp_used, self_spell_coin_inhands, action_feature])
+        feature = numpy.hstack([self_h_feature, oppo_h_feature,
+                                self_m_feature, self_hp_used,
+                                self_used_cards_feature, oppo_used_cards_feature])
 
         return feature
 
@@ -821,7 +832,7 @@ class QValueFunctionApprox:
     def to_feature(self, game_world: 'GameWorld', action: 'Action') -> numpy.ndarray:
         """ convert this state-action into a full feature array """
         features = self.extract_raw_features(game_world, action)
-        # features = self.raw_feature_to_full_feature(features, action)
+        features = self.raw_feature_to_full_feature(features, action)
         return features
 
     def to_feature_over_acts(self, game_world: 'GameWorld'):
@@ -911,7 +922,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         model.add(Dense(self.hidden_dim, activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(1, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
-        print(model.get_weights())
+        # print(model.get_weights())
         model.compile(loss='mse', optimizer=SGD(lr=self.alpha), metrics=['accuracy'])
         return model
 
@@ -953,6 +964,7 @@ class QValueDQNApprox(QValueFunctionApprox):
             return
 
         features = self.to_feature(last_state, last_act)
+        logger.info('action:' + str(last_act) + '--' + self.feature2str(features))
         next_features_over_acts = self.to_feature_over_acts(new_game_world)
         self.memory.append(features, last_act, r, next_features_over_acts, match_end)
 

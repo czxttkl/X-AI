@@ -1,5 +1,6 @@
 """
 https://github.com/rlcode/reinforcement-learning/blob/master/2-cartpole/2-double-dqn/cartpole_ddqn.py
+This one used DOUBLE DQN and should be an improved version over ddqn_1.py
 """
 import sys
 import gym
