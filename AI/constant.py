@@ -28,7 +28,8 @@ ql_dqn_train_loss_hist_size = 500
 # logger.setLevel(logging.INFO)
 
 # game
-player1_win_rate_num_games = 1000         # calculate player 1's win rate based on how many recent games
+player1_win_rate_num_games = 100    # calculate player 1's win rate based on how many recent games
+test_win_rate_num_games = 1000      # test win rate of two players after this number of training games
 
 mage_fix_deck = [
                  'Mana Wyrm', 'Mirror Image',

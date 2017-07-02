@@ -38,17 +38,19 @@ class GameWorld:
 
     def __repr__(self):
         """ representation of this game world, which looks like a simple game UI """
-        str = 'Turn %d\n' % self.turn
-        str += '%r. health: %d, mana: %d\n' % \
-              (self.player1_name, self[self.player1_name]['health'], self[self.player1_name]['mana'])
-        str += 'intable: %r\n' % self[self.player1_name]['intable']
-        str += 'inhands: %r\n' % self[self.player1_name]['inhands']
-        str += "-----------------------------------------------\n"
-        str += '%r. health: %d, mana: %d\n' % \
-              (self.player2_name, self[self.player2_name]['health'], self[self.player2_name]['mana'])
-        str += 'intable: %r\n' % self[self.player2_name]['intable']
-        str += 'inhands: %r\n' % self[self.player2_name]['inhands']
-        return str
+        s = 'Turn %d\n' % self.turn
+        s += '%r. health: %d, mana: %d\n' % \
+              (self.player1_name, self.health(self.player1_name), self.mana(self.player1_name))
+        s += 'intable: %r\n' % self.intable(self.player1_name)
+        s += 'inhands: %r\n' % self.inhands(self.player1_name)
+        s += 'used cards: {0}\n'.format(str(self.used_cards(self.player1_name))[28:-2])
+        s += "-----------------------------------------------\n"
+        s += '%r. health: %d, mana: %d\n' % \
+              (self.player2_name, self.health(self.player2_name), self.mana(self.player2_name))
+        s += 'intable: %r\n' % self.intable(self.player2_name)
+        s += 'inhands: %r\n' % self.inhands(self.player2_name)
+        s += 'used cards: {0}\n'.format(str(self.used_cards(self.player2_name))[28:-2])
+        return s
 
     def __getitem__(self, player_name):
         return self.data[player_name]
@@ -189,11 +191,28 @@ class Match:
         self.winner_reason = None
 
     def play_n_match(self, n):
-        t1 = time.time()
+        # t1 = time.time()
         for i in range(n):
             self.play_one_match(i)
-        # self.player2.print_qtable()
-        logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
+            if (i+1) % constant.test_win_rate_num_games == 0 \
+                    and not self.player1.test and not self.player2.test:
+                self.test_match()
+        return self.player1_win_rate
+        # logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
+
+    def test_match(self):
+        """ test matches to get win rate after every while """
+        original_level = logger.level
+        logger.setLevel(logging.FATAL)
+        self.player1.reset(test=True)
+        self.player2.reset(test=True)
+        match = Match(self.player1, self.player2)
+        test_player1_win_rate = match.play_n_match(n=constant.player1_win_rate_num_games)
+        self.player1.reset(test=False)
+        self.player2.reset(test=False)
+        logger.setLevel(original_level)
+        logger.warning('test player1 win rate {0}'.format(test_player1_win_rate))
+        logger.warning("-------------------------------------------------------------------------------")
 
     def play_one_match(self, match_idx):
         turn = 0
@@ -247,8 +266,7 @@ class Match:
         self.player1.post_match()
         self.player2.post_match()
         logger.warning("last {0} player 1 win rate: {1}"
-                       .format(len(self.recent_player1_win_lose),
-                               numpy.mean(self.recent_player1_win_lose)))
+                       .format(len(self.recent_player1_win_lose), self.player1_win_rate))
         logger.warning("-------------------------------------------------------------------------------")
         self.winner = None
         self.winner_reason = None
@@ -264,14 +282,17 @@ class Match:
 
     def check_for_match_end(self, game_world: 'GameWorld') -> bool:
         """ return True if the match ends. Otherwise return False """
-        if game_world[self.player1.name]['health'] <= 0:
+        if game_world.health(self.player1) <= 0:
             self.winner = self.player2
             self.winner_reason = "player1 health<=0"
             return True
-        elif game_world[self.player2.name]['health'] <= 0:
+        elif game_world.health(self.player2) <= 0:
             self.winner = self.player1
             self.winner_reason = "player2 health<=0"
             return True
         else:
             return False
 
+    @property
+    def player1_win_rate(self):
+        return numpy.mean(self.recent_player1_win_lose)

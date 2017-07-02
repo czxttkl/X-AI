@@ -113,7 +113,7 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
     hidden_dim = 50   # hidden unit dimension for 2 hidden layer NN
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.WARNING)
+    logger.setLevel(logging.INFO)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
                            start_health=start_health, fix_deck=constant.all_fireblast_deck, )
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
@@ -122,13 +122,13 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=1000)
+    match.play_n_match(n=3000)
     # test
-    logger.setLevel(logging.INFO)
-    player1.reset(test=True)
-    player2.reset(test=True)
-    match = Match(player1, player2)
-    match.play_n_match(n=100)
+    # logger.setLevel(logging.INFO)
+    # player1.reset(test=True)
+    # player2.reset(test=True)
+    # match = Match(player1, player2)
+    # match.play_n_match(n=100)
 
 
 if __name__ == "__main__":

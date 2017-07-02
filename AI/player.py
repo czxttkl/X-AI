@@ -22,10 +22,12 @@ logger = logging.getLogger('hearthstone')
 
 class Player:
 
-    def __init__(self, cls, name, first_player, start_health, fix_deck=None, **kwargs):
+    def __init__(self, cls, name, first_player, start_health, test=False, fix_deck=None, **kwargs):
         self.name = name
         self.cls = cls
         self.start_health = start_health
+        self.test = test
+
         self.health = self.start_health
         self.armor = 0
         self.this_turn_mana = 0
@@ -44,7 +46,7 @@ class Player:
             self.draw_as_second_player()
         self._init_player(**kwargs)     # any preloading job for the player
 
-    def reset(self, test=False):
+    def reset(self, test=None):
         """ reset this player as a new match starts """
         self.health = self.start_health
         self.armor = 0
@@ -58,7 +60,7 @@ class Player:
             self.draw_as_first_player()
         else:
             self.draw_as_second_player()
-        if test:
+        if test is not None:
             self.test = test
 
     def _init_player(self, **kwargs):
@@ -356,7 +358,8 @@ class QValueTabular:
         return s
 
     def post_match(self):
-        self.num_match += 1
+        if not self.player.test:
+            self.num_match += 1
         self.print_qtable_summary()
         # self.print_qtable()
         # don't save any update during test
@@ -499,14 +502,12 @@ class QLearningPlayer(Player):
         gamma = kwargs['gamma']               # discounting factor
         epsilon = kwargs['epsilon']           # epsilon-greedy
         alpha = kwargs['alpha']               # learning rate
-        test = kwargs.get('test', False)      # whether in test mode
         degree = kwargs.get('degree', 1)      # degree for polynomial feature transformation
         hidden_dim = kwargs.get('hidden_dim', 10)
                                               # hidden unit number in DQN
         method = kwargs['method']
         annotation = kwargs['annotation']     # additional note for this player
         self.epsilon = epsilon
-        self.test = test
         self.last_state = None
         self.last_act = None
 
@@ -522,7 +523,7 @@ class QLearningPlayer(Player):
             choose_act = all_acts[0]
             logger.info("Choice 0: %r" % choose_act)
         else:
-            choose_act = self.epsilon_greedy(game_world, all_acts)
+            choose_act = self.epsilon_greedy(game_world, all_acts, self.test)
 
         self.last_state = game_world.copy()
         self.last_act = choose_act.copy()
@@ -540,7 +541,7 @@ class QLearningPlayer(Player):
         """ called when a match finishes """
         self.qvalues_impl.post_match()
 
-    def epsilon_greedy(self, game_world: 'GameWorld', all_acts: List['Action']):
+    def epsilon_greedy(self, game_world: 'GameWorld', all_acts: List['Action'], test: bool):
         """ pick actions based on epsilon greedy """
         # (act_idx, a, Q(s,a))
         act_qvalue_tuples = list(zip(range(len(all_acts)),
@@ -553,7 +554,7 @@ class QLearningPlayer(Player):
         max_act_idx, max_act, max_qvalue = max(act_qvalue_tuples_shuffled, key=lambda x: x[2])
 
         # if in test mode, do not explore, just exploit
-        if self.test:
+        if test:
             for act_idx, act, qvalue in act_qvalue_tuples:
                 logger.info("Choice %d (%.3f): %r" % (act_idx, qvalue, act))
             return max_act
@@ -923,12 +924,13 @@ class QValueDQNApprox(QValueFunctionApprox):
         model.add(Dense(1, activation='linear', kernel_initializer='he_uniform'))
         model.summary()
         # print(model.get_weights())
-        model.compile(loss='mse', optimizer=SGD(lr=self.alpha), metrics=['accuracy'])
+        model.compile(loss='mse', optimizer=SGD(lr=self.alpha))
         return model
 
     def post_match(self):
         self.sync_lag_model()
-        self.num_match += 1
+        if not self.player.test:
+            self.num_match += 1
         logger.warning('QValueDQNApprox post match:' + str(self))
         # don't save any update during test
         if not self.player.test and self.num_match % constant.ql_dqn_save_freq == 0:
@@ -946,7 +948,7 @@ class QValueDQNApprox(QValueFunctionApprox):
             return qvalue
 
     def __repr__(self):
-        s = 'num_match:{0}, {1}, train_loss_size:{2}, mean:{3} \n'.\
+        s = 'num_match:{0}, {1}, train_loss_size:{2}, mean:{3}'.\
                    format(self.num_match, self.memory,
                           len(self.train_hist), numpy.mean(self.train_hist) if len(self.train_hist) else 0)
         # print feature weights
@@ -964,7 +966,7 @@ class QValueDQNApprox(QValueFunctionApprox):
             return
 
         features = self.to_feature(last_state, last_act)
-        logger.info('action:' + str(last_act) + '--' + self.feature2str(features))
+        # logger.info('action:' + str(last_act) + '--' + self.feature2str(features))
         next_features_over_acts = self.to_feature_over_acts(new_game_world)
         self.memory.append(features, last_act, r, next_features_over_acts, match_end)
 
