@@ -122,13 +122,13 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=0)
+    match.play_n_match(n=1000)
     # test
     logger.setLevel(logging.INFO)
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_n_match(n=100)
+    match.play_n_match(n=10)
 
 
 if __name__ == "__main__":

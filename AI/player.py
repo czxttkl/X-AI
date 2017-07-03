@@ -755,12 +755,12 @@ class QValueFunctionApprox:
         else:
             feature = feature[:half_feature_size]
 
-        self_h = numpy.where(feature[0:31])[0][0]
-        oppo_h = numpy.where(feature[31:62])[0][0]
-        self_m = numpy.where(feature[62:73])[0][0]
-        self_hp_used = feature[73]
-        self_used_cards_feature = feature[74:74+Card.all_diff_cards_size]
-        oppo_used_cards_feature = feature[(74+Card.all_diff_cards_size):(74+2*Card.all_diff_cards_size)]
+        self_h = feature[0]
+        oppo_h = feature[1]
+        self_m = feature[2]
+        self_hp_used = feature[3]
+        self_used_cards_feature = feature[4:4+Card.all_diff_cards_size]
+        oppo_used_cards_feature = feature[(4+Card.all_diff_cards_size):(4+2*Card.all_diff_cards_size)]
 
         self_used_cards_str = ''
         oppo_used_cards_str = ''
@@ -788,13 +788,10 @@ class QValueFunctionApprox:
         oppo = self.player.opponent
 
         # health feature
-        self_h_feature = numpy.zeros(31)
-        self_h_feature[game_world.health(player)] = 1
-        oppo_h_feature = numpy.zeros(31)
-        oppo_h_feature[game_world.health(oppo)] = 1
+        self_h_feature = numpy.array([game_world.health(player)])
+        oppo_h_feature = numpy.array([game_world.health(oppo)])
         # mana feature
-        self_m_feature = numpy.zeros(11)
-        self_m_feature[game_world.mana(player)] = 1
+        self_m_feature = numpy.array([game_world.mana(player)])
         # hp used feature
         self_hp_used = numpy.array([game_world.hp_used(player)])
         # used card feature

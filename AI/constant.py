@@ -15,7 +15,7 @@ ql_dqn_pos_batch_size = 20
 ql_dqn_neg_batch_size = 20
 # self_h, oppo_h, self_m, self_hp_used, self_used_cards, oppo_used_cards,
 # and double for non-end-turn and end-turn action
-ql_dqn_k = (31 + 31 + 11 + 1 + Card.all_diff_cards_size * 2) * 2
+ql_dqn_k = (1 + 1 + 1 + 1 + Card.all_diff_cards_size * 2) * 2
 ql_dqn_mem_pos_size = 50
 ql_dqn_mem_neg_size = 50
 ql_dqn_train_loss_hist_size = 500
