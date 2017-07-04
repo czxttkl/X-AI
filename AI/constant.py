@@ -11,13 +11,14 @@ ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values on
 ql_linear_save_freq = 100  # num of matches to save q-learning linear weights once
 ql_dqn_save_freq = 100     # num of matches to save q-learning DQN weights once
 
+ql_dqn_memory_start_train_size = 50
 ql_dqn_pos_batch_size = 20
 ql_dqn_neg_batch_size = 20
-# self_h, oppo_h, self_m, self_hp_used, self_used_cards, oppo_used_cards,
+# self_h, oppo_h, self_m, self_hp_used, self_used_cards, oppo_used_cards, self_intable, oppo_intable
 # and double for non-end-turn and end-turn action
-ql_dqn_k = (1 + 1 + 1 + 1 + Card.all_diff_cards_size * 2) * 2
-ql_dqn_mem_pos_size = 50
-ql_dqn_mem_neg_size = 50
+ql_dqn_k = (1 + 1 + 1 + 1 + Card.all_diff_cards_size * 2 + 35 * 2) * 2
+ql_dqn_mem_pos_size = 5000
+ql_dqn_mem_neg_size = 5000
 ql_dqn_train_loss_hist_size = 500
 
 # logger

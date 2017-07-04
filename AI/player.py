@@ -761,6 +761,8 @@ class QValueFunctionApprox:
         self_hp_used = feature[3]
         self_used_cards_feature = feature[4:4+Card.all_diff_cards_size]
         oppo_used_cards_feature = feature[(4+Card.all_diff_cards_size):(4+2*Card.all_diff_cards_size)]
+        self_intable_feature = feature[(4+2*Card.all_diff_cards_size):(4+2*Card.all_diff_cards_size+35)]
+        oppo_intable_feature = feature[(4+2*Card.all_diff_cards_size+35):(4+2*Card.all_diff_cards_size+70)]
 
         self_used_cards_str = ''
         oppo_used_cards_str = ''
@@ -770,8 +772,20 @@ class QValueFunctionApprox:
             if oppo_used_cards_feature[i]:
                 oppo_used_cards_str += Card.cidx2name_dict[i] + ":" + str(oppo_used_cards_feature[i]) + ';'
 
-        s = 'self_h:{0},oppo_h:{1},self_m:{2},self_hp_used:{3},self_used_cards:{4}oppo_used_cards:{5}'.\
-            format(self_h, oppo_h, self_m, self_hp_used, self_used_cards_str, oppo_used_cards_str)
+        self_intable_str = ''
+        oppo_intable_str = ''
+        for i in range(7):
+            if not numpy.any(self_intable_feature[(5*i):(5*i+5)]):
+                break
+            self_intable_str += '({0},{1},{2},{3},{4});'.format(*(self_intable_feature[(5*i):(5*i+5)].tolist()))
+        for i in range(7):
+            if not numpy.any(oppo_intable_feature[(5*i):(5*i+5)]):
+                break
+            oppo_intable_str += '({0},{1},{2},{3},{4});'.format(*(oppo_intable_feature[(5*i):(5*i+5)].tolist()))
+
+        s = 'self_h:{0},oppo_h:{1},self_m:{2},self_hp_used:{3},self_used_cards:{4}oppo_used_cards:{5}self_intable:{6}oppo_intable:{7}'.\
+            format(self_h, oppo_h, self_m, self_hp_used, self_used_cards_str, oppo_used_cards_str,
+                   self_intable_str, oppo_intable_str)
 
         return s
 
@@ -801,6 +815,16 @@ class QValueFunctionApprox:
         oppo_used_cards_feature = numpy.zeros(Card.all_diff_cards_size)
         for card_name, count in game_world.used_cards(oppo).items():
             oppo_used_cards_feature[Card.name2cidx_dict[card_name]] = count
+        # intable feature (taunt, divine, used_this_turn, attack, health)*(minions at most)
+        self_intable_feature = numpy.zeros(5*7)
+        for idx, mn in enumerate(game_world.intable(player)):
+            self_intable_feature[(5*idx):(5*(idx+1))] = \
+                mn.taunt, mn.divine, mn.used_this_turn, mn.attack, mn.health
+        oppo_intable_feature = numpy.zeros(5 * 7)
+        for idx, mn in enumerate(game_world.intable(oppo)):
+            oppo_intable_feature[(5 * idx):(5 * (idx + 1))] = \
+                mn.taunt, mn.divine, mn.used_this_turn, mn.attack, mn.health
+
         # logger.info("features:")
         # logger.info(self_h_feature)
         # logger.info(oppo_h_feature)
@@ -811,7 +835,8 @@ class QValueFunctionApprox:
         # logger.info('----------------------------------------')
         feature = numpy.hstack([self_h_feature, oppo_h_feature,
                                 self_m_feature, self_hp_used,
-                                self_used_cards_feature, oppo_used_cards_feature])
+                                self_used_cards_feature, oppo_used_cards_feature,
+                                self_intable_feature, oppo_intable_feature])
 
         return feature
 
@@ -867,11 +892,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.train_hist = deque(maxlen=constant.ql_dqn_train_loss_hist_size)
                                       # Keras model train loss value. update after every fit
         self.k = constant.ql_dqn_k
-        self.memory = Memory(neg_reward_size=constant.ql_dqn_mem_neg_size,
-                             pos_reward_size=constant.ql_dqn_mem_pos_size,
-                             neg_batch_size=constant.ql_dqn_neg_batch_size,
-                             pos_batch_size=constant.ql_dqn_pos_batch_size,
-                             qvalues_impl=self)
+        self.memory = Memory(qvalues_impl=self)
         super().__init__(player)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
@@ -968,7 +989,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.memory.append(features, last_act, r, next_features_over_acts, match_end)
 
         # if memory is not full, continue to collect data
-        if not self.memory.full():
+        if not self.memory.start_train():
             return
 
         # train model

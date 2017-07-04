@@ -72,9 +72,9 @@ class Card:
         self.mana_cost = mana_cost
         self.heropower = heropower
         self.used_this_turn = used_this_turn
-        self.deterministic = deterministic
-        self.collectible = collectible
-
+        self.deterministic = deterministic       # whether the card effect is deterministic
+        self.collectible = collectible           # whether the card can be constructed in the deck
+                                                 # or must be summoned by other cards
         # minion
         self.is_minion = is_minion
         self.attack = attack

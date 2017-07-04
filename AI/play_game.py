@@ -26,14 +26,15 @@ def test_rd_vs_ql_exact_all_fireblast_deck():
     gamma = 1.0  # discounting factor
     epsilon = 0.2  # epsilon-greedy
     alpha = 1.0  # learning rate
+    deck = constant.all_fireblast_deck
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.WARNING)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', start_health=start_health,
-                           first_player=True, fix_deck=constant.all_fireblast_deck)
+                           first_player=True, fix_deck=deck)
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', start_health=start_health,
-                              first_player=False, fix_deck=constant.all_fireblast_deck,
-                              method='exact', gamma=gamma, epsilon=epsilon, alpha=alpha, test=False,
+                              first_player=False, fix_deck=deck, method='exact',
+                              gamma=gamma, epsilon=epsilon, alpha=alpha, test=False,
                               annotation='all_fireblast_deck_strthl{0}'.format(start_health),
                               )
     # train
@@ -55,14 +56,15 @@ def test_rd_vs_ql_exact_mage_fix_deck():
     gamma = 1.0  # discounting factor
     epsilon = 0.2  # epsilon-greedy
     alpha = 1.0  # learning rate
+    deck = constant.mage_fix_deck
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.WARNING)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
-                           start_health=start_health, fix_deck=constant.mage_fix_deck, )
+                           start_health=start_health, fix_deck=deck)
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                              start_health=start_health, fix_deck=constant.mage_fix_deck,
-                              method='exact', annotation='mage_fix_deck_strthl{0}'.format(start_health),
+                              start_health=start_health, fix_deck=deck, method='exact',
+                              annotation='mage_fix_deck_strthl{0}'.format(start_health),
                               gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
@@ -84,14 +86,15 @@ def test_rd_vs_ql_la_all_fireblast_deck():
     gamma = 0.95   # discounting factor
     epsilon = 0.2  # epsilon-greedy
     alpha = 0.1    # learning rate
+    deck = constant.all_fireblast_deck
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
-                           start_health=start_health, fix_deck=constant.all_fireblast_deck, )
+                           start_health=start_health, fix_deck=deck)
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                              start_health=start_health, fix_deck=constant.all_fireblast_deck,
-                              method='linear', annotation='_all_fireblast_deck_strthl{0}'.format(start_health),
+                              start_health=start_health, fix_deck=deck, method='linear',
+                              annotation='_all_fireblast_deck_strthl{0}'.format(start_health),
                               degree=1, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
@@ -111,24 +114,53 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
     epsilon = 0.3   # epsilon-greedy
     alpha = 0.01    # learning rate
     hidden_dim = 50   # hidden unit dimension for 2 hidden layer NN
+    deck = constant.all_fireblast_deck
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.WARNING)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
-                           start_health=start_health, fix_deck=constant.all_fireblast_deck, )
+                           start_health=start_health, fix_deck=deck)
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
-                              start_health=start_health, fix_deck=constant.all_fireblast_deck,
-                              method='dqn', annotation='all_fireblast_deck_strthl{0}'.format(start_health),
+                              start_health=start_health, fix_deck=deck, method='dqn',
+                              annotation='all_fireblast_deck_strthl{0}'.format(start_health),
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=1000)
+    match.play_n_match(n=500000)
     # test
+    # logger.setLevel(logging.INFO)
+    # player1.reset(test=True)
+    # player2.reset(test=True)
+    # match = Match(player1, player2)
+    # match.play_n_match(n=100)
+
+
+def test_rd_vs_ql_dqn_magix_fix_deck():
+    """ test q learningdqn with Deep Q-Network"""
+    start_health = 15
+    gamma = 1.0     # discounting factor
+    epsilon = 0.3   # epsilon-greedy
+    alpha = 0.01    # learning rate
+    hidden_dim = 50   # hidden unit dimension for 2 hidden layer NN
+    deck = constant.mage_fix_deck
+    logger = logging.getLogger('hearthstone')
+    logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.INFO)
-    player1.reset(test=True)
-    player2.reset(test=True)
+    player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
+                           start_health=start_health, fix_deck=deck)
+    player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+                              start_health=start_health, fix_deck=deck, method='dqn',
+                              annotation='mage_fix_deck_strthl{0}'.format(start_health),
+                              hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
+    # train
     match = Match(player1, player2)
     match.play_n_match(n=10)
+    # test
+    # logger.setLevel(logging.INFO)
+    # player1.reset(test=True)
+    # player2.reset(test=True)
+    # match = Match(player1, player2)
+    # match.play_n_match(n=10)
 
 
 if __name__ == "__main__":
