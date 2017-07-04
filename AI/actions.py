@@ -1,7 +1,7 @@
 from match import *
 from card import *
 import random
-import copy
+import mycopy as copy
 
 
 class Action:

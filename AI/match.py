@@ -133,7 +133,7 @@ class Match:
 
     @property
     def player1_win_rate(self):
-        if len(self.recent_test_player1_win_ratio) == 0:
+        if len(self.recent_player1_win_lose) == 0:
             return 0
         else:
             return numpy.mean(self.recent_player1_win_lose)

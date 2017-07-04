@@ -187,96 +187,6 @@ class Player:
 
         return candidates
 
-    def search_all_actions_in_one_turn(self, game_world, cur_act_seq, all_act_seqs):
-        """ Search all possible actions in one turn using DSP """
-        candidates = []
-
-        # hero power
-        # heuristic search: if used, hero power should be used first (when cur_act_seq only has NullAction)
-        if len(cur_act_seq) == 1 and self.card_playable_from_hands(self.heropower, game_world):
-            candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit='hero'))
-            for oppo_pawn in game_world[self.opponent.name]['intable']:
-                candidates.append(HeroPowerAttack(src_player=self, target_player=self.opponent, target_unit=oppo_pawn))
-
-        # play inhands
-        for card in game_world[self.name]['inhands']:
-            if self.card_playable_from_hands(card, game_world):
-                # heuristic search: spellplay should be executed before MinionPlay and MinionAttack
-                if card.is_spell and cur_act_seq.no([MinionPlay, MinionAttack]):
-                    if card.spell_require_target:
-                        if card.spell_target_can_be_hero:
-                            candidates.append(SpellPlay(src_player=self, src_card=card, target_player=self.opponent,
-                                                        target_unit='hero'))
-                        for oppo_pawn in game_world[self.opponent.name]['intable']:
-                            candidates.append(SpellPlay(src_player=self, src_card=card, target_player=self.opponent,
-                                                        target_unit=oppo_pawn))
-                    else:
-                        candidates.append(SpellPlay(src_player=self, src_card=card))
-                # heuristic search: minionplay should be executed before MinionAttack
-                elif card.is_minion and cur_act_seq.no([MinionAttack]):
-                    candidates.append(MinionPlay(src_player=self, src_card=card))
-
-        # minion attack
-        oppo_taunt = []
-        oppo_divine = []
-        for oppo_pawn in game_world[self.opponent.name]['intable']:
-            if oppo_pawn.divine:
-                oppo_divine.append(oppo_pawn)
-            if oppo_pawn.taunt:
-                oppo_taunt.append(oppo_pawn)
-        # heuristic search: when taunt is present, minion attacks can initiate from any of my minions,
-        # to any of taunt opponent minions
-        if oppo_taunt:
-            for pawn in game_world[self.name]['intable']:
-                if not pawn.used_this_turn:
-                    for oppo_pawn in oppo_taunt:
-                        candidates.append(
-                                MinionAttack(src_player=self, src_card=pawn,
-                                             target_player=self.opponent, target_unit=oppo_pawn))
-        # heuristic search: when divine is present, search minion attacks from any of my minions,
-        # to any of opponent minions
-        elif oppo_divine:
-            for pawn in game_world[self.name]['intable']:
-                if not pawn.used_this_turn:
-                    candidates.append(MinionAttack(src_player=self, src_card=pawn,
-                                                   target_player=self.opponent, target_unit='hero'))
-                    for oppo_pawn in game_world[self.opponent.name]['intable']:
-                        candidates.append(
-                                MinionAttack(src_player=self, src_card=pawn,
-                                             target_player=self.opponent, target_unit=oppo_pawn))
-        # heuristic search: when no taunt or divine is present in opponent minions, search
-        # minion attacks from my first usable minion to any of other minions
-        else:
-            for pawn in game_world[self.name]['intable']:
-                if not pawn.used_this_turn:
-                    candidates.append(MinionAttack(src_player=self, src_card=pawn,
-                                                   target_player=self.opponent, target_unit='hero'))
-                    for oppo_pawn in game_world[self.opponent.name]['intable']:
-                        candidates.append(MinionAttack(src_player=self, src_card=pawn,
-                                                       target_player=self.opponent, target_unit=oppo_pawn))
-                    break
-
-        # add actions so far as a choice
-        # heuristic search: has to add all MinionAttack before finishing the turn
-        candidate_has_minion_attack = False
-        for candidate in candidates:
-            if isinstance(candidate, MinionAttack):
-                candidate_has_minion_attack = True
-                break
-        if not candidate_has_minion_attack:
-            all_act_seqs.add(cur_act_seq)
-
-        for candidate in candidates:
-            # backup
-            game_world_old = game_world.copy()
-            candidate.apply(game_world)
-            # apply, DFS
-            cur_act_seq.update(candidate, game_world)
-            self.search_all_actions_in_one_turn(game_world, cur_act_seq, all_act_seqs)
-            # restore
-            game_world = game_world_old
-            cur_act_seq.pop(game_world)
-
 
 class RandomPlayer(Player):
     """ A player always picks a random action from available actions """
@@ -419,6 +329,11 @@ class QValueTabular:
         """ number of visits at (s,a) """
         return self.qvalues_tab.get(state_str, dict()).get(act_str, (0, 0))[1]
 
+    def gen_last_state_act_repr(self, last_state, last_act):
+        last_state_str = self.state2str(last_state)
+        last_act_str = self.action2str(last_act)
+        return (last_state_str, last_act_str)
+
     def max_qvalue(self, game_world: 'GameWorld') -> float:
         """ max_a Q(s,a)"""
         state_str = self.state2str(game_world)
@@ -431,11 +346,9 @@ class QValueTabular:
             self.qvalues_tab[state_str] = dict()
         self.qvalues_tab[state_str][act_str] = (update_qvalue, update_count)
 
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
-               r: float, match_end: bool, test: bool):
+    def update(self, last_state_act_repr, new_game_world: 'GameWorld', r: float, match_end: bool, test: bool):
         """ update Q(s,a) <- (1-alpha) * Q(s,a) + alpha * [R + gamma * max_a' Q(s',a')] """
-        last_state_str = self.state2str(last_state)
-        last_act_str = self.action2str(last_act)
+        last_state_str, last_act_str = last_state_act_repr
         new_state_str = self.state2str(new_game_world)
         old_qvalue = self.qvalue(state_str=last_state_str, act_str=last_act_str)
 
@@ -466,7 +379,7 @@ class QValueTabular:
         if not test:
             self.set_qvaluetab(last_state_str, last_act_str, update_qvalue, update_count)
 
-    def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
+    def determine_r(self, match_end: bool, winner: bool):
         """ determine reward """
         # there are two schemas of rewards.
 
@@ -509,13 +422,10 @@ class QLearningPlayer(Player):
         method = kwargs['method']
         annotation = kwargs['annotation']     # additional note for this player
         self.epsilon = epsilon
-        self.last_state = None
-        self.last_act = None
+        self.last_state_act_repr = None
 
         if method == 'exact':
             self.qvalues_impl = QValueTabular(self, gamma, epsilon, alpha, annotation)
-        elif method == 'linear':
-            self.qvalues_impl = QValueLinearApprox(self, degree, gamma, epsilon, alpha, annotation)
         elif method == 'dqn':
             self.qvalues_impl = QValueDQNApprox(self, hidden_dim, gamma, epsilon, alpha, annotation)
 
@@ -526,17 +436,15 @@ class QLearningPlayer(Player):
         else:
             choose_act = self.epsilon_greedy(game_world, all_acts, self.test)
 
-        self.last_state = game_world.copy()
-        self.last_act = choose_act.copy()
-
+        self.last_state_act_repr = self.qvalues_impl.gen_last_state_act_repr(last_state=game_world, last_act=choose_act)
         logger.info("%r pick %r\n" % (self.name, choose_act))
         return choose_act
 
     def post_action(self, new_game_world: 'GameWorld', match_end: bool, winner: bool):
         """ called when an action is applied.
         update Q values """
-        R = self.qvalues_impl.determine_r(match_end, winner, self.last_state, new_game_world)
-        self.qvalues_impl.update(self.last_state, self.last_act, new_game_world, R, match_end, self.test)
+        R = self.qvalues_impl.determine_r(match_end, winner)
+        self.qvalues_impl.update(self.last_state_act_repr, new_game_world, R, match_end, self.test)
 
     def post_match(self):
         """ called when a match finishes """
@@ -560,7 +468,7 @@ class QLearningPlayer(Player):
                 logger.info("Choice %d (%.3f): %r" % (act_idx, qvalue, act))
             return max_act
         else:
-            epsilon = max(self.epsilon, constant.ql_epsilon_cap - self.qvalues_impl.num_match / 1000 * 0.15)
+            epsilon = self.adapt_epsilon
             acts_weights = numpy.full(shape=len(all_acts), fill_value=epsilon / (len(all_acts) - 1))
             acts_weights[max_act_idx] = 1. - epsilon
 
@@ -573,6 +481,9 @@ class QLearningPlayer(Player):
             choose_idx = numpy.random.choice(idx_list, 1, replace=False, p=acts_weights)[0]
             return act_qvalue_tuples[choose_idx][1]
 
+    @property
+    def adapt_epsilon(self):
+        return max(self.epsilon, constant.ql_epsilon_cap - self.qvalues_impl.num_match / 1000 * 0.25)
 
 class QValueFunctionApprox:
     feat_names = [
@@ -585,109 +496,6 @@ class QValueFunctionApprox:
         self.player = player
         self.num_match = 0
         self.init_and_load()
-    # feature names
-    # self.feat_names = [
-    #                    # feature index 0 - 9
-    #                    'turn', 'self_h', 'oppo_h', 'self_m',
-    #                    'self_max_m', 'oppo_next_m',         # self maximum mana this turn, oppo mana next turn
-    #                    'self_rem_cards', 'oppo_rem_cards',  # number of remaining cards of self and oppo inhands
-    #                    'self_mn', 'oppo_mn',                # number of minions of self and oppo intable
-    #
-    #                    # feature index 10 - 13
-    #                    'self_mn_taunt', 'oppo_mn_taunt',    # number of minions in taunt
-    #                    'self_mn_divine', 'oppo_mn_divine',  # number of minions in divine
-    #
-    #                    # feature index 14 - 22
-    #                    'self_tt_mn_attkable', 'self_tt_mn_attk',   # self total minion (attackable) attack
-    #                    'self_tt_mn_h',   # self total minion health
-    #                    'self_tt_mn_taunt_attkable', 'self_tt_mn_taunt_attk', 'self_tt_mn_taunt_h',
-    #                    'self_tt_mn_divine_attkable', 'self_tt_mn_divine_attk', 'self_tt_mn_divine_h',
-    #
-    #                    # feature index 23 - 28
-    #                    'oppo_tt_mn_attk', 'oppo_tt_mn_h',
-    #                    'oppo_tt_mn_taunt_attk', 'oppo_tt_mn_taunt_h',
-    #                    'oppo_tt_mn_divine_attk', 'oppo_tt_mn_divine_h',
-    #
-    #                    # feature index 29 - 30
-    #                    'self_rem_deck', 'oppo_rem_deck',
-    #                    ]
-
-    # feature[0] = game_world.turn
-    # feature[1] = game_world[self.player.name]['health']
-    # feature[2] = game_world[self.player.opponent.name]['health']
-    # feature[3] = game_world[self.player.name]['mana']
-    # feature[4] = self.player.max_mana_this_turn(game_world.turn)
-    # feature[5] = self.player.opponent.max_mana_this_turn(game_world.turn + 1)
-    # feature[6] = len(game_world[self.player.name]['inhands'])
-    # feature[7] = len(game_world[self.player.opponent.name]['inhands'])
-    # feature[8] = len(game_world[self.player.name]['intable'])
-    # feature[9] = len(game_world[self.player.opponent.name]['intable'])
-    #
-    # self_mn_taunt, oppo_mn_taunt, self_mn_divine, oppo_mn_divine, \
-    #     self_tt_mn_attkable, self_tt_mn_attk, self_tt_mn_h, \
-    #     self_tt_mn_taunt_attkable, self_tt_mn_taunt_attk, self_tt_mn_taunt_h, \
-    #     self_tt_mn_divine_attkable, self_tt_mn_divine_attk, self_tt_mn_divine_h, \
-    #     oppo_tt_mn_attk, oppo_tt_mn_h, \
-    #     oppo_tt_mn_taunt_attk, oppo_tt_mn_taunt_h, \
-    #     oppo_tt_mn_divine_attk, oppo_tt_mn_divine_h = [0] * 19
-    #
-    # self_intable = game_world[self.player.name]['intable']
-    # oppo_intable = game_world[self.player.opponent.name]['intable']
-    #
-    # # process self table
-    # for card in self_intable:
-    #     self_tt_mn_attk += card.attack
-    #     self_tt_mn_h += card.health
-    #     if not card.used_this_turn:
-    #         self_tt_mn_attkable += card.attack
-    #     if card.taunt:
-    #         self_mn_taunt += 1
-    #         self_tt_mn_taunt_h += card.health
-    #         self_tt_mn_taunt_attk += card.attack
-    #         if not card.used_this_turn:
-    #             self_tt_mn_taunt_attkable += card.attack
-    #     if card.divine:
-    #         self_mn_divine += 1
-    #         self_tt_mn_divine_h += card.health
-    #         self_tt_mn_divine_attk += card.attack
-    #         if not card.used_this_turn:
-    #             self_tt_mn_divine_attkable += card.attack
-    #
-    # # process oppo intable
-    # for card in oppo_intable:
-    #     oppo_tt_mn_attk += card.attack
-    #     oppo_tt_mn_h += card.health
-    #     if card.taunt:
-    #         oppo_mn_taunt += 1
-    #         oppo_tt_mn_taunt_h += card.health
-    #         oppo_tt_mn_taunt_attk += card.attack
-    #     if card.divine:
-    #         oppo_mn_divine += 1
-    #         oppo_tt_mn_divine_h += card.health
-    #         oppo_tt_mn_divine_attk += card.attack
-    #
-    # feature[10] = self_mn_taunt
-    # feature[11] = oppo_mn_taunt
-    # feature[12] = self_mn_divine
-    # feature[13] = oppo_mn_divine
-    # feature[14] = self_tt_mn_attkable
-    # feature[15] = self_tt_mn_attk
-    # feature[16] = self_tt_mn_h
-    # feature[17] = self_tt_mn_taunt_attkable
-    # feature[18] = self_tt_mn_taunt_attk
-    # feature[19] = self_tt_mn_taunt_h
-    # feature[20] = self_tt_mn_divine_attkable
-    # feature[21] = self_tt_mn_divine_attk
-    # feature[22] = self_tt_mn_divine_h
-    # feature[23] = oppo_tt_mn_attk
-    # feature[24] = oppo_tt_mn_h
-    # feature[25] = oppo_tt_mn_taunt_attk
-    # feature[26] = oppo_tt_mn_taunt_h
-    # feature[27] = oppo_tt_mn_divine_attk
-    # feature[28] = oppo_tt_mn_divine_h
-    #
-    # feature[29] = game_world[self.player.name]['rem_deck']
-    # feature[30] = game_world[self.player.opponent.name]['rem_deck']
 
     def init_and_load(self):
         pass
@@ -701,6 +509,9 @@ class QValueFunctionApprox:
     def post_match(self):
         pass
 
+    def gen_last_state_act_repr(self, last_state, last_act):
+        return self.to_feature(last_state, last_act)
+
     def max_qvalue(self, game_world: 'GameWorld') -> float:
         pass
 
@@ -713,7 +524,7 @@ class QValueFunctionApprox:
     def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
         pass
 
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
+    def update(self, last_state_act_repr, new_game_world: 'GameWorld',
                r: float, match_end: bool, test: bool):
         pass
 
@@ -865,7 +676,7 @@ class QValueFunctionApprox:
             list(map(lambda action: self.to_feature(game_world, action), all_acts)))
         return features_over_acts
 
-    def determine_r(self, match_end: bool, winner: bool, old_state: 'GameWorld', new_state: 'GameWorld'):
+    def determine_r(self, match_end: bool, winner: bool):
         """ determine reward """
         # also see QValueTabular.determine_r for explanation
         r = 0
@@ -966,8 +777,8 @@ class QValueDQNApprox(QValueFunctionApprox):
             return qvalue
 
     def __repr__(self):
-        s = 'num_match:{0}, {1}, train_loss_size:{2}, mean:{3}'.\
-                   format(self.num_match, self.memory,
+        s = 'num_match:{0}, epsilon:{1}, {2}, train_loss_size:{3}, mean:{4}'.\
+                   format(self.num_match, self.player.adapt_epsilon, self.memory,
                           len(self.train_hist), numpy.mean(self.train_hist) if len(self.train_hist) else 0)
         # print feature weights
         # s += 'model weights: \n{0}\n {1}\n {2} {3}\nlag_model weights: \n{4}\n {5}\n {6} {7}'.\
@@ -977,16 +788,15 @@ class QValueDQNApprox(QValueFunctionApprox):
         #                   self.lag_model.get_weights()[2].flatten(), self.lag_model.get_weights()[3])
         return s
 
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
-               r: float, match_end: bool, test: bool):
+    def update(self, last_state_act_features, new_game_world: 'GameWorld', r: float, match_end: bool, test: bool):
         # only update in training phase
         if test:
             return
 
-        features = self.to_feature(last_state, last_act)
         # logger.info('action:' + str(last_act) + '--' + self.feature2str(features))
-        next_features_over_acts = self.to_feature_over_acts(new_game_world)
-        self.memory.append(features, last_act, r, next_features_over_acts, match_end)
+        # next_features_over_acts = self.to_feature_over_acts(new_game_world)
+        next_features_over_acts = None
+        self.memory.append(last_state_act_features, r, next_features_over_acts, match_end)
 
         # if memory is not full, continue to collect data
         if not self.memory.start_train():
@@ -1003,124 +813,4 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.train_hist.append(loss)
         # logger.warning("Q-learning update model weight update change: {0}, prev train loss:{1}, post train loss:{2}".format(
         #     numpy.sum((post_weight - prev_weight)**2), prev_train_loss, post_train_loss))
-
-
-class QValueLinearApprox(QValueFunctionApprox):
-    """ use linear function approximation. however always observe weights grow to infinity """
-
-    def __init__(self, player, degree, gamma, epsilon, alpha, annotation):
-        self.degree = degree          # polynomial degree for feature transforming
-        self.gamma = gamma            # discount factor
-        self.epsilon = epsilon        # epsilon-greedy rate
-        self.alpha = alpha            # learning rate
-        self.num_match = 0            # number of total matches
-        self.annotation = annotation  # annotation added in model file name
-        self.weight = None            # will be initialized in init_and_load()
-
-        self.poly = PolynomialFeatures(degree=self.degree, include_bias=False, interaction_only=False)
-        # features consist of two parts:
-        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
-        # 2. features of the current state if it is a end-turn action
-        poly_k = self.poly.fit_transform(numpy.zeros((1, len(self.feat_names)))).shape[1]
-        # num of total features. First part for non-end-turn action. Second part for end-turn action.
-        self.k = poly_k * 2
-        super().__init__(player)
-
-    def init_weight(self):
-        return numpy.zeros(self.k)
-
-    def __repr__(self):
-        # print feature weights
-        return 'num_match:' + str(self.num_match) + "," + \
-               ','.join(map(lambda name_w: name_w[0] + ':' + str(name_w[1]), zip(self.feat_names, self.weight)))
-
-    def file_name(self):
-        file_name = "{0}_gamma{1}_epsilon{2}_alpha{3}_linear_{4}". \
-            format(constant.ql_linear_data_path, self.gamma, self.epsilon, self.alpha, self.annotation)
-        return file_name
-
-    def init_and_load(self):
-        # load q values weight
-        if os.path.isfile(self.file_name()):
-            with open(self.file_name(), 'rb') as f:
-                self.gamma, self.epsilon, self.alpha, self.num_match, self.weight = pickle.load(f)
-        else:
-            self.weight = self.init_weight()
-
-    def save(self):
-        file_name = self.file_name()
-        with open(file_name, 'wb') as f:
-            pickle.dump((self.gamma, self.epsilon, self.alpha,
-                         self.num_match, self.weight), f, protocol=4)
-
-    def post_match(self):
-        """ perform model storage, or output some info """
-        self.num_match += 1
-        logger.warning('QValueLinearApprox post match:' + str(self))
-        # don't save any update during test
-        if not self.player.test and self.num_match % constant.ql_linear_save_freq == 0:
-            self.save()
-
-    def max_qvalue(self, game_world: 'GameWorld') -> float:
-        """ max_a Q(s,a)"""
-        all_acts = self.player.search_one_action(game_world)
-        max_state_qvalue = max(map(lambda action: self.qvalue(game_world, action), all_acts))
-        return max_state_qvalue
-
-    def qvalue(self, game_world: 'GameWorld', action: 'Action', return_feature=False):
-        """ Q(s,a)
-         feature(s,a) are afterstate, i.e., the state after action is acted on game_world """
-        features = self.to_feature(game_world, action)
-        qvalue = numpy.dot(features, self.weight)
-
-        if return_feature:
-            return qvalue, features
-        else:
-            return qvalue
-
-    def raw_feature_to_full_feature(self, features, action: 'Action') -> numpy.ndarray:
-        """
-        full features consist of two parts:
-        # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
-        # 2. features of the current state if it is an end-turn action
-        """
-        # Compare to parent implementation, QValueLinearApprox has poly transform features
-        features = self.poly.fit_transform(numpy.expand_dims(features, axis=0)).reshape(-1)
-        if isinstance(action, NullAction):
-            features = numpy.hstack((numpy.zeros_like(features), features))
-        else:
-            features = numpy.hstack((features, numpy.zeros_like(features)))
-        return features
-
-    def update(self, last_state: 'GameWorld', last_act: 'Action', new_game_world: 'GameWorld',
-               r: float, match_end: bool, test: bool):
-        """ w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a) """
-        # q value is based on linear combination of weights and features
-        old_qvalue, old_qvalue_features = self.qvalue(last_state, last_act, return_feature=True)
-
-        # if match end, max_new_state_qvalue eqauls to zero
-        if match_end:
-            max_new_state_qvalue = 0
-        else:
-            max_new_state_qvalue = self.max_qvalue(new_game_world)
-
-        predict_qvalue = r + self.gamma * max_new_state_qvalue
-        delta = predict_qvalue - old_qvalue
-        old_weight = self.weight.copy()
-        new_weight = self.alpha * delta * old_qvalue_features + self.weight
-
-        logger.info("Q-learning update. this state: %r, this action: %r" %
-                    (self.state2str(last_state), self.action2str(last_act)))
-        logger.info("Q-learning update. this state feature: %r" % old_qvalue_features)
-        logger.info("Q-learning update. new_state: %r, max_new_state_qvalue: %f" %
-                    (self.state2str(new_game_world), max_new_state_qvalue))
-        logger.info("Q-learning update. w <- w + alpha * (R + gamma * max_a'Q(s', a') - Q(s,a)) * feature(s,a):\n"
-                    "{0} <- \n{1} \n + {2} * ({3} + {4} * {5} - {6}) * {7}"
-                    .format(new_weight, old_weight, self.alpha, r, self.gamma,
-                            max_new_state_qvalue, old_qvalue, old_qvalue_features))
-
-        # only update in training phase
-        if not test:
-            self.weight = new_weight
-
 

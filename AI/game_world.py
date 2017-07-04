@@ -1,6 +1,6 @@
 from player import Player
 from typing import Union
-import copy
+import mycopy as copy
 from card import *
 
 

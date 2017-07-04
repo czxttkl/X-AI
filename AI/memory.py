@@ -33,9 +33,9 @@ class Memory:
 
         for i in range(size):
             features[i] = mini_batch[i][0]
-            r = mini_batch[i][2]
-            next_features_over_acts = mini_batch[i][3]
-            match_end = mini_batch[i][4]
+            r = mini_batch[i][1]
+            next_features_over_acts = mini_batch[i][2]
+            match_end = mini_batch[i][3]
             if match_end:
                 target[i] = r
             else:
@@ -67,31 +67,16 @@ class Memory:
         with open(self.qvalues_impl.file_name_memory(), 'rb') as f:
             self.pos_memory, self.neg_memory = pickle.load(f)
 
-    def append(self, features, last_act, reward, next_features_over_acts, match_end):
-        self.buffer.append([features, last_act, reward, next_features_over_acts, match_end])
+    def append(self, features, reward, next_features_over_acts, match_end):
+        self.buffer.append([features, reward, next_features_over_acts, match_end])
         if match_end:
             for b in self.buffer:
-                b[2] = reward
-                b[4] = True   # make match_end=True so that only reward is used
-                                  # to approximate Q(s,a) (No max a' Q(s',a'))
+                b[1] = reward
+                b[3] = True   # make match_end=True so that only reward is used
+                              # to approximate Q(s,a) (No max a' Q(s',a'))
                 if reward < 0:
                     self.neg_memory.append(b)
                 else:
                     self.pos_memory.append(b)
             self.buffer = []
 
-        # if reward < 0:
-        #     self.neg_memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        # elif reward > 0:
-        #     self.pos_memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        # else:
-        #     self.neu_memory.append((features, last_act, reward, next_features_over_acts, match_end))
-
-        # if reward != 0:
-        #     self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
-        # else:
-        #     # gradually accept zero reward intermediate state
-        #     thres = 60. / numpy.log(self.num_match + 2)
-        #     seed = numpy.random.random()
-        #     if seed > thres:
-        #         self.memory.append((features, last_act, reward, next_features_over_acts, match_end))
