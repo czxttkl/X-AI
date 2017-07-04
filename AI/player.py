@@ -560,8 +560,7 @@ class QLearningPlayer(Player):
                 logger.info("Choice %d (%.3f): %r" % (act_idx, qvalue, act))
             return max_act
         else:
-            # epsilon = max(self.epsilon, min(3.9 / numpy.log(self.qvalues_impl.num_match + 1), 0.5))
-            epsilon = self.epsilon
+            epsilon = max(self.epsilon, constant.ql_epsilon_cap - self.qvalues_impl.num_match / 1000 * 0.15)
             acts_weights = numpy.full(shape=len(all_acts), fill_value=epsilon / (len(all_acts) - 1))
             acts_weights[max_act_idx] = 1. - epsilon
 

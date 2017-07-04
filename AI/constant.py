@@ -11,6 +11,8 @@ ql_exact_save_freq = 5000  # num of matches to save q-learning tabular values on
 ql_linear_save_freq = 100  # num of matches to save q-learning linear weights once
 ql_dqn_save_freq = 100     # num of matches to save q-learning DQN weights once
 
+ql_epsilon_cap = 0.7       # maximum epsilon to start with
+
 ql_dqn_memory_start_train_size = 50
 ql_dqn_pos_batch_size = 20
 ql_dqn_neg_batch_size = 20
