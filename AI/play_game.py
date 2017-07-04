@@ -135,7 +135,7 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
     # match.play_n_match(n=100)
 
 
-def test_rd_vs_ql_dqn_magix_fix_deck():
+def test_rd_vs_ql_dqn_mage_fix_deck():
     """ test q learningdqn with Deep Q-Network"""
     start_health = 15
     gamma = 1.0     # discounting factor
@@ -145,7 +145,7 @@ def test_rd_vs_ql_dqn_magix_fix_deck():
     deck = constant.mage_fix_deck
     logger = logging.getLogger('hearthstone')
     logger.addHandler(logging.StreamHandler())
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.WARNING)
     player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
                            start_health=start_health, fix_deck=deck)
     player2 = QLearningPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
@@ -154,13 +154,13 @@ def test_rd_vs_ql_dqn_magix_fix_deck():
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=10)
+    match.play_n_match(n=10000)
     # test
     # logger.setLevel(logging.INFO)
     # player1.reset(test=True)
     # player2.reset(test=True)
     # match = Match(player1, player2)
-    # match.play_n_match(n=10)
+    # match.play_n_match(n=100)
 
 
 if __name__ == "__main__":
@@ -169,6 +169,7 @@ if __name__ == "__main__":
     # test_rd_vs_ql_exact_all_fireblast_deck()
     # test_rd_vs_ql_all_fireblast_deck()
     # test_rd_vs_ql_la_all_fireblast_deck()
-    test_rd_vs_ql_dqn_all_fireblast_deck()
+    # test_rd_vs_ql_dqn_all_fireblast_deck()
+    test_rd_vs_ql_dqn_mage_fix_deck()
 
 

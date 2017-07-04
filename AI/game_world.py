@@ -40,7 +40,7 @@ class GameWorld:
               (self.player2_name, self.health(self.player2_name), self.mana(self.player2_name))
         s += 'intable: %r\n' % self.intable(self.player2_name)
         s += 'inhands: %r\n' % self.inhands(self.player2_name)
-        s += 'used cards: {0}\n'.format(str(self.used_cards(self.player2_name))[28:-2])
+        s += 'used cards:{0}\n'.format(str(self.used_cards(self.player2_name))[28:-2])
         return s
 
     def __getitem__(self, player_name):

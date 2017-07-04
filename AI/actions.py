@@ -7,7 +7,15 @@ import copy
 class Action:
 
     def __init__(self, src_player, src_card):
-        self.src_player = src_player.name
+        """
+        Any subclass of Action should note:
+        src_player should not be entire player object but only his name.
+        otherwise, when the action is copied, it will be too costy.
+        """
+        if src_player is None or isinstance(src_player, str):
+            self.src_player = src_player
+        else:
+            self.src_player = src_player.name
         self.src_card = src_card
 
     def apply(self, game_world):
@@ -61,7 +69,10 @@ class NullAction(Action):
 class MinionPlay(Action):
     """ Play a minion from inhand to intable """
     def __init__(self, src_card, src_player=None, from_inhands=True):
-        self.src_player = src_player.name
+        if src_player is None or isinstance(src_player, str):
+            self.src_player = src_player
+        else:
+            self.src_player = src_player.name
         self.src_card = src_card
         self.from_inhands = from_inhands
 
@@ -69,7 +80,7 @@ class MinionPlay(Action):
         if self.from_inhands:
             new_minion = Card.find_card(game_world.inhands(self.src_player), self.src_card)
             game_world.play_card_from_inhands(self.src_player, new_minion)
-            game_world.dec_mana(new_minion.mana_cost)
+            game_world.dec_mana(self.src_player, new_minion.mana_cost)
         else:
             # when MinionPlay is not from inhands, play self.src_card directly
             new_minion = self.src_card
@@ -93,12 +104,15 @@ class MinionPlay(Action):
 class SpellPlay(Action):
 
     def __init__(self, src_player, src_card, target_player=None, target_unit=None):
-        self.src_player = src_player.name
-        self.src_card = src_card
-        if target_player:
-            self.target_player = target_player.name
+        if src_player is None or isinstance(src_player, str):
+            self.src_player = src_player
         else:
-            self.target_player = None
+            self.src_player = src_player.name
+        if target_player is None or isinstance(target_player, str):
+            self.target_player = target_player
+        else:
+            self.target_player = target_player.name
+        self.src_card = src_card
         self.target_unit = target_unit
 
     def __apply__(self, game_world: 'GameWorld'):
@@ -137,8 +151,14 @@ class SpellPlay(Action):
 class MinionAttack(Action):
 
     def __init__(self, src_player, target_player, target_unit, src_card):
-        self.src_player = src_player.name
-        self.target_player = target_player.name
+        if src_player is None or isinstance(src_player, str):
+            self.src_player = src_player
+        else:
+            self.src_player = src_player.name
+        if target_player is None or isinstance(target_player, str):
+            self.target_player = target_player
+        else:
+            self.target_player = target_player.name
         self.target_unit = target_unit
         self.src_card = src_card
 
@@ -169,9 +189,15 @@ class MinionAttack(Action):
 class HeroPowerAttack(Action):
 
     def __init__(self, src_player, src_card, target_player, target_unit):
-        self.src_player = src_player.name
+        if src_player is None or isinstance(src_player, str):
+            self.src_player = src_player
+        else:
+            self.src_player = src_player.name
+        if target_player is None or isinstance(target_player, str):
+            self.target_player = target_player
+        else:
+            self.target_player = target_player.name
         self.src_card = src_card
-        self.target_player = target_player.name
         self.target_unit = target_unit
 
     def __apply__(self, game_world: 'GameWorld'):

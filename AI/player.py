@@ -1,6 +1,7 @@
 import numpy
 from card import *
 from actions import *
+from actions import NullAction
 import os.path
 import constant
 import pickle
