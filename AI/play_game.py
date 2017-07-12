@@ -139,7 +139,7 @@ def test_rd_vs_ql_dqn_mage_fix_deck():
     """ test q learningdqn with Deep Q-Network"""
     start_health = 15
     gamma = 1.0     # discounting factor
-    epsilon = 0.3   # epsilon-greedy
+    epsilon = 0.2   # epsilon-greedy
     alpha = 0.01    # learning rate
     hidden_dim = 50   # hidden unit dimension for 2 hidden layer NN
     deck = constant.mage_fix_deck
@@ -154,7 +154,7 @@ def test_rd_vs_ql_dqn_mage_fix_deck():
                               hidden_dim=hidden_dim, gamma=gamma, epsilon=epsilon, alpha=alpha, test=False)
     # train
     match = Match(player1, player2)
-    match.play_n_match(n=10000)
+    match.play_n_match(n=10000000)
     # test
     # logger.setLevel(logging.INFO)
     player1.reset(test=True)
@@ -169,7 +169,7 @@ if __name__ == "__main__":
     # test_rd_vs_ql_exact_all_fireblast_deck()
     # test_rd_vs_ql_all_fireblast_deck()
     # test_rd_vs_ql_la_all_fireblast_deck()
-    test_rd_vs_ql_dqn_all_fireblast_deck()
-    # test_rd_vs_ql_dqn_mage_fix_deck()
+    # test_rd_vs_ql_dqn_all_fireblast_deck()
+    test_rd_vs_ql_dqn_mage_fix_deck()
 
 

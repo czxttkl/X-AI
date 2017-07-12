@@ -485,6 +485,7 @@ class QLearningPlayer(Player):
     def adapt_epsilon(self):
         return max(self.epsilon, constant.ql_epsilon_cap - self.qvalues_impl.num_match / 1000 * 0.25)
 
+
 class QValueFunctionApprox:
     feat_names = [
         'self_h', 'oppo_h',

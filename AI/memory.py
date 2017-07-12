@@ -70,8 +70,10 @@ class Memory:
     def append(self, features, reward, next_features_over_acts, match_end):
         self.buffer.append([features, reward, next_features_over_acts, match_end])
         if match_end:
-            for b in self.buffer:
-                b[1] = reward
+            len_buffer = len(self.buffer)
+            for idx, b in enumerate(self.buffer):
+                discount = self.qvalues_impl.gamma ** (len_buffer - (idx + 1))
+                b[1] = discount * reward
                 b[3] = True   # make match_end=True so that only reward is used
                               # to approximate Q(s,a) (No max a' Q(s',a'))
                 if reward < 0:
