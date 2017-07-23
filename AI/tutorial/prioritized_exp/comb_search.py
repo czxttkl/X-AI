@@ -18,7 +18,7 @@ TEST_PERIOD = 10
 with tf.variable_scope('DQN_with_prioritized_replay'):
     RL = DQNPrioritizedReplay(
         n_features=k, memory_size=MEMORY_SIZE,
-        e_greedy_increment=0.00005, sess=sess, prioritized=True, output_graph=True,
+        e_greedy_increment=0.00005, sess=sess, prioritized=False, output_graph=True,
     )
 sess.run(tf.global_variables_initializer())
 

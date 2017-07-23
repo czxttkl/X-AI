@@ -232,6 +232,7 @@ class DQNPrioritizedReplay:
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
     def store_transition(self, s, a, r, s_):
+        a = 0    # placeholder
         if self.prioritized:  # prioritized replay
             transition = np.hstack((s, [a, r], s_))
             self.memory.store(transition)  # have high priority for newly arrived transition
@@ -297,10 +298,10 @@ class DQNPrioritizedReplay:
         # index n_features: action tuple
         # index n_features: reward
         # last n_features: features of s' (next state)
-        q_next, q_eval = self.sess.run(
-            [self.q_next, self.q_eval],
-            feed_dict={self.s_: batch_memory[:, -self.n_features:],
-                       self.s: batch_memory[:, :self.n_features]})
+        # q_next, q_eval = self.sess.run(
+        #     [self.q_next, self.q_eval],
+        #     feed_dict={self.s_: batch_memory[:, -self.n_features:],
+        #                self.s: batch_memory[:, :self.n_features]})
 
         # q_target shape: (batch_size, action_size)
         reward = batch_memory[:, self.n_features + 1].reshape((-1, 1))
