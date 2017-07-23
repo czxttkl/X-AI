@@ -4,6 +4,8 @@ View more on my tutorial page: https://morvanzhou.github.io/tutorials/
 Using:
 Tensorflow: 1.0
 gym: 0.8.0
+
+# copy from https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/tree/master/contents/5.2_Prioritized_Replay_DQN
 """
 import gym
 from RL_brain import DQNPrioritizedReplay
