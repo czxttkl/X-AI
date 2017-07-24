@@ -5,11 +5,11 @@ Using:
 Tensorflow: 1.0
 gym: 0.8.0
 """
-
+import time
 import numpy as np
 import tensorflow as tf
 import numpy
-
+from collections import deque
 np.random.seed(1)
 tf.set_random_seed(1)
 
@@ -186,7 +186,7 @@ class DQNPrioritizedReplay:
         if output_graph:
             tf.summary.FileWriter("logs/", self.sess.graph)
 
-        self.cost_his = []
+        self.cost_his = deque(maxlen=100)
 
     def _build_net(self):
         def build_layers(s, c_names, n_l1, w_initializer, b_initializer):

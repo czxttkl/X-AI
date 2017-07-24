@@ -37,8 +37,10 @@ def train(RL):
     total_steps = 0
     steps = []
     episodes = []
-    for i_episode in range(20):
+    episodes_rewards = []
+    for i_episode in range(15):
         observation = env.reset()
+        rewards = 0
         while True:
             # env.render()
 
@@ -47,6 +49,7 @@ def train(RL):
             observation_, reward, done, info = env.step(action)
 
             if done: reward = 10
+            rewards += reward
 
             RL.store_transition(observation, action, reward, observation_)
 
@@ -57,11 +60,13 @@ def train(RL):
                 print('episode ', i_episode, ' finished')
                 steps.append(total_steps)
                 episodes.append(i_episode)
+                episodes_rewards.append(rewards)
                 break
 
             observation = observation_
             total_steps += 1
-    return np.vstack((episodes, steps))
+
+    return np.vstack((episodes, steps, episodes_rewards))
 
 his_natural = train(RL_natural)
 his_prio = train(RL_prio)
@@ -71,6 +76,17 @@ plt.plot(his_natural[0, :], his_natural[1, :] - his_natural[1, 0], c='b', label=
 plt.plot(his_prio[0, :], his_prio[1, :] - his_prio[1, 0], c='r', label='DQN with prioritized replay')
 plt.legend(loc='best')
 plt.ylabel('total training time')
+plt.xlabel('episode')
+plt.grid()
+plt.show()
+
+
+
+# plot rewards
+plt.plot(his_natural[0, :], his_natural[2, :], c='b', label='natural DQN')
+plt.plot(his_prio[0, :], his_prio[2, :], c='r', label='DQN with prioritized replay')
+plt.legend(loc='best')
+plt.ylabel('rewards per episode')
 plt.xlabel('episode')
 plt.grid()
 plt.show()
