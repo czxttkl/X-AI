@@ -6,7 +6,7 @@ https://gym.openai.com/envs/MountainCar-v0
 https://github.com/dennybritz/reinforcement-learning/tree/master/FA
 
 some findings:
-1. the best result is acheived when using the four RBFSampler as feature transformer and set
+1. the best result is achieved when using the four RBFSampler as feature transformer and set
 SGDClassifier's eta0 as 0.1
 1. if I use polynomial transformation, the result is not good.
 2. learning rate is also an important parameter to tune

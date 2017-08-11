@@ -10,8 +10,6 @@ import numpy as np
 import tensorflow as tf
 import numpy
 from collections import deque
-np.random.seed(1)
-tf.set_random_seed(1)
 
 
 class SumTree(object):
@@ -296,7 +294,7 @@ class DQNPrioritizedReplay:
         # memory format:
         # first n_features: features of s (last state),
         # index n_features: action tuple
-        # index n_features: reward
+        # index n_features + １: reward
         # last n_features: features of s' (next state)
         # q_next, q_eval = self.sess.run(
         #     [self.q_next, self.q_eval],

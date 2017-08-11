@@ -269,7 +269,7 @@ class DQNPrioritizedReplay:
         # memory format:
         # first n_features: features of s (last state),
         # index n_features: eval_act_index
-        # index n_features: reward
+        # index n_features + 1: reward
         # last n_features: features of s' (next state)
         q_next, q_eval = self.sess.run(
             [self.q_next, self.q_eval],

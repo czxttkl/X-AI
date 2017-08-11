@@ -137,7 +137,7 @@ def test_rd_vs_ql_dqn_all_fireblast_deck():
 
 def test_rd_vs_ql_dqn_mage_fix_deck():
     """ test q learningdqn with Deep Q-Network"""
-    start_health = 15
+    start_health = 30
     gamma = 1.0     # discounting factor
     epsilon = 0.2   # epsilon-greedy
     alpha = 0.01    # learning rate
