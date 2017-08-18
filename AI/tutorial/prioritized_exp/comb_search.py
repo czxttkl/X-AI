@@ -7,7 +7,7 @@ import time
 sess = tf.Session()
 k = 50   # total available card size
 d = 30    # deck size
-use_prioritized_replay = True
+use_prioritized_replay = False
 # the function to optimize is a linear combination of
 # power of one, two and interaction
 kk = k + k + k * (k-1) / 2
@@ -63,11 +63,18 @@ class Environment():
 
     def output(self, feature):
         # t1 = time.time()
+        assert len(feature.shape) == 1
         trans_feature = self.poly.fit_transform(feature.reshape((1, -1))).flatten()
         out = numpy.dot(self.coef, trans_feature)
         # t2 = time.time()
         # print('step output time', t2 - t1)
         return out
+
+    def outputs(self, features):
+        assert len(features.shape) == 2
+        trans_features = self.poly.fit_transform(features)
+        outs = numpy.dot(self.coef, trans_features.T)
+        return outs
 
     def step(self, action):
         old_out = self.output(self.curr_feature)
@@ -75,8 +82,8 @@ class Environment():
         self.curr_feature[idx_to_remove] = 0
         self.curr_feature[idx_to_add] = 1
         new_out = self.output(self.curr_feature)
-        # reward = new_out - old_out
-        reward = old_out - new_out
+        reward = new_out - old_out
+        # reward = old_out - new_out
         # reward = new_out
         return self.curr_feature.copy(), reward
 
@@ -88,20 +95,22 @@ for i_episode in range(EPISODE_SIZE):
     episode_steps = 0
     observation = env.reset()
     for i_epsisode_step in range(TRIAL_SIZE):
-        action = RL.choose_action(observation, epsilon_greedy=True)
+        action = RL.choose_action(observation, state_val_eval_func=env.output,
+                                  state_vals_eval_func=env.outputs, epsilon_greedy=True)
         observation_, reward = env.step(action)
         RL.store_transition(observation, action, reward, observation_)
         total_steps += 1
         observation = observation_
-        if total_steps > MEMORY_SIZE / 5:
+        if total_steps > MEMORY_SIZE // 5:
             RL.learn()
 
     print('episode ', i_episode, ' finished with value', env.output(observation), 'cur_epsilon', RL.cur_epsilon())
 
-    if total_steps > MEMORY_SIZE / 5 and i_episode % TEST_PERIOD == 0:
+    if total_steps > MEMORY_SIZE // 5 and i_episode % TEST_PERIOD == 0:
         observation = env.reset()
         for i_episode_test_step in range(TRIAL_SIZE):
-            action = RL.choose_action(observation, epsilon_greedy=False)
+            action = RL.choose_action(observation, state_val_eval_func=env.output,
+                                      state_vals_eval_func=env.outputs, epsilon_greedy=False)
             observation, reward = env.step(action)
             test_output = env.output(observation)
             print('TEST step {0}, finished with value {1} and reward {2}'.

@@ -251,25 +251,28 @@ class DQNPrioritizedReplay:
     #         action = np.random.randint(0, self.n_actions)
     #     return action
 
-    def choose_action(self, observation, epsilon_greedy=True):
+    def choose_action(self, observation, state_val_eval_func, state_vals_eval_func, epsilon_greedy=True):
         # action format (idx_to_remove, idx_to_add)
         zero_idx = numpy.where(observation == 0)[0]
         one_idx = numpy.where(observation == 1)[0]
-        features = numpy.repeat(observation.reshape(1, -1), repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+        next_state_features = numpy.repeat(observation.reshape(1, -1), repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
         action_list = []
         action_idx = 0
         for zi in zero_idx:
             for oi in one_idx:
-                features[action_idx, zi] = 1
-                features[action_idx, oi] = 0
+                next_state_features[action_idx, oi] = 0
+                next_state_features[action_idx, zi] = 1
                 action_list.append((oi, zi))
                 action_idx += 1
         # the last row of features means don't change any card
         action_list.append((zi, oi))
 
         if not epsilon_greedy or np.random.uniform() < self.epsilon:
-            actions_value = self.sess.run(self.q_eval, feed_dict={self.s: features})
-            action_idx = np.argmax(actions_value)
+            pred_next_state_values = self.sess.run(self.q_eval, feed_dict={self.s: next_state_features}).flatten()
+            cur_state_value = state_val_eval_func(observation)
+            next_state_values = state_vals_eval_func(next_state_features)
+            action_reward = next_state_values - cur_state_value
+            action_idx = np.argmax(action_reward + pred_next_state_values)
             action = action_list[action_idx]
         else:
             action = (np.random.choice(one_idx), np.random.choice(zero_idx))
@@ -294,7 +297,7 @@ class DQNPrioritizedReplay:
         # memory format:
         # first n_features: features of s (last state),
         # index n_features: action tuple
-        # index n_features + １: reward
+        # index n_features + 1: reward
         # last n_features: features of s' (next state)
         # q_next, q_eval = self.sess.run(
         #     [self.q_next, self.q_eval],
