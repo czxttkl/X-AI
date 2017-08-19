@@ -1,16 +1,22 @@
+"""
+Use Q-learning to maximize a function, which is a linear combination of power of one, two and interaction
+"""
+
 import numpy
 from sklearn.preprocessing import PolynomialFeatures
 import tensorflow as tf
 from QLearning import QLearning
 import time
+from tfboard import TensorboardWriter
 
 sess = tf.Session()
 k = 60   # total available card size
 d = 30    # deck size
 use_prioritized_replay = False
+noisy = True         # whether the reward is noisy
+noisy_reward_normalize_factor = 2850.  # when noisy=True, we should normalize reward between 0 and 1
 gamma = 0.9
-# the function to optimize is a linear combination of
-# power of one, two and interaction
+# the function to optimize is a linear combination of power of one, two and interaction
 kk = k + k + k * (k-1) // 2  # polynomial feature size
 n_actions = d * (k-d) + 1    # number of one-card modification
 n_hidden = d * 2             # number of hidden units in Qlearning NN
@@ -28,7 +34,8 @@ RL = QLearning(
     e_greedy_increment=0.0005, sess=sess, prioritized=use_prioritized_replay, output_graph=True,
     reward_decay=gamma
 )
-summary_writer = tf.summary.FileWriter("comb_search_k{0}_d{1}/{2}".format(k, d, time.time()))
+
+tb_writer = TensorboardWriter(folder_name="comb_search_k{0}_d{1}/{2}".format(k, d, time.time()))
 
 sess.run(tf.global_variables_initializer())
 
@@ -110,7 +117,11 @@ class Environment():
         new_out = self.output(self.cur_state)
         # reward = new_out - old_out
         # reward = old_out - new_out
-        reward = new_out
+        if noisy:
+            # generate 0 or 1
+            reward = numpy.random.binomial(n=1, p=new_out/noisy_reward_normalize_factor)
+        else:
+            reward = new_out
         return self.cur_state.copy(), reward
 
 
@@ -142,13 +153,14 @@ for i_episode in range(EPISODE_SIZE):
             print('TEST step {0}, output: {1}, at {2}, qval: {3}, reward {4}'.
                   format(i_episode_test_step, test_output, cur_state, q_val, reward))
 
-        summary = tf.Summary()
-        summary.value.add(tag='Prioritized={0}, gamma={1}/Test Ending Output'.format(use_prioritized_replay, gamma),
-                          simple_value=test_output)
-        summary.value.add(tag='Prioritized={0}, gamma={1}/Test Ending Qvalue'.format(use_prioritized_replay, gamma),
-                          simple_value=q_val)
-        summary_writer.add_summary(summary, global_step=i_episode)
-        summary_writer.flush()
+        tb_writer.write(tags=['Prioritized={0}, gamma={1}, noisy={2}/Test Ending Output'.
+                                format(use_prioritized_replay, gamma, noisy),
+                              'Prioritized={0}, gamma={1}, noisy={2}/Test Ending Qvalue'.
+                                format(use_prioritized_replay, gamma, noisy),
+                              ],
+                        values=[test_output,
+                                q_val],
+                        step=i_episode)
 
 
 
