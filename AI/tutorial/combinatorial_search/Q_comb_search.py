@@ -13,8 +13,10 @@ sess = tf.Session()
 k = 60   # total available card size
 d = 30    # deck size
 use_prioritized_replay = False
-noisy = True         # whether the reward is noisy
-noisy_reward_normalize_factor = 2850.  # when noisy=True, we should normalize reward between 0 and 1
+noisy = False         # whether the reward is noisy
+# when noisy=True, we should normalize reward between 0 and 1
+reward_normalize_std = 800.
+reward_normalize_mean = 2200.
 gamma = 0.9
 # the function to optimize is a linear combination of power of one, two and interaction
 kk = k + k + k * (k-1) // 2  # polynomial feature size
@@ -23,7 +25,7 @@ n_hidden = d * 2             # number of hidden units in Qlearning NN
 MEMORY_SIZE = 50000
 MEMORY_SIZE_START_LEARNING = 1000
 TRIAL_SIZE = d // 2              # how many card modification allowed
-EPISODE_SIZE = 600000000         # the size of training episodes
+EPISODE_SIZE = 12000             # the size of training episodes
 MONTE_CARLO_ITERATIONS = 100    # use monte carlo samples to determine max and min
 TEST_PERIOD = 10                 # how many per training episodes to do training
 # np.random.seed(1)
@@ -32,7 +34,7 @@ TEST_PERIOD = 10                 # how many per training episodes to do training
 RL = QLearning(
     n_features=k, n_actions=n_actions, n_hidden=n_hidden, memory_size=MEMORY_SIZE,
     e_greedy_increment=0.0005, sess=sess, prioritized=use_prioritized_replay, output_graph=True,
-    reward_decay=gamma
+    reward_decay=gamma, n_total_episode=EPISODE_SIZE
 )
 
 tb_writer = TensorboardWriter(folder_name="comb_search_k{0}_d{1}/{2}".format(k, d, time.time()))
@@ -119,9 +121,10 @@ class Environment():
         # reward = old_out - new_out
         if noisy:
             # generate 0 or 1
-            reward = numpy.random.binomial(n=1, p=new_out/noisy_reward_normalize_factor)
+            reward = numpy.random.binomial(n=1,
+                                           p=(new_out - reward_normalize_mean) / reward_normalize_std)
         else:
-            reward = new_out
+            reward = (new_out - reward_normalize_mean) / reward_normalize_std
         return self.cur_state.copy(), reward
 
 

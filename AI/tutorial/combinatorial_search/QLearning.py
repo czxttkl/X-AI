@@ -1,9 +1,5 @@
 """
-The DQN improvement: Prioritized Experience Replay (based on https://arxiv.org/abs/1511.05952)
-View more on my tutorial page: https://morvanzhou.github.io/tutorials/
-Using:
-Tensorflow: 1.0
-gym: 0.8.0
+Neural network approximation Q-Learning with prioritized experience replay
 """
 import time
 import numpy as np
@@ -14,22 +10,35 @@ from collections import deque
 
 class Memory(object):  # stored as ( s, a, r, s_ ) in Deque
 
-    def __init__(self, capacity, prioritized, n_features, n_actions):
+    def __init__(self, capacity, prioritized, n_features, n_actions, n_total_episode, batch_size):
         self.prioritized = prioritized
         self.memory = deque(maxlen=capacity)
         self.n_actions = n_actions
         self.n_features = n_features
+        self.n_total_episode = n_total_episode
+        self.batch_size = batch_size
 
     def store(self, transition):
         self.memory.append(transition)
 
-    def sample(self, n):
-        assert n <= len(self.memory)
-        sample_mem_idx = numpy.random.choice(len(self.memory), n, replace=False)
+    def sample(self):
+        if self.prioritized:
+            return self._prioritized_sample()
+        else:
+            return self._no_prioritized_sample()
 
-        qsa_feature = numpy.zeros((n, self.n_features))
-        qsa_next_feature = numpy.zeros((n, self.n_actions, self.n_features))
-        rewards = numpy.zeros(n)
+    def _prioritized_sample(self):
+        pass
+
+    def _no_prioritized_sample(self):
+        assert self.batch_size <= len(self.memory)
+        sample_mem_idx = numpy.random.choice(len(self.memory), self.batch_size, replace=False)
+
+        qsa_feature = numpy.zeros((self.batch_size, self.n_features))
+        qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
+        rewards = numpy.zeros(self.batch_size)
+        # every sample is equally important in non-prioritized sampling
+        is_weights = numpy.ones(self.batch_size)
 
         for i, mem_idx in enumerate(sample_mem_idx):
             state, action, reward, next_state = self.memory[mem_idx]
@@ -37,7 +46,7 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in Deque
             qsa_feature[i] = self.apply(state, action)
             qsa_next_feature[i] = self.all_possible_next_states(next_state)
 
-        return qsa_feature, qsa_next_feature, rewards
+        return qsa_feature, qsa_next_feature, rewards, is_weights
 
     def apply(self, state, action):
         state_copy = state.copy()
@@ -62,21 +71,13 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in Deque
         # the last row of next_states means don't change any card
         return next_states
 
-    def update(self, idx, error):
-        p = self._get_priority(error)
-        self.tree.update(idx, p)
-
-    def _get_priority(self, error):
-        error += self.epsilon  # avoid 0
-        clipped_error = np.clip(error, 0, self.abs_err_upper)
-        return np.power(clipped_error, self.alpha)
-
 
 class QLearning:
     def __init__(
             self,
             n_features,
             n_actions,
+            n_total_episode,
             n_hidden=20,
             learning_rate=0.005,
             reward_decay=1.0,
@@ -90,6 +91,7 @@ class QLearning:
             sess=None,
     ):
         self.n_features = n_features
+        self.n_total_episode = n_total_episode
         self.n_actions = n_actions
         self.n_hidden = n_hidden
         self.lr = learning_rate
@@ -108,7 +110,8 @@ class QLearning:
         self._build_net()
 
         self.memory = Memory(prioritized=self.prioritized, capacity=memory_size,
-                             n_features=self.n_features, n_actions=self.n_actions)
+                             n_features=self.n_features, n_actions=self.n_actions,
+                             n_total_episode=self.n_total_episode, batch_size=self.batch_size)
 
         if sess is None:
             self.sess = tf.Session()
@@ -118,8 +121,6 @@ class QLearning:
 
         if output_graph:
             tf.summary.FileWriter("logs/", self.sess.graph)
-
-        self.cost_his = deque(maxlen=100)
 
     def _build_net(self):
         def build_eval_layers(s, c_names, w_initializer, b_initializer):
@@ -167,10 +168,11 @@ class QLearning:
             self.q_next = build_target_layers(self.s_, c_names, w_initializer, b_initializer)
 
         # ------------------ loss function ----------------------
-        # self.q_target = tf.placeholder(tf.float32, [None, 1], name='Q_target')  # for calculating loss
+        # importance sampling weight
         self.q_target = self.reward + self.gamma * tf.reduce_max(self.q_next, axis=1)
+        self.is_weights = tf.placeholder(tf.float32, [None, 1], name='IS_weights')
         with tf.variable_scope('loss'):
-            self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
+            self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval))
         with tf.variable_scope('train'):
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
@@ -197,7 +199,7 @@ class QLearning:
             self._replace_target_params()
             print('target_params_replaced')
 
-        qsa_feature, qsa_next_feature, rewards = self.memory.sample(self.batch_size)
+        qsa_feature, qsa_next_feature, rewards, is_weights = self.memory.sample()
 
         q_target, q_next, q_eval = self.sess.run(
             [self.q_target, self.q_next, self.q_eval],
@@ -205,12 +207,11 @@ class QLearning:
                        self.s_: qsa_next_feature,
                        self.reward: rewards})
 
-        _, self.cost = self.sess.run([self._train_op, self.loss],
+        _, self.loss = self.sess.run([self._train_op, self.loss],
                                      feed_dict={self.s: qsa_feature,
                                                 self.s_: qsa_next_feature,
-                                                self.reward: rewards})
-
-        self.cost_his.append(self.cost)
+                                                self.reward: rewards,
+                                                self.is_weights: is_weights})
 
         self.epsilon = self.cur_epsilon()
         self.learn_step_counter += 1
