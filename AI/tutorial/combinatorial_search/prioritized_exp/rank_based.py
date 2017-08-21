@@ -158,7 +158,7 @@ class Experience(object):
         # sample from k segments
         for n in range(1, self.batch_size + 1):
             index = random.randint(distribution['strata_ends'][n] + 1,
-                                   distribution['strata_ends'][n + 1])
+                                   max(distribution['strata_ends'][n] + 1, distribution['strata_ends'][n + 1]))
             rank_list.append(index)
 
         # beta, increase by global_step, max 1

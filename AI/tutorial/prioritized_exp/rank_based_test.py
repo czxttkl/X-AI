@@ -11,7 +11,7 @@ def t():
 
     # insert to experience
     print('test insert experience')
-    for i in range(1, 51):
+    for i in range(1, 1151):
         # tuple, like(state_t, a, r, state_t_1, t)
         to_insert = (i, 1, 1, i, 1)
         experience.store(to_insert)
