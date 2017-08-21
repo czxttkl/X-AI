@@ -23,7 +23,7 @@ class Memory(object):
         self.n_mem_size_learn_start = n_mem_size_learn_start
 
         if self.prioritized:
-            # partition_num * n_mem_size_learn_start should be larger than capacity
+            # partition_num (==batch_size) * n_mem_size_learn_start should be larger than capacity
             assert self.batch_size * self.n_mem_size_learn_start >= self.capacity
             self.memory = rank_based.Experience({'size': self.capacity, 'learn_start': self.n_mem_size_learn_start,
                                                  'partition_num': self.batch_size, 'batch_size': self.batch_size,
@@ -123,7 +123,6 @@ class QLearning:
             memory_size=10000,
             batch_size=32,
             e_greedy_increment=None,
-            output_graph=False,
             prioritized=True,
             sess=None,
     ):
@@ -152,14 +151,7 @@ class QLearning:
                              n_total_episode=self.n_total_episode, batch_size=self.batch_size,
                              n_mem_size_learn_start=self.n_mem_size_learn_start)
 
-        if sess is None:
-            self.sess = tf.Session()
-            self.sess.run(tf.global_variables_initializer())
-        else:
-            self.sess = sess
-
-        if output_graph:
-            tf.summary.FileWriter("logs/", self.sess.graph)
+        self.sess = sess
 
     def _build_net(self):
         def build_eval_layers(s, c_names, w_initializer, b_initializer):
@@ -193,11 +185,12 @@ class QLearning:
         self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_')
         self.reward = tf.placeholder(tf.float32, [None], name='reward')  # reward
 
+        w_initializer, b_initializer = \
+            tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
+
         # ------------------ build evaluate_net ------------------
         with tf.variable_scope('eval_net'):
-            c_names, w_initializer, b_initializer = \
-                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], \
-                tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
+            c_names = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
             self.q_eval = build_eval_layers(self.s, c_names, w_initializer, b_initializer)
 
         # ------------------ build target_net ------------------

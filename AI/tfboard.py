@@ -6,9 +6,9 @@ import tensorflow as tf
 
 class TensorboardWriter:
 
-    def __init__(self, folder_name):
+    def __init__(self, folder_name, session):
         self.folder_name = folder_name
-        self.summary_writer = tf.summary.FileWriter(self.folder_name)
+        self.summary_writer = tf.summary.FileWriter(logdir=self.folder_name, graph=session.graph)
 
     def write(self, tags, values, step):
         """
