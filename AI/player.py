@@ -15,7 +15,7 @@ from collections import deque, defaultdict
 from keras.layers import Dense
 from keras.optimizers import Adam,SGD
 from keras.models import Sequential
-from memory import Memory
+from memory import MonteCarloMemory
 
 numpy.set_printoptions(threshold=10)
 logger = logging.getLogger('hearthstone')
@@ -427,7 +427,7 @@ class QLearningPlayer(Player):
         if method == 'exact':
             self.qvalues_impl = QValueTabular(self, gamma, epsilon, alpha, annotation)
         elif method == 'dqn':
-            self.qvalues_impl = QValueDQNApprox(self, hidden_dim, gamma, epsilon, alpha, annotation)
+            self.qvalues_impl = MonteCarloQValueDQNApprox(self, hidden_dim, gamma, epsilon, alpha, annotation)
 
     def pick_action(self, all_acts, game_world) -> 'Action':
         if len(all_acts) == 1:
@@ -689,8 +689,8 @@ class QValueFunctionApprox:
         return r
 
 
-class QValueDQNApprox(QValueFunctionApprox):
-    """ use deep q network for function approximation """
+class MonteCarloQValueDQNApprox(QValueFunctionApprox):
+    """ use monte-carlo based deep q network for function approximation """
     def __init__(self, player, hidden_dim, gamma, epsilon, alpha, annotation):
         self.hidden_dim = hidden_dim  # hidden dim of 1-layer deep q network
         self.gamma = gamma            # discount factor
@@ -704,7 +704,7 @@ class QValueDQNApprox(QValueFunctionApprox):
         self.train_hist = deque(maxlen=constant.ql_dqn_train_loss_hist_size)
                                       # Keras model train loss value. update after every fit
         self.k = constant.ql_dqn_k
-        self.memory = Memory(qvalues_impl=self)
+        self.memory = MonteCarloMemory(qvalues_impl=self)
         super().__init__(player)
         # features consist of two parts:
         # 1. features of the afterstate if it is a non-end-turn action. (simulate the action and resulting world)
@@ -796,6 +796,7 @@ class QValueDQNApprox(QValueFunctionApprox):
 
         # logger.info('action:' + str(last_act) + '--' + self.feature2str(features))
         # next_features_over_acts = self.to_feature_over_acts(new_game_world)
+        # monte carlo q-learning does not need to use next_features_over_acts
         next_features_over_acts = None
         self.memory.append(last_state_act_features, r, next_features_over_acts, match_end)
 

@@ -26,7 +26,7 @@ BATCH_SIZE = 64
 MEMORY_SIZE = 64000
 MEMORY_SIZE_START_LEARNING = 1000
 TRIAL_SIZE = d                   # how many card modification allowed
-EPISODE_SIZE = 2000              # the size of training episodes
+EPISODE_SIZE = 1000              # the size of training episodes
 MONTE_CARLO_ITERATIONS = 100     # use monte carlo samples to determine max and min
 TEST_PERIOD = 10                 # how many per training episodes to do testing
 # np.random.seed(1)

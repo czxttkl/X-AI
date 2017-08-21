@@ -5,7 +5,7 @@ import pickle
 import constant
 
 
-class Memory:
+class MonteCarloMemory:
     """
     Memory used for experience replay
     """
