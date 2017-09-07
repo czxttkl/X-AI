@@ -13,7 +13,8 @@ import prioritized_exp.rank_based as rank_based
 class Memory(object):
 
     def __init__(self, capacity, prioritized, n_features, n_actions,
-                 n_total_episode, batch_size, n_mem_size_learn_start):
+                 n_total_episode, batch_size, n_mem_size_learn_start,
+                 all_possible_next_states_func, step_state_func):
         self.capacity = capacity
         self.prioritized = prioritized
         self.n_actions = n_actions
@@ -21,6 +22,8 @@ class Memory(object):
         self.n_total_episode = n_total_episode
         self.batch_size = batch_size
         self.n_mem_size_learn_start = n_mem_size_learn_start
+        self.all_possible_next_states = all_possible_next_states_func
+        self.step_state = step_state_func
 
         if self.prioritized:
             # partition_num (==batch_size) * n_mem_size_learn_start should be larger than capacity
@@ -49,14 +52,16 @@ class Memory(object):
         qsa_feature = numpy.zeros((self.batch_size, self.n_features))
         qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
         rewards = numpy.zeros(self.batch_size)
+        terminal_weights = numpy.ones(self.batch_size)
         is_weights = numpy.array(is_weights)
 
         for i, (state, action, reward, next_state, terminal) in enumerate(samples):
             rewards[i] = reward
-            qsa_feature[i] = self.apply(state, action)
+            terminal_weights[i] = 0 if terminal else 1
+            qsa_feature[i] = self.step_state(state, action)
             qsa_next_feature[i] = self.all_possible_next_states(next_state)
 
-        return qsa_feature, qsa_next_feature, rewards, is_weights, sample_mem_idxs
+        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, sample_mem_idxs
 
     def _no_prioritized_sample(self):
         assert self.batch_size <= len(self.memory)
@@ -65,39 +70,18 @@ class Memory(object):
         qsa_feature = numpy.zeros((self.batch_size, self.n_features))
         qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
         rewards = numpy.zeros(self.batch_size)
+        terminal_weights = numpy.ones(self.batch_size)
         # every sample is equally important in non-prioritized sampling
         is_weights = numpy.ones(self.batch_size)
 
         for i, mem_idx in enumerate(sample_mem_idxs):
             state, action, reward, next_state, terminal = self.memory[mem_idx]
             rewards[i] = reward
-            qsa_feature[i] = self.apply(state, action)
+            terminal_weights[i] = 0 if terminal else 1
+            qsa_feature[i] = self.step_state(state, action)
             qsa_next_feature[i] = self.all_possible_next_states(next_state)
 
-        return qsa_feature, qsa_next_feature, rewards, is_weights, sample_mem_idxs
-
-    def apply(self, state, action):
-        state_copy = state.copy()
-        idx_to_remove, idx_to_add = action[0], action[1]
-        state_copy[idx_to_remove] = 0
-        state_copy[idx_to_add] = 1
-        return state_copy
-
-    def all_possible_next_states(self, state):
-        # action format (idx_to_remove, idx_to_add)
-        zero_idx = numpy.where(state == 0)[0]
-        one_idx = numpy.where(state == 1)[0]
-        assert len(zero_idx) * len(one_idx) + 1 == self.n_actions
-        # repeat a (1, self.n_features) 2d array vertically self.n_actions times
-        next_states = numpy.repeat(state.reshape((1, -1)), repeats=self.n_actions, axis=0)
-        action_idx = 0
-        for zi in zero_idx:
-            for oi in one_idx:
-                next_states[action_idx, oi] = 0
-                next_states[action_idx, zi] = 1
-                action_idx += 1
-        # the last row of next_states means don't change any card
-        return next_states
+        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, sample_mem_idxs
 
     def update_priority(self, e_id, abs_error):
         assert self.prioritized
@@ -115,6 +99,8 @@ class QLearning:
             n_actions,
             n_total_episode,
             n_mem_size_learn_start,
+            all_possible_next_states_func,
+            step_state_func,
             n_hidden=20,
             learning_rate=0.005,
             reward_decay=1.0,
@@ -149,7 +135,9 @@ class QLearning:
         self.memory = Memory(prioritized=self.prioritized, capacity=memory_size,
                              n_features=self.n_features, n_actions=self.n_actions,
                              n_total_episode=self.n_total_episode, batch_size=self.batch_size,
-                             n_mem_size_learn_start=self.n_mem_size_learn_start)
+                             n_mem_size_learn_start=self.n_mem_size_learn_start,
+                             all_possible_next_states_func=all_possible_next_states_func,
+                             step_state_func=step_state_func)
 
         self.sess = sess
 
@@ -166,7 +154,7 @@ class QLearning:
                 b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
                 # out shape: (n_sample, 1)
                 out = tf.matmul(l1, w2) + b2
-            return tf.squeeze(out)
+            return tf.squeeze(out), w1, b1, w2, b2
 
         def build_target_layers(s_, c_names, w_initializer, b_initializer):
             # s_ Q(s',a') for all a' feature, shape: (n_sample, n_actions, n_features)
@@ -179,11 +167,12 @@ class QLearning:
                 w2 = tf.get_variable('w2', [self.n_hidden, 1], initializer=w_initializer, collections=c_names)
                 b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
                 out = tf.einsum('ijh,ho->ijo', l1, w2) + b2
-            return tf.squeeze(out)
+            return tf.squeeze(out), w1, b1, w2, b2
 
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
         self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_')
         self.reward = tf.placeholder(tf.float32, [None], name='reward')  # reward
+        self.terminal_weights = tf.placeholder(tf.float32, [None], name='terminal') # terminal
 
         w_initializer, b_initializer = \
             tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
@@ -191,26 +180,28 @@ class QLearning:
         # ------------------ build evaluate_net ------------------
         with tf.variable_scope('eval_net'):
             c_names = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_eval = build_eval_layers(self.s, c_names, w_initializer, b_initializer)
+            self.q_eval, self.eval_w1, self.eval_b1, self.eval_w2, self.eval_b2\
+                = build_eval_layers(self.s, c_names, w_initializer, b_initializer)
 
         # ------------------ build target_net ------------------
         # Q(s',a') for all a' feature
         with tf.variable_scope('target_net'):
             c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_next = build_target_layers(self.s_, c_names, w_initializer, b_initializer)
+            self.q_next, self.target_w1, self.target_b1, self.target_w2, self.target_b2\
+                = build_target_layers(self.s_, c_names, w_initializer, b_initializer)
 
         # ------------------ loss function ----------------------
         # importance sampling weight
-        self.q_target = self.reward + self.gamma * tf.reduce_max(self.q_next, axis=1)
-        self.is_weights = tf.placeholder(tf.float32, [None], name='IS_weights')
+        self.q_target =self.reward + self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1))
+        self.is_weights = tf.placeholder(tf.float32, [None], name='IS_weights')  # importance sampling weight
         with tf.variable_scope('train'):
             self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval))
             self.abs_errors = tf.abs(self.q_target - self.q_eval)
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
 
-    def store_transition(self, s, a, r, s_):
+    def store_transition(self, s, a, r, s_, terminal):
         # transition is a tuple (current_state, action, reward, next_state, whether_terminal)
-        self.memory.store((s, a, r, s_, False))
+        self.memory.store((s, a, r, s_, terminal))
 
     def choose_action(self, state, next_possible_states, next_possbile_actions, epsilon_greedy=True):
         pred_q_values = self.sess.run(self.q_eval, feed_dict={self.s: next_possible_states}).flatten()
@@ -236,7 +227,8 @@ class QLearning:
                 self.memory.rebalance()
             print('prioritized memory rebalanced')
 
-        qsa_feature, qsa_next_feature, rewards, is_weights, exp_idx = self.memory.sample(self.learn_step_counter)
+        qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
+            = self.memory.sample(self.learn_step_counter)
 
         # q_target, q_next, q_eval = self.sess.run(
         #     [self.q_target, self.q_next, self.q_eval],
@@ -248,6 +240,7 @@ class QLearning:
                                             feed_dict={self.s: qsa_feature,
                                                        self.s_: qsa_next_feature,
                                                        self.reward: rewards,
+                                                       self.terminal_weights: terminal_weights,
                                                        self.is_weights: is_weights})
 
         if self.prioritized:

@@ -1,0 +1,136 @@
+"""
+Optimization environment, a function, which is feed-forward neural network
+"""
+import numpy
+import tensorflow as tf
+
+
+MONTE_CARLO_ITERATIONS = 200000     # use monte carlo samples to determine max and min
+COEF_SEED = 1234      # seed for coefficient generation
+RANDOM_SEED = 1113    # seed for random behavior except coefficient generation
+n_hidden_func = 100   # number of hidden units in the black-box function
+
+
+class Environment:
+    def __init__(self, k, d):
+        self.k = k
+        self.d = d
+        self.func_generate()
+        self.monte_carlo()
+
+    def func_generate(self):
+        # set seed for nn coef
+        numpy.random.seed(COEF_SEED)
+        self.w1 = numpy.random.randn(self.k, n_hidden_func) * 10
+        self.b1 = numpy.random.randn(n_hidden_func) * 10
+        self.w2 = numpy.random.randn(n_hidden_func, 1) * 10
+        self.b2 = numpy.random.randn(1) * 10
+        # set seed for other randomness
+        if RANDOM_SEED is None:
+            numpy.random.seed()
+        else:
+            numpy.random.seed(RANDOM_SEED)
+            tf.set_random_seed(RANDOM_SEED)
+
+    def monte_carlo(self):
+        """ Use monte carlo to find the max value """
+        min_val = 9e16
+        max_val = -9e16
+        for i in range(MONTE_CARLO_ITERATIONS):
+            random_state = numpy.zeros(self.k)
+            one_idx = numpy.random.choice(self.k, self.d, replace=False)
+            random_state[one_idx] = 1
+            random_state_output = self.output(random_state)
+            if random_state_output < min_val:
+                min_val = random_state_output
+                min_state = random_state
+            if random_state_output > max_val:
+                max_val = random_state_output
+                max_state = random_state
+        print("monte carlo max: {0} at {1}\nmin: {2} at {3}".format(max_val, max_state, min_val, min_state))
+
+    def reset(self):
+        random_state = numpy.zeros(self.k)
+        one_idx = numpy.random.choice(self.k, self.d, replace=False)
+        random_state[one_idx] = 1
+        self.cur_state = random_state
+        return self.cur_state.copy()
+
+    def output(self, state):
+        # t1 = time.time()
+        assert len(state.shape) == 1 and state.shape[0] == self.k
+        out = numpy.dot(
+                        self.relu(
+                                  numpy.dot(state, self.w1)
+                                  + self.b1
+                                 ),
+                        self.w2) + self.b2
+        # t2 = time.time()
+        # print('step output time', t2 - t1)
+        return out[0]
+
+    def outputs(self, states):
+        assert len(states.shape) == 2 and states.shape[1] == self.k
+        outs = numpy.dot(
+                         self.relu(
+                                   numpy.dot(states, self.w1)
+                                   + self.b1
+                                  ),
+                         self.w2) + self.b2
+        return outs
+
+    def relu(self, x):
+        return x * (x > 0)
+
+    def all_possible_next_states(self, state):
+        # action format (idx_to_remove, idx_to_add)
+        zero_idx = numpy.where(state == 0)[0]
+        one_idx = numpy.where(state == 1)[0]
+        next_states = numpy.repeat(state.copy().reshape((1, -1)),
+                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+        action_idx = 0
+        for zi in zero_idx:
+            for oi in one_idx:
+                next_states[action_idx, oi] = 0
+                next_states[action_idx, zi] = 1
+                action_idx += 1
+        # the last row of next_states means don't change any card
+        return next_states
+
+    def all_possible_next_state_action(self, state):
+        # action format (idx_to_remove, idx_to_add)
+        zero_idx = numpy.where(state == 0)[0]
+        one_idx = numpy.where(state == 1)[0]
+        next_states = numpy.repeat(state.copy().reshape(1, -1),
+                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+        next_actions = []
+        action_idx = 0
+        for zi in zero_idx:
+            for oi in one_idx:
+                next_states[action_idx, oi] = 0
+                next_states[action_idx, zi] = 1
+                next_actions.append((oi, zi))
+                action_idx += 1
+        # the last row of next_states means don't change any card
+        next_actions.append((zi, oi))
+        return next_states, next_actions
+
+    def step(self, action):
+        """ step an action on self.cur_state """
+        old_out = self.output(self.cur_state)
+        idx_to_remove, idx_to_add = action[0], action[1]
+        self.cur_state[idx_to_remove] = 0
+        self.cur_state[idx_to_add] = 1
+        new_out = self.output(self.cur_state)
+        # reward = new_out - old_out
+        # reward = old_out - new_out
+        reward = new_out
+        return self.cur_state.copy(), reward
+
+    def step_state(self, state, action):
+        """ step an action on state """
+        idx_to_remove, idx_to_add = action[0], action[1]
+        state = state.copy()
+        state[idx_to_remove] = 0
+        state[idx_to_add] = 1
+        return state
