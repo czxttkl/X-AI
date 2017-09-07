@@ -171,7 +171,7 @@ class QLearning:
 
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
         self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_')
-        self.reward = tf.placeholder(tf.float32, [None], name='reward')  # reward
+        self.rewards = tf.placeholder(tf.float32, [None], name='reward')  # reward
         self.terminal_weights = tf.placeholder(tf.float32, [None], name='terminal') # terminal
 
         w_initializer, b_initializer = \
@@ -192,7 +192,7 @@ class QLearning:
 
         # ------------------ loss function ----------------------
         # importance sampling weight
-        self.q_target =self.reward + self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1))
+        self.q_target = self.rewards + self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1))
         self.is_weights = tf.placeholder(tf.float32, [None], name='IS_weights')  # importance sampling weight
         with tf.variable_scope('train'):
             self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval))
@@ -239,7 +239,7 @@ class QLearning:
         _, loss, abs_errors = self.sess.run([self._train_op, self.loss, self.abs_errors],
                                             feed_dict={self.s: qsa_feature,
                                                        self.s_: qsa_next_feature,
-                                                       self.reward: rewards,
+                                                       self.rewards: rewards,
                                                        self.terminal_weights: terminal_weights,
                                                        self.is_weights: is_weights})
 

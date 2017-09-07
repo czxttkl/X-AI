@@ -132,6 +132,10 @@ class Environment:
         new_out = self.output(self.cur_state)
         # reward = new_out - old_out
         # reward = old_out - new_out
+        # if new_out > 4407:
+        #     reward = new_out
+        # else:
+        #     reward = -1
         reward = new_out
         return self.cur_state.copy(), reward
 
