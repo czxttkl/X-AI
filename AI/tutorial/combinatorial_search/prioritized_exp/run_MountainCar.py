@@ -1,12 +1,14 @@
 """
 The DQN improvement: Prioritized Experience Replay (based on https://arxiv.org/abs/1511.05952)
+
 View more on my tutorial page: https://morvanzhou.github.io/tutorials/
+
 Using:
 Tensorflow: 1.0
 gym: 0.8.0
-
-# copy from https://github.com/MorvanZhou/Reinforcement-learning-with-tensorflow/tree/master/contents/5.2_Prioritized_Replay_DQN
 """
+
+
 import gym
 from RL_brain import DQNPrioritizedReplay
 import matplotlib.pyplot as plt
@@ -37,10 +39,8 @@ def train(RL):
     total_steps = 0
     steps = []
     episodes = []
-    episodes_rewards = []
-    for i_episode in range(15):
+    for i_episode in range(20):
         observation = env.reset()
-        rewards = 0
         while True:
             # env.render()
 
@@ -49,7 +49,6 @@ def train(RL):
             observation_, reward, done, info = env.step(action)
 
             if done: reward = 10
-            rewards += reward
 
             RL.store_transition(observation, action, reward, observation_)
 
@@ -60,31 +59,23 @@ def train(RL):
                 print('episode ', i_episode, ' finished')
                 steps.append(total_steps)
                 episodes.append(i_episode)
-                episodes_rewards.append(rewards)
                 break
 
             observation = observation_
             total_steps += 1
-
-    return np.vstack((episodes, steps, episodes_rewards))
+    return np.vstack((episodes, steps))
 
 his_natural = train(RL_natural)
 his_prio = train(RL_prio)
 
-# compare steps to reach episode end
+# compare based on first success
 plt.plot(his_natural[0, :], his_natural[1, :] - his_natural[1, 0], c='b', label='natural DQN')
 plt.plot(his_prio[0, :], his_prio[1, :] - his_prio[1, 0], c='r', label='DQN with prioritized replay')
 plt.legend(loc='best')
 plt.ylabel('total training time')
 plt.xlabel('episode')
 plt.grid()
-plt.show()
+plt.savefig('steps.png')
+# plt.show()
 
-# plot rewards
-plt.plot(his_natural[0, :], his_natural[2, :], c='b', label='natural DQN')
-plt.plot(his_prio[0, :], his_prio[2, :], c='r', label='DQN with prioritized replay')
-plt.legend(loc='best')
-plt.ylabel('rewards per episode')
-plt.xlabel('episode')
-plt.grid()
-plt.show()
+

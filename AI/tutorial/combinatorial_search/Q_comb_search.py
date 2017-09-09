@@ -10,14 +10,14 @@ from tfboard import TensorboardWriter
 import argparse
 
 # Raw parameters
-k = 20   # total available card size
+k = 22   # total available card size
 d = 6    # deck size
 use_prioritized_replay = False
 gamma = 0.9
 n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
-MEMORY_SIZE = 64000
-MEMORY_SIZE_START_LEARNING = 1000
+MEMORY_SIZE = 640000
+MEMORY_SIZE_START_LEARNING = 10000
 EPISODE_SIZE = 10000001               # the size of training episodes
 TEST_PERIOD = 10                 # how many per training episodes to do testing
 noisy = False
