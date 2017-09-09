@@ -17,7 +17,7 @@ import numpy as np
 
 env = gym.make('MountainCar-v0')
 env = env.unwrapped
-env.seed(21)
+env.seed(1000)
 MEMORY_SIZE = 10000
 
 sess = tf.Session()
@@ -50,7 +50,7 @@ def train(RL):
 
             if done: reward = 10
 
-            RL.store_transition(observation, action, reward, observation_)
+            RL.store_transition(observation, action, reward, observation_, done)
 
             if total_steps > MEMORY_SIZE:
                 RL.learn()
@@ -65,8 +65,8 @@ def train(RL):
             total_steps += 1
     return np.vstack((episodes, steps))
 
-his_natural = train(RL_natural)
 his_prio = train(RL_prio)
+his_natural = train(RL_natural)
 
 # compare based on first success
 plt.plot(his_natural[0, :], his_natural[1, :] - his_natural[1, 0], c='b', label='natural DQN')

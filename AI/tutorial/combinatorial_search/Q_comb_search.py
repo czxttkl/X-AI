@@ -10,9 +10,9 @@ from tfboard import TensorboardWriter
 import argparse
 
 # Raw parameters
-k = 22   # total available card size
+k = 20   # total available card size
 d = 6    # deck size
-use_prioritized_replay = False
+use_prioritized_replay = True
 gamma = 0.9
 n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64

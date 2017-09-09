@@ -11,8 +11,8 @@ gym: 0.8.0
 import numpy as np
 import tensorflow as tf
 
-np.random.seed(1)
-tf.set_random_seed(1)
+np.random.seed(1000)
+tf.set_random_seed(1000)
 
 
 class SumTree(object):
@@ -29,7 +29,8 @@ class SumTree(object):
         self.tree = np.zeros(2 * capacity - 1)
         # [--------------Parent nodes-------------][-------leaves to recode priority-------]
         #             size: capacity - 1                       size: capacity
-        self.data = np.zeros(capacity, dtype=object)  # for all transitions
+        # self.data = np.zeros(capacity, dtype=object)  # for all transitions
+        self.data = [None] * capacity
         # [--------------data frame-------------]
         #             size: capacity
 
@@ -95,7 +96,7 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
     alpha = 0.6  # [0~1] convert the importance of TD error to priority
     beta = 0.4  # importance-sampling, from initial value increasing to 1
     beta_increment_per_sampling = 0.001
-    abs_err_upper = 1.  # clipped abs error
+    abs_err_default = 1.  # clipped abs error
 
     def __init__(self, capacity):
         self.tree = SumTree(capacity)
@@ -103,27 +104,30 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
     def store(self, transition):
         max_p = np.max(self.tree.tree[-self.tree.capacity:])
         if max_p == 0:
-            max_p = self.abs_err_upper
+            max_p = self.abs_err_default
         self.tree.add(max_p, transition)   # set the max p for new p
 
     def sample(self, n):
-        b_idx, b_memory, ISWeights = np.empty((n,), dtype=np.int32), np.empty((n, self.tree.data[0].size)), np.empty((n, 1))
+        b_idx, b_memory, ISWeights \
+            = np.empty((n,), dtype=np.int32), [None] * n, np.empty((n, 1))
         pri_seg = self.tree.total_p / n       # priority segment
         self.beta = np.min([1., self.beta + self.beta_increment_per_sampling])  # max = 1
 
         min_prob = np.min(self.tree.tree[-self.tree.capacity:]) / self.tree.total_p     # for later calculate ISweight
+        assert min_prob != 0
         for i in range(n):
             a, b = pri_seg * i, pri_seg * (i + 1)
             v = np.random.uniform(a, b)
             idx, p, data = self.tree.get_leaf(v)
             prob = p / self.tree.total_p
             ISWeights[i, 0] = np.power(prob/min_prob, -self.beta)
-            b_idx[i], b_memory[i, :] = idx, data
+            b_idx[i], b_memory[i] = idx, data
         return b_idx, b_memory, ISWeights
 
     def batch_update(self, tree_idx, abs_errors):
         abs_errors += self.epsilon  # convert to abs and avoid 0
-        clipped_errors = np.minimum(abs_errors, self.abs_err_upper)
+        # clipped_errors = np.minimum(abs_errors, self.abs_err_upper)
+        clipped_errors = abs_errors     # do we really need to clipped?
         ps = np.power(clipped_errors, self.alpha)
         for ti, p in zip(tree_idx, ps):
             self.tree.update(ti, p)
@@ -221,10 +225,9 @@ class DQNPrioritizedReplay:
             c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
             self.q_next = build_layers(self.s_, c_names, n_l1, w_initializer, b_initializer, False)
             
-    def store_transition(self, s, a, r, s_):
+    def store_transition(self, s, a, r, s_, terminal):
         if self.prioritized:    # prioritized replay
-            transition = np.hstack((s, [a, r], s_))
-            self.memory.store(transition)    # have high priority for newly arrived transition
+            self.memory.store((s, a, r, s_, terminal))    # have high priority for newly arrived transition
         else:       # random replay
             if not hasattr(self, 'memory_counter'):
                 self.memory_counter = 0
@@ -249,31 +252,36 @@ class DQNPrioritizedReplay:
 
         if self.prioritized:
             tree_idx, batch_memory, ISWeights = self.memory.sample(self.batch_size)
+            s = np.array([d[0] for d in batch_memory])
+            s_ = np.array([d[3] for d in batch_memory])
+            eval_act_index = np.array([d[1] for d in batch_memory]).astype(int)
+            reward = np.array([d[2] for d in batch_memory])
         else:
             sample_index = np.random.choice(self.memory_size, size=self.batch_size)
             batch_memory = self.memory[sample_index, :]
+            s = batch_memory[:, :self.n_features]
+            s_ = batch_memory[:, -self.n_features:]
+            eval_act_index = batch_memory[:, self.n_features].astype(int)
+            reward = batch_memory[:, self.n_features + 1]
 
         q_next, q_eval = self.sess.run(
                 [self.q_next, self.q_eval],
-                feed_dict={self.s_: batch_memory[:, -self.n_features:],
-                           self.s: batch_memory[:, :self.n_features]})
+                feed_dict={self.s_: s_,
+                           self.s: s})
 
         q_target = q_eval.copy()
         batch_index = np.arange(self.batch_size, dtype=np.int32)
-        eval_act_index = batch_memory[:, self.n_features].astype(int)
-        reward = batch_memory[:, self.n_features + 1]
-
         q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
 
         if self.prioritized:
             _, abs_errors, self.cost = self.sess.run([self._train_op, self.abs_errors, self.loss],
-                                         feed_dict={self.s: batch_memory[:, :self.n_features],
+                                         feed_dict={self.s: s,
                                                     self.q_target: q_target,
                                                     self.ISWeights: ISWeights})
             self.memory.batch_update(tree_idx, abs_errors)     # update priority
         else:
             _, self.cost = self.sess.run([self._train_op, self.loss],
-                                         feed_dict={self.s: batch_memory[:, :self.n_features],
+                                         feed_dict={self.s: s,
                                                     self.q_target: q_target})
 
         self.cost_his.append(self.cost)

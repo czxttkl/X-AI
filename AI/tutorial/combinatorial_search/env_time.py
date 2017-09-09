@@ -8,7 +8,7 @@ import tensorflow as tf
 
 MONTE_CARLO_ITERATIONS = 200000     # use monte carlo samples to determine max and min
 COEF_SEED = 1234      # seed for coefficient generation
-RANDOM_SEED = 1116    # seed for random behavior except coefficient generation
+RANDOM_SEED = 1616    # seed for random behavior except coefficient generation
 n_hidden_func = 100   # number of hidden units in the black-box function
 
 
@@ -132,7 +132,7 @@ class Environment:
         new_out = self.output(self.cur_state)
         # reward = new_out - old_out
         # reward = old_out - new_out
-        if new_out > 4721:
+        if new_out > 4407:
             reward = new_out
         else:
             reward = -1
