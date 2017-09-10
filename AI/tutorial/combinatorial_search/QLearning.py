@@ -8,6 +8,7 @@ import tensorflow as tf
 import numpy
 from collections import deque
 import prioritized_exp.rank_based as rank_based
+from prioritized_exp import RL_brain
 
 
 class Memory(object):
@@ -26,11 +27,12 @@ class Memory(object):
         self.step_state = step_state_func
 
         if self.prioritized:
-            # partition_num (==batch_size) * n_mem_size_learn_start should be larger than capacity
-            assert self.batch_size * self.n_mem_size_learn_start >= self.capacity
-            self.memory = rank_based.Experience({'size': self.capacity, 'learn_start': self.n_mem_size_learn_start,
-                                                 'partition_num': self.batch_size, 'batch_size': self.batch_size,
-                                                 'total_step': self.n_total_episode})
+            self.memory = RL_brain.Memory(self.capacity)
+            # # partition_num (==batch_size) * n_mem_size_learn_start should be larger than capacity
+            # assert self.batch_size * self.n_mem_size_learn_start >= self.capacity
+            # self.memory = rank_based.Experience({'size': self.capacity, 'learn_start': self.n_mem_size_learn_start,
+            #                                      'partition_num': self.batch_size, 'batch_size': self.batch_size,
+            #                                      'total_step': self.n_total_episode})
         else:
             self.memory = deque(maxlen=self.capacity)
 
@@ -51,13 +53,15 @@ class Memory(object):
             return self._no_prioritized_sample()
 
     def _prioritized_sample(self, learn_step_counter):
-        samples, is_weights, sample_mem_idxs = self.memory.sample(learn_step_counter)
+        # samples, is_weights, sample_mem_idxs = self.memory.sample(learn_step_counter)
+        tree_idx, samples, is_weights = self.memory.sample(self.batch_size)
 
         qsa_feature = numpy.zeros((self.batch_size, self.n_features))
         qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
         rewards = numpy.zeros(self.batch_size)
         terminal_weights = numpy.ones(self.batch_size)
-        is_weights = numpy.array(is_weights)
+        # is_weights = numpy.array(is_weights)
+        is_weights = numpy.squeeze(is_weights)
 
         for i, (state, action, reward, next_state, terminal) in enumerate(samples):
             rewards[i] = reward
@@ -67,7 +71,7 @@ class Memory(object):
             qsa_feature[i] = self.step_state(state, action)
             qsa_next_feature[i] = self.all_possible_next_states(next_state)
 
-        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, sample_mem_idxs
+        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, tree_idx
 
     def _no_prioritized_sample(self):
         assert self.batch_size <= len(self.memory)
@@ -91,9 +95,10 @@ class Memory(object):
 
         return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, sample_mem_idxs
 
-    def update_priority(self, e_id, abs_error):
+    def update_priority(self, e_ids, abs_errors):
         assert self.prioritized
-        self.memory.update_priority(e_id, abs_error)
+        self.memory.batch_update(e_ids, abs_errors)
+        # self.memory.update_priority(e_ids, abs_errors)
 
     def rebalance(self):
         assert self.prioritized
@@ -230,10 +235,11 @@ class QLearning:
         if self.learn_step_counter % self.replace_target_iter == 0:
             self._replace_target_params()
             print('target_params_replaced')
-            # btw, rebalance the prioritized memory
             if self.prioritized:
-                self.memory.rebalance()
-            print('prioritized memory rebalanced')
+                print('4408 reward samples in total:', numpy.sum([d[2] > 0 for d in self.memory.memory.tree.data]))
+                # btw, rebalance the prioritized memory
+                # self.memory.rebalance()
+                # print('prioritized memory rebalanced')
 
         qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
             = self.memory.sample(self.learn_step_counter)

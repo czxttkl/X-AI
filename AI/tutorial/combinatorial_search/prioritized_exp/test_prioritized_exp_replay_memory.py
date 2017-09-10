@@ -3,7 +3,7 @@ import numpy
 numpy.random.seed()
 
 memory = Memory(capacity=10)
-for i in range(10):
+for i in range(20):
     memory.store((i, i))
 
 # just check the sampling when all data are new. this should act like a uniform sampling
