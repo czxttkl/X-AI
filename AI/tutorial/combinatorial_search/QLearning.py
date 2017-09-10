@@ -38,11 +38,11 @@ class Memory(object):
 
     def store(self, transition):
         if self.prioritized:
-            if transition[2] > 0:
+            if transition[2] > 4407:
                 print('save 4408')
             self.memory.store(transition)
         else:
-            if transition[2] > 0:
+            if transition[2] > 4407:
                 print('save 4408')
             self.memory.append(transition)
 
@@ -65,7 +65,7 @@ class Memory(object):
 
         for i, (state, action, reward, next_state, terminal) in enumerate(samples):
             rewards[i] = reward
-            if reward > 0:
+            if reward > 4407:
                 print('sample 4408')
             terminal_weights[i] = 0 if terminal else 1
             qsa_feature[i] = self.step_state(state, action)
@@ -86,7 +86,7 @@ class Memory(object):
 
         for i, mem_idx in enumerate(sample_mem_idxs):
             state, action, reward, next_state, terminal = self.memory[mem_idx]
-            if reward > 0:
+            if reward > 4407:
                 print('sample 4408')
             rewards[i] = reward
             terminal_weights[i] = 0 if terminal else 1
@@ -235,11 +235,11 @@ class QLearning:
         if self.learn_step_counter % self.replace_target_iter == 0:
             self._replace_target_params()
             print('target_params_replaced')
-            if self.prioritized:
-                print('4408 reward samples in total:', numpy.sum([d[2] > 0 for d in self.memory.memory.tree.data]))
-                # btw, rebalance the prioritized memory
-                # self.memory.rebalance()
-                # print('prioritized memory rebalanced')
+            # if self.prioritized:
+            #     print('4408 reward samples in total:', numpy.sum([d[2] > 4407 for d in self.memory.memory.tree.data]))
+            #     btw, rebalance the prioritized memory
+            #     self.memory.rebalance()
+            #     print('prioritized memory rebalanced')
 
         qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
             = self.memory.sample(self.learn_step_counter)

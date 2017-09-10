@@ -12,7 +12,7 @@ import argparse
 # Raw parameters
 k = 20   # total available card size
 d = 6    # deck size
-use_prioritized_replay = True
+use_prioritized_replay = False
 gamma = 0.9
 n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
