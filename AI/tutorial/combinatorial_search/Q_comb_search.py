@@ -18,10 +18,11 @@ n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
 MEMORY_SIZE = 64000
 MEMORY_SIZE_START_LEARNING = 64000
-EPISODE_SIZE = 10000001               # the size of training episodes
+EPISODE_SIZE = 10000001          # the size of training episodes
 TEST_PERIOD = 10                 # how many per training episodes to do testing
 noisy = False
 timed = True                     # whether including step as one feature
+RANDOM_SEED = 1919               # seed for random behavior except coefficient generation
 
 # Read parameters
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -33,7 +34,8 @@ timed = args.timed
 # Derived parameters
 n_actions = d * (k-d) + 1    # number of one-card modification
 TRIAL_SIZE = d                # how many card modification allowed
-n_input_ql = k if not timed else k+1
+n_input_ql = k if not timed else k+1   # input dimension to qlearning network
+numpy.random.seed(RANDOM_SEED)
 
 sess = tf.Session()
 if timed:
@@ -83,10 +85,10 @@ for i_episode in range(EPISODE_SIZE):
             print('TEST step {0}, output: {1}, at {2}, qval: {3}, reward {4}'.
                   format(i_episode_test_step, test_output, cur_state, q_val, reward))
 
-        tb_writer.write(tags=['Prioritized={0}, gamma={1}, noisy={2}, include_step={3}/Test Ending Output'.
-                                format(use_prioritized_replay, gamma, noisy, timed),
-                              'Prioritized={0}, gamma={1}, noisy={2}, include_step={3}/Test Ending Qvalue'.
-                                format(use_prioritized_replay, gamma, noisy, timed),
+        tb_writer.write(tags=['Prioritized={0}, gamma={1}, noisy={2}, include_step={3}, seed={4}/Test Ending Output'.
+                                format(use_prioritized_replay, gamma, noisy, timed, RANDOM_SEED),
+                              'Prioritized={0}, gamma={1}, noisy={2}, include_step={3}, seed={4}/Test Ending Qvalue'.
+                                format(use_prioritized_replay, gamma, noisy, timed, RANDOM_SEED),
                               ],
                         values=[test_output,
                                 q_val],

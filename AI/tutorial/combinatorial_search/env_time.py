@@ -8,7 +8,6 @@ import tensorflow as tf
 
 MONTE_CARLO_ITERATIONS = 200000     # use monte carlo samples to determine max and min
 COEF_SEED = 1234      # seed for coefficient generation
-RANDOM_SEED = 1918    # seed for random behavior except coefficient generation
 n_hidden_func = 100   # number of hidden units in the black-box function
 
 
@@ -20,18 +19,18 @@ class Environment:
         self.monte_carlo()
 
     def func_generate(self):
+        # back up original random seed
+        s = numpy.random.get_state()
         # set seed for nn coef
         numpy.random.seed(COEF_SEED)
         self.w1 = numpy.random.randn(self.k, n_hidden_func) * 10
         self.b1 = numpy.random.randn(n_hidden_func) * 10
         self.w2 = numpy.random.randn(n_hidden_func, 1) * 10
         self.b2 = numpy.random.randn(1) * 10
-        # set seed for other randomness
-        if RANDOM_SEED is None:
-            numpy.random.seed()
-        else:
-            numpy.random.seed(RANDOM_SEED)
-            tf.set_random_seed(RANDOM_SEED)
+        # restore random seed for other randomness
+        numpy.random.set_state(s)
+        tf_seed = numpy.random.randint(0, 1000)
+        tf.set_random_seed(tf_seed)
 
     def monte_carlo(self):
         """ Use monte carlo to find the max value """
