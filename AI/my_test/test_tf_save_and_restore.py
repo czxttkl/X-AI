@@ -12,7 +12,7 @@ class Model:
     def __init__(self, save_and_load_path, load=False):
         self.save_and_load_path = save_and_load_path
 
-        # create a graph for model variables, saver and session
+        # create a graph for model variables and session
         self.graph = tf.Graph()
         self.sess = tf.Session(graph=self.graph)
 

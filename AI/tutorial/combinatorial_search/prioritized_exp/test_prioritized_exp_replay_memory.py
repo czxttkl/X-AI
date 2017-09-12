@@ -2,7 +2,7 @@ from RL_brain import Memory
 import numpy
 numpy.random.seed()
 
-memory = Memory(capacity=10)
+memory = Memory(capacity=30)
 for i in range(20):
     memory.store((i, i))
 

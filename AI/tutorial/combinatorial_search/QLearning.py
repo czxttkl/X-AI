@@ -9,6 +9,8 @@ import numpy
 from collections import deque
 import prioritized_exp.rank_based as rank_based
 from prioritized_exp import RL_brain
+import os
+import pickle
 
 
 class Memory(object):
@@ -100,59 +102,111 @@ class Memory(object):
         self.memory.batch_update(e_ids, abs_errors)
         # self.memory.update_priority(e_ids, abs_errors)
 
-    def rebalance(self):
-        assert self.prioritized
-        self.memory.rebalance()
+    @property
+    def size(self):
+        if self.prioritized:
+            return sum(map(lambda x: 1 if x else 0, self.memory.data)) # count how many not-none element
+        else:
+            return len(self.memory)
 
 
 class QLearning:
+
     def __init__(
             self,
             n_features,
             n_actions,
+            n_hidden,
             n_total_episode,
             n_mem_size_learn_start,
+            save_and_load_path,
             all_possible_next_states_func,
             step_state_func,
-            n_hidden=20,
+            load,
             learning_rate=0.005,
-            reward_decay=1.0,
+            reward_decay=0.9,
             e_greedy=0.8,
             replace_target_iter=500,
+            save_model_iter=3000,
             memory_size=10000,
             batch_size=32,
-            e_greedy_increment=None,
+            e_greedy_increment=0.0001,
             prioritized=True,
-            sess=None,
     ):
         self.n_features = n_features
-        self.n_total_episode = n_total_episode
-        self.n_mem_size_learn_start = n_mem_size_learn_start
         self.n_actions = n_actions
         self.n_hidden = n_hidden
+        self.n_total_episode = n_total_episode
+        self.n_mem_size_learn_start = n_mem_size_learn_start
+        self.save_and_load_path = save_and_load_path
+        self.load = load
+
         self.lr = learning_rate
         self.gamma = reward_decay
         self.epsilon_max = e_greedy
         self.replace_target_iter = replace_target_iter
+        self.save_model_iter = save_model_iter
         self.memory_size = memory_size
         self.batch_size = batch_size
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
-
         self.prioritized = prioritized  # decide to use double q or not
 
         self.learn_step_counter = 0
 
-        self._build_net()
+        # create a graph for model variables and session
+        self.graph = tf.Graph()
+        self.sess = tf.Session(graph=self.graph)
+        if not load:
+            with self.graph.as_default():
+                self._build_net()
+                self.sess.run(tf.global_variables_initializer())
+            self.memory = Memory(prioritized=self.prioritized, capacity=memory_size,
+                                 n_features=self.n_features, n_actions=self.n_actions,
+                                 n_total_episode=self.n_total_episode, batch_size=self.batch_size,
+                                 n_mem_size_learn_start=self.n_mem_size_learn_start,
+                                 all_possible_next_states_func=all_possible_next_states_func,
+                                 step_state_func=step_state_func)
+        else:
+            self.load_model()
 
-        self.memory = Memory(prioritized=self.prioritized, capacity=memory_size,
-                             n_features=self.n_features, n_actions=self.n_actions,
-                             n_total_episode=self.n_total_episode, batch_size=self.batch_size,
-                             n_mem_size_learn_start=self.n_mem_size_learn_start,
-                             all_possible_next_states_func=all_possible_next_states_func,
-                             step_state_func=step_state_func)
+    def save_model(self):
+        with self.graph.as_default():
+            saver = tf.train.Saver()
+            path = saver.save(self.sess, self.save_and_load_path)
+            print('save model to', path)
+            with open(self.save_and_load_path + '_memory.pickle', 'wb') as f:
+                pickle.dump(self.memory, f, protocol=-1)   # -1: highest protocol
 
-        self.sess = sess
+    def load_model(self):
+        with self.graph.as_default():
+            saver = tf.train.import_meta_graph(self.save_and_load_path + '.meta')
+            saver.restore(self.sess, tf.train.latest_checkpoint(os.path.dirname(self.save_and_load_path)))
+            # placeholders
+            self.s = self.graph.get_tensor_by_name('s:0')  # Q(s,a) feature
+            self.s_ = self.graph.get_tensor_by_name('s_:0')  # Q(s',a') feature
+            self.rewards = self.graph.get_tensor_by_name('reward:0')   # reward
+            self.terminal_weights = self.graph.get_tensor_by_name('terminal:0')  # terminal
+            # variables
+            self.q_eval = self.graph.get_tensor_by_name('eval_net/out:0')
+            self.eval_w1 = self.graph.get_tensor_by_name('eval_net/l1/w1:0')
+            self.eval_b1 = self.graph.get_tensor_by_name('eval_net/l1/b1:0')
+            self.eval_w2 = self.graph.get_tensor_by_name('eval_net/l2/w2:0')
+            self.eval_b2 = self.graph.get_tensor_by_name('eval_net/l2/b2:0')
+            self.q_next = self.graph.get_tensor_by_name('target_net/out:0')
+            self.target_w1 = self.graph.get_tensor_by_name('target_net/l1/w1:0')
+            self.target_b1 = self.graph.get_tensor_by_name('target_net/l1/b1:0')
+            self.target_w2 = self.graph.get_tensor_by_name('target_net/l2/w2:0')
+            self.target_b2 = self.graph.get_tensor_by_name('target_net/l2/b2:0')
+            self.q_target = self.graph.get_tensor_by_name("q_target:0")
+            self.is_weights = self.graph.get_tensor_by_name("is_weights:0")
+            self.loss = self.graph.get_tensor_by_name("loss:0")
+            self.abs_errors = self.graph.get_tensor_by_name("abs_errors:0")
+            # operations
+            self.train_op = self.graph.get_operation_by_name('train_op')
+
+        with open(self.save_and_load_path + '_memory.pickle', 'rb') as f:
+            self.memory = pickle.load(f)  # -1: highest protocol
 
     def _build_net(self):
         def build_eval_layers(s, c_names, w_initializer, b_initializer):
@@ -167,7 +221,7 @@ class QLearning:
                 b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
                 # out shape: (n_sample, 1)
                 out = tf.matmul(l1, w2) + b2
-            return tf.squeeze(out), w1, b1, w2, b2
+            return tf.squeeze(out, name='out'), w1, b1, w2, b2
 
         def build_target_layers(s_, c_names, w_initializer, b_initializer):
             # s_ Q(s',a') for all a' feature, shape: (n_sample, n_actions, n_features)
@@ -180,10 +234,10 @@ class QLearning:
                 w2 = tf.get_variable('w2', [self.n_hidden, 1], initializer=w_initializer, collections=c_names)
                 b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
                 out = tf.einsum('ijh,ho->ijo', l1, w2) + b2
-            return tf.squeeze(out), w1, b1, w2, b2
+            return tf.squeeze(out, name='out'), w1, b1, w2, b2
 
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
-        self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_')
+        self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_') # Q(s',a') feature
         self.rewards = tf.placeholder(tf.float32, [None], name='reward')  # reward
         self.terminal_weights = tf.placeholder(tf.float32, [None], name='terminal') # terminal
 
@@ -193,24 +247,26 @@ class QLearning:
         # ------------------ build evaluate_net ------------------
         with tf.variable_scope('eval_net'):
             c_names = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_eval, self.eval_w1, self.eval_b1, self.eval_w2, self.eval_b2\
+            self.q_eval, self.eval_w1, self.eval_b1, self.eval_w2, self.eval_b2 \
                 = build_eval_layers(self.s, c_names, w_initializer, b_initializer)
 
         # ------------------ build target_net ------------------
         # Q(s',a') for all a' feature
         with tf.variable_scope('target_net'):
             c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_next, self.target_w1, self.target_b1, self.target_w2, self.target_b2\
+            self.q_next, self.target_w1, self.target_b1, self.target_w2, self.target_b2 \
                 = build_target_layers(self.s_, c_names, w_initializer, b_initializer)
 
         # ------------------ loss function ----------------------
         # importance sampling weight
-        self.q_target = self.rewards + self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1))
-        self.is_weights = tf.placeholder(tf.float32, [None], name='IS_weights')  # importance sampling weight
-        with tf.variable_scope('train'):
-            self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval))
-            self.abs_errors = tf.abs(self.q_target - self.q_eval)
-            self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
+        self.q_target = tf.add(self.rewards,
+                               self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1)),
+                               name='q_target')
+        # importance sampling weight
+        self.is_weights = tf.placeholder(tf.float32, [None], name='is_weights')
+        self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval), name='loss')
+        self.abs_errors = tf.abs(self.q_target - self.q_eval, name='abs_errors')
+        self.train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss, name='train_op')
 
     def store_transition(self, s, a, r, s_, terminal):
         # transition is a tuple (current_state, action, reward, next_state, whether_terminal)
@@ -227,19 +283,20 @@ class QLearning:
         return action, pred_q_value
 
     def _replace_target_params(self):
-        t_params = tf.get_collection('target_net_params')
-        e_params = tf.get_collection('eval_net_params')
-        self.sess.run([tf.assign(t, e) for t, e in zip(t_params, e_params)])
+        with self.graph.as_default():
+            t_params = tf.get_collection('target_net_params')
+            e_params = tf.get_collection('eval_net_params')
+            self.sess.run([tf.assign(t, e) for t, e in zip(t_params, e_params)])
+            print('target_params_replaced')
 
     def learn(self):
         if self.learn_step_counter % self.replace_target_iter == 0:
             self._replace_target_params()
-            print('target_params_replaced')
             # if self.prioritized:
             #     print('4408 reward samples in total:', numpy.sum([d[2] > 4407 for d in self.memory.memory.tree.data]))
-            #     btw, rebalance the prioritized memory
-            #     self.memory.rebalance()
-            #     print('prioritized memory rebalanced')
+
+        if self.learn_step_counter % self.save_model_iter == 0:
+            self.save_model()
 
         qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
             = self.memory.sample(self.learn_step_counter)
@@ -250,7 +307,7 @@ class QLearning:
         #                self.s_: qsa_next_feature,
         #                self.reward: rewards})
 
-        _, loss, abs_errors = self.sess.run([self._train_op, self.loss, self.abs_errors],
+        _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
                                             feed_dict={self.s: qsa_feature,
                                                        self.s_: qsa_next_feature,
                                                        self.rewards: rewards,
