@@ -1,8 +1,8 @@
 """
 Tensorflow model save&restore tutorial
 
-create a graph and put variables only related to this model onto the graph
-saver and session only work on the session
+create a graph and create variables only related to this model onto the graph
+saver and session only work on the graph
 """
 import tensorflow as tf
 import os

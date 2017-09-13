@@ -124,7 +124,7 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
         return b_idx, b_memory, ISWeights
 
     def batch_update(self, tree_idx, abs_errors):
-        abs_errors += self.epsilon  # convert to abs and avoid 0
+        abs_errors += self.epsilon      # convert to abs and avoid 0
         # clipped_errors = np.minimum(abs_errors, self.abs_err_upper)
         clipped_errors = abs_errors     # do we really need to clipped?
         ps = np.power(clipped_errors, self.alpha)
@@ -206,7 +206,6 @@ class DQNPrioritizedReplay:
             c_names, n_l1, w_initializer, b_initializer = \
                 ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20, \
                 tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
-
             self.q_eval = build_layers(self.s, c_names, n_l1, w_initializer, b_initializer, True)
 
         with tf.variable_scope('loss'):

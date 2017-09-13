@@ -6,7 +6,7 @@ import numpy
 import tensorflow as tf
 
 
-MONTE_CARLO_ITERATIONS = 200000     # use monte carlo samples to determine max and min
+MONTE_CARLO_ITERATIONS = 20000     # use monte carlo samples to determine max and min
 COEF_SEED = 1234      # seed for coefficient generation
 n_hidden_func = 100   # number of hidden units in the black-box function
 
@@ -82,24 +82,6 @@ class Environment:
     def relu(self, x):
         return x * (x > 0)
 
-    def all_possible_next_states(self, state_and_step):
-        state, step = state_and_step[:-1], state_and_step[-1]
-        # action format (idx_to_remove, idx_to_add)
-        zero_idx = numpy.where(state == 0)[0]
-        one_idx = numpy.where(state == 1)[0]
-        next_state_template = state_and_step.copy().reshape(1, -1)
-        next_state_template[0, -1] = step + 1
-        next_states = numpy.repeat(next_state_template,
-                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
-        action_idx = 0
-        for zi in zero_idx:
-            for oi in one_idx:
-                next_states[action_idx, oi] = 0
-                next_states[action_idx, zi] = 1
-                action_idx += 1
-        # the last row of next_states means don't change any card
-        return next_states
-
     def all_possible_next_state_action(self, state_and_step):
         state, step = state_and_step[:-1], state_and_step[-1]
         # action format (idx_to_remove, idx_to_add)
@@ -135,14 +117,7 @@ class Environment:
         #     reward = new_out
         # else:
         #     reward = -1
-        reward = new_out
+        # reward = new_out
+        reward = numpy.exp(new_out / 100. - 35.)
         return self.cur_state.copy(), reward
 
-    def step_state(self, state_and_step, action):
-        """ step an action on state_and_step """
-        idx_to_remove, idx_to_add = action[0], action[1]
-        state_and_step = state_and_step.copy()
-        state_and_step[idx_to_remove] = 0
-        state_and_step[idx_to_add] = 1
-        state_and_step[-1] += 1  # increase the step
-        return state_and_step
