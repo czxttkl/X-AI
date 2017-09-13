@@ -7,17 +7,17 @@ import numpy as np
 import tensorflow as tf
 import numpy
 from collections import deque
-import prioritized_exp.rank_based as rank_based
 from prioritized_exp import RL_brain
 import os
 import pickle
+from tfboard import TensorboardWriter
 
 
 class Memory(object):
 
     def __init__(self, capacity, prioritized, n_features, n_actions,
-                 n_total_episode, batch_size, n_mem_size_learn_start,
-                 all_possible_next_states_func, step_state_func):
+                 n_total_episode, batch_size, n_mem_size_learn_start):
+        self.size = 0
         self.capacity = capacity
         self.prioritized = prioritized
         self.n_actions = n_actions
@@ -25,16 +25,9 @@ class Memory(object):
         self.n_total_episode = n_total_episode
         self.batch_size = batch_size
         self.n_mem_size_learn_start = n_mem_size_learn_start
-        self.all_possible_next_states = all_possible_next_states_func
-        self.step_state = step_state_func
 
         if self.prioritized:
             self.memory = RL_brain.Memory(self.capacity)
-            # # partition_num (==batch_size) * n_mem_size_learn_start should be larger than capacity
-            # assert self.batch_size * self.n_mem_size_learn_start >= self.capacity
-            # self.memory = rank_based.Experience({'size': self.capacity, 'learn_start': self.n_mem_size_learn_start,
-            #                                      'partition_num': self.batch_size, 'batch_size': self.batch_size,
-            #                                      'total_step': self.n_total_episode})
         else:
             self.memory = deque(maxlen=self.capacity)
 
@@ -47,6 +40,9 @@ class Memory(object):
             if transition[2] > 4407:
                 print('save 4408')
             self.memory.append(transition)
+        self.size += 1
+        if self.size > self.capacity:
+            self.size = self.capacity
 
     def sample(self):
         if self.prioritized:
@@ -55,15 +51,13 @@ class Memory(object):
             return self._no_prioritized_sample()
 
     def _prioritized_sample(self):
-        # samples, is_weights, sample_mem_idxs = self.memory.sample(learn_step_counter)
         tree_idx, samples, is_weights = self.memory.sample(self.batch_size)
 
         qsa_feature = numpy.zeros((self.batch_size, self.n_features))
         qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
         rewards = numpy.zeros(self.batch_size)
         terminal_weights = numpy.ones(self.batch_size)
-        # is_weights = numpy.array(is_weights)
-        is_weights = numpy.squeeze(is_weights)
+        is_weights = numpy.squeeze(is_weights)   # morvan's memory return 2d is_weights array
 
         for i, (state, action, reward, next_state, terminal) in enumerate(samples):
             rewards[i] = reward
@@ -100,14 +94,33 @@ class Memory(object):
     def update_priority(self, e_ids, abs_errors):
         assert self.prioritized
         self.memory.batch_update(e_ids, abs_errors)
-        # self.memory.update_priority(e_ids, abs_errors)
 
-    @property
-    def size(self):
-        if self.prioritized:
-            return sum(map(lambda x: 1 if x else 0, self.memory.tree.data)) # count how many not-none element
-        else:
-            return len(self.memory)
+    def all_possible_next_states(self, state_and_step):
+        state, step = state_and_step[:-1], state_and_step[-1]
+        # action format (idx_to_remove, idx_to_add)
+        zero_idx = numpy.where(state == 0)[0]
+        one_idx = numpy.where(state == 1)[0]
+        next_state_template = state_and_step.copy().reshape(1, -1)
+        next_state_template[0, -1] = step + 1
+        next_states = numpy.repeat(next_state_template,
+                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+        action_idx = 0
+        for zi in zero_idx:
+            for oi in one_idx:
+                next_states[action_idx, oi] = 0
+                next_states[action_idx, zi] = 1
+                action_idx += 1
+        # the last row of next_states means don't change any card
+        return next_states
+
+    def step_state(self, state_and_step, action):
+        """ step an action on state_and_step """
+        idx_to_remove, idx_to_add = action[0], action[1]
+        state_and_step = state_and_step.copy()
+        state_and_step[idx_to_remove] = 0
+        state_and_step[idx_to_add] = 1
+        state_and_step[-1] += 1  # increase the step
+        return state_and_step
 
 
 class QLearning:
@@ -120,15 +133,14 @@ class QLearning:
             n_total_episode,
             n_mem_size_learn_start,
             save_and_load_path,
-            all_possible_next_states_func,
-            step_state_func,
             load,
+            tensorboard_path,
             learning_rate=0.005,
             reward_decay=0.9,
             e_greedy=0.8,
             replace_target_iter=500,
             save_model_iter=3000,
-            memory_size=10000,
+            memory_capacity=10000,
             batch_size=32,
             e_greedy_increment=0.0001,
             prioritized=True,
@@ -140,13 +152,14 @@ class QLearning:
         self.n_mem_size_learn_start = n_mem_size_learn_start
         self.save_and_load_path = save_and_load_path
         self.load = load
+        self.tensorboard_path = tensorboard_path
 
         self.lr = learning_rate
         self.gamma = reward_decay
         self.epsilon_max = e_greedy
         self.replace_target_iter = replace_target_iter
         self.save_model_iter = save_model_iter
-        self.memory_size = memory_size
+        self.memory_capacity = memory_capacity
         self.batch_size = batch_size
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
@@ -161,14 +174,14 @@ class QLearning:
             with self.graph.as_default():
                 self._build_net()
                 self.sess.run(tf.global_variables_initializer())
-            self.memory = Memory(prioritized=self.prioritized, capacity=memory_size,
+            self.memory = Memory(prioritized=self.prioritized, capacity=self.memory_capacity,
                                  n_features=self.n_features, n_actions=self.n_actions,
                                  n_total_episode=self.n_total_episode, batch_size=self.batch_size,
-                                 n_mem_size_learn_start=self.n_mem_size_learn_start,
-                                 all_possible_next_states_func=all_possible_next_states_func,
-                                 step_state_func=step_state_func)
+                                 n_mem_size_learn_start=self.n_mem_size_learn_start)
         else:
             self.load_model()
+
+        self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
 
     def save_model(self):
         with self.graph.as_default():
@@ -322,3 +335,10 @@ class QLearning:
 
     def cur_epsilon(self):
         return self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
+
+    def tb_write(self, tags, values, step):
+        """ write to tensorboard """
+        self.tb_writer.write(tags, values, step)
+
+    def memory_size(self):
+        return self.memory.size
