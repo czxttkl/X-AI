@@ -48,13 +48,13 @@ class Memory(object):
                 print('save 4408')
             self.memory.append(transition)
 
-    def sample(self, learn_step_counter):
+    def sample(self):
         if self.prioritized:
-            return self._prioritized_sample(learn_step_counter)
+            return self._prioritized_sample()
         else:
             return self._no_prioritized_sample()
 
-    def _prioritized_sample(self, learn_step_counter):
+    def _prioritized_sample(self):
         # samples, is_weights, sample_mem_idxs = self.memory.sample(learn_step_counter)
         tree_idx, samples, is_weights = self.memory.sample(self.batch_size)
 
@@ -105,7 +105,7 @@ class Memory(object):
     @property
     def size(self):
         if self.prioritized:
-            return sum(map(lambda x: 1 if x else 0, self.memory.data)) # count how many not-none element
+            return sum(map(lambda x: 1 if x else 0, self.memory.tree.data)) # count how many not-none element
         else:
             return len(self.memory)
 
@@ -299,7 +299,7 @@ class QLearning:
             self.save_model()
 
         qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
-            = self.memory.sample(self.learn_step_counter)
+            = self.memory.sample()
 
         # q_target, q_next, q_eval = self.sess.run(
         #     [self.q_target, self.q_next, self.q_eval],
