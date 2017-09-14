@@ -35,6 +35,7 @@ class QLearning:
             batch_size=32,
             e_greedy_increment=0.0001,
             prioritized=True,
+            planning=False
     ):
         self.env = Environment(k=k, d=d)
         self.n_features = n_features
@@ -54,6 +55,7 @@ class QLearning:
         self.epsilon_increment = e_greedy_increment
         self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
         self.prioritized = prioritized  # decide to use double q or not
+        self.planning = planning  # decide to use planning for additional learning
 
         self.learn_step_counter = 0
 
@@ -66,9 +68,9 @@ class QLearning:
                 self.sess.run(tf.global_variables_initializer())
             self.memory = Memory(prioritized=self.prioritized, capacity=self.memory_capacity,
                                  n_features=self.n_features, n_actions=self.n_actions,
-                                 batch_size=self.batch_size,
+                                 batch_size=self.batch_size, planning=self.planning,
                                  qsa_feature_extract=self.env.step_state,
-                                 qsa_next_feature_extract=self.env.all_possible_next_states)
+                                 qsa_feature_extract_for_all_acts=self.env.all_possible_next_states)
         else:
             self.load_model()
 
@@ -95,16 +97,12 @@ class QLearning:
             self.rewards = self.graph.get_tensor_by_name('reward:0')   # reward
             self.terminal_weights = self.graph.get_tensor_by_name('terminal:0')  # terminal
             # variables
-            self.q_eval = self.graph.get_tensor_by_name('eval_net/out:0')
+            self.q_eval = self.graph.get_tensor_by_name('eval_net/q_eval:0')
             self.eval_w1 = self.graph.get_tensor_by_name('eval_net/l1/w1:0')
             self.eval_b1 = self.graph.get_tensor_by_name('eval_net/l1/b1:0')
             self.eval_w2 = self.graph.get_tensor_by_name('eval_net/l2/w2:0')
             self.eval_b2 = self.graph.get_tensor_by_name('eval_net/l2/b2:0')
-            self.q_next = self.graph.get_tensor_by_name('target_net/out:0')
-            self.target_w1 = self.graph.get_tensor_by_name('target_net/l1/w1:0')
-            self.target_b1 = self.graph.get_tensor_by_name('target_net/l1/b1:0')
-            self.target_w2 = self.graph.get_tensor_by_name('target_net/l2/w2:0')
-            self.target_b2 = self.graph.get_tensor_by_name('target_net/l2/b2:0')
+            self.q_next = self.graph.get_tensor_by_name('eval_net/q_next:0')
             self.q_target = self.graph.get_tensor_by_name("q_target:0")
             self.is_weights = self.graph.get_tensor_by_name("is_weights:0")
             self.loss = self.graph.get_tensor_by_name("loss:0")
@@ -116,53 +114,34 @@ class QLearning:
             self.memory = pickle.load(f)  # -1: highest protocol
 
     def _build_net(self):
-        def build_eval_layers(s, c_names, w_initializer, b_initializer):
-            # s is Q(s,a) feature, shape: (n_sample, n_features)
-            with tf.variable_scope('l1'):
-                w1 = tf.get_variable('w1', [self.n_features, self.n_hidden], initializer=w_initializer, collections=c_names)
-                b1 = tf.get_variable('b1', [self.n_hidden], initializer=b_initializer, collections=c_names)
-                # l1 shape: (n_sample, n_hidden)
-                l1 = tf.nn.relu(tf.matmul(s, w1) + b1)
-            with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [self.n_hidden, 1], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
-                # out shape: (n_sample, 1)
-                out = tf.matmul(l1, w2) + b2
-            return tf.squeeze(out, name='out'), w1, b1, w2, b2
-
-        def build_target_layers(s_, c_names, w_initializer, b_initializer):
-            # s_ Q(s',a') for all a' feature, shape: (n_sample, n_actions, n_features)
-            with tf.variable_scope('l1'):
-                w1 = tf.get_variable('w1', [self.n_features, self.n_hidden], initializer=w_initializer, collections=c_names)
-                b1 = tf.get_variable('b1', [self.n_hidden], initializer=b_initializer, collections=c_names)
-                # l1 shape: shape: (n_sample, n_actions, n_hidden)
-                l1 = tf.nn.relu(tf.einsum('ijk,kh->ijh', s_, w1) + b1)
-            with tf.variable_scope('l2'):
-                w2 = tf.get_variable('w2', [self.n_hidden, 1], initializer=w_initializer, collections=c_names)
-                b2 = tf.get_variable('b2', [1], initializer=b_initializer, collections=c_names)
-                out = tf.einsum('ijh,ho->ijo', l1, w2) + b2
-            return tf.squeeze(out, name='out'), w1, b1, w2, b2
-
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
-        self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_') # Q(s',a') feature
+        self.s_ = tf.placeholder(tf.float32, [None, self.n_actions, self.n_features], name='s_')  # Q(s',a') feature
         self.rewards = tf.placeholder(tf.float32, [None], name='reward')  # reward
-        self.terminal_weights = tf.placeholder(tf.float32, [None], name='terminal') # terminal
+        self.terminal_weights = tf.placeholder(tf.float32, [None], name='terminal')  # terminal
 
         w_initializer, b_initializer = \
             tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
 
         # ------------------ build evaluate_net ------------------
         with tf.variable_scope('eval_net'):
-            c_names = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_eval, self.eval_w1, self.eval_b1, self.eval_w2, self.eval_b2 \
-                = build_eval_layers(self.s, c_names, w_initializer, b_initializer)
-
-        # ------------------ build target_net ------------------
-        # Q(s',a') for all a' feature
-        with tf.variable_scope('target_net'):
-            c_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
-            self.q_next, self.target_w1, self.target_b1, self.target_w2, self.target_b2 \
-                = build_target_layers(self.s_, c_names, w_initializer, b_initializer)
+            # s is Q(s,a) feature, shape: (n_sample, n_features)
+            # s_ Q(s',a') for all a' feature, shape: (n_sample, n_actions, n_features)
+            with tf.variable_scope('l1'):
+                self.eval_w1 = tf.get_variable('w1', [self.n_features, self.n_hidden], initializer=w_initializer)
+                self.eval_b1 = tf.get_variable('b1', [self.n_hidden], initializer=b_initializer)
+                # l1 shape: (n_sample, n_hidden)
+                l1 = tf.nn.relu(tf.matmul(self.s, self.eval_w1) + self.eval_b1)
+                # l1 shape: shape: (n_sample, n_actions, n_hidden)
+                l1_ = tf.nn.relu(tf.einsum('ijk,kh->ijh', self.s_, self.eval_w1) + self.eval_b1)
+            with tf.variable_scope('l2'):
+                self.eval_w2 = tf.get_variable('w2', [self.n_hidden, 1], initializer=w_initializer)
+                self.eval_b2 = tf.get_variable('b2', [1], initializer=b_initializer)
+                # out shape: (n_sample, 1)
+                out = tf.matmul(l1, self.eval_w2) + self.eval_b2
+                # out_ shape: (n_sample, n_actions, 1), Q(s',a') for all a' feature
+                out_ = tf.einsum('ijh,ho->ijo', l1_, self.eval_w2) + self.eval_b2
+            self.q_eval = tf.squeeze(out, name='q_eval')
+            self.q_next = tf.squeeze(out_, name='q_next')
 
         # ------------------ loss function ----------------------
         # importance sampling weight
@@ -197,12 +176,21 @@ class QLearning:
         pred_q_value = pred_q_values[action_idx]
         return action, pred_q_value
 
-    def _replace_target_params(self):
-        with self.graph.as_default():
-            t_params = tf.get_collection('target_net_params')
-            e_params = tf.get_collection('eval_net_params')
-            self.sess.run([tf.assign(t, e) for t, e in zip(t_params, e_params)])
-            print('target_params_replaced')
+    # def _replace_target_params(self):
+    #     with self.graph.as_default():
+    #         t_params = tf.get_collection('target_net_params')
+    #         e_params = tf.get_collection('eval_net_params')
+    #         self.sess.run([tf.assign(t, e) for t, e in zip(t_params, e_params)])
+    #         print('target_params_replaced')
+
+    def planning_learn(self, qsa_next_features, qsa_features):
+        """
+        additional learning from planning:
+        for a sample s, a, r, s', we know all 's,'a that lead to s'
+        :param qsa_next_features: features for Q(s',a') for all a'
+        :param qsa_features: features for Q('s,'a) for all 'a which leads to s'
+        """
+        pass
 
     def learn(self, MEMORY_CAPACITY_START_LEARNING):
         while True:
@@ -210,25 +198,28 @@ class QLearning:
                 print('wait for more samples')
                 time.sleep(1)
                 continue
-
-            if self.learn_step_counter % self.replace_target_iter == 0:
-                self._replace_target_params()
+            #
+            # if self.learn_step_counter % self.replace_target_iter == 0:
+            #     self._replace_target_params()
 
             if self.learn_step_counter % self.save_model_iter == 0:
                 self.save_model()
 
-            qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_ids \
+            qsa_feature, qsa_features, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
                 = self.memory.sample()
 
             _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
                                                 feed_dict={self.s: qsa_feature,
-                                                           self.s_: qsa_next_feature,
+                                                           self.s_: qsa_next_features,
                                                            self.rewards: rewards,
                                                            self.terminal_weights: terminal_weights,
                                                            self.is_weights: is_weights})
 
             if self.prioritized:
                 self.update_memory_priority(exp_ids, abs_errors)
+
+            if self.planning:
+                self.planning_learn(qsa_feature)
 
             self.epsilon = self.cur_epsilon()
             self.learn_step_counter += 1

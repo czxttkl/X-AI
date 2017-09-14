@@ -132,8 +132,8 @@ class Environment:
         #     reward = new_out
         # else:
         #     reward = -1
-        # reward = new_out
-        reward = numpy.exp(new_out / 100. - 36.)  # distilled reward
+        reward = new_out
+        # reward = numpy.exp(new_out / 100. - 36.)  # distilled reward
         return self.cur_state.copy(), reward
 
     def all_possible_next_states(self, state_and_step):

@@ -12,18 +12,19 @@ from multiprocessing.managers import BaseManager
 
 
 # Raw parameters
-k = 20   # total available card size
-d = 6    # deck size
-USE_PRIORITIZED_REPLAY = False
+k = 120   # total available card size
+d = 30    # deck size
+USE_PRIORITIZED_REPLAY = True
 gamma = 0.9
 n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
-MEMORY_CAPACITY = 100000
-MEMORY_CAPACITY_START_LEARNING = 100000
+MEMORY_CAPACITY = 300000
+MEMORY_CAPACITY_START_LEARNING = 10000
 EPISODE_SIZE = 10000001          # the size of training episodes
 TEST_PERIOD = 20                 # how many per training episodes to do testing
-RANDOM_SEED = 224               # seed for random behavior except coefficient generation
+RANDOM_SEED = 204               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
+PLANNING = False                 # whether to use planning
 model_save_load_path = 'optimizer_model/qlearning'
 
 # Read parameters
@@ -48,13 +49,14 @@ manager = BaseManager()
 manager.start()
 RL = manager.QLearning(
     k=k, d=d, n_features=n_input_ql, n_actions=n_actions, n_hidden=n_hidden_ql, load=LOAD,
-    memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, batch_size=BATCH_SIZE,
+    memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
     save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path
 )
 
 
 def collect_samples(RL):
     RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED)
+
 
 def learn(RL):
     RL.learn(MEMORY_CAPACITY_START_LEARNING)
