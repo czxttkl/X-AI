@@ -29,8 +29,6 @@ class Environment:
         self.b2 = numpy.random.randn(1) * 10
         # restore random seed for other randomness
         numpy.random.set_state(s)
-        tf_seed = numpy.random.randint(0, 1000)
-        tf.set_random_seed(tf_seed)
 
     def monte_carlo(self):
         """ Use monte carlo to find the max value """
@@ -91,6 +89,8 @@ class Environment:
         next_state_template[0, -1] = step + 1
         next_states = numpy.repeat(next_state_template,
                                    repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+
+        # pythonic implementation (faster)
         next_actions = []
         action_idx = 0
         for zi in zero_idx:
@@ -101,11 +101,26 @@ class Environment:
                 action_idx += 1
         # the last row of next_states means don't change any card
         next_actions.append((zi, oi))
+
+        # numpy implementation:
+        # row_idx = numpy.arange(len(zero_idx) * len(one_idx))
+        # # first row: one_idx to change to 0, second row: zero idx to change to 1
+        # col_idx = numpy.array(numpy.meshgrid(one_idx, zero_idx)).reshape(2, -1)
+        # next_states[row_idx, col_idx[0]] = 0
+        # next_states[row_idx, col_idx[1]] = 1
+        #
+        # no_change_action = numpy.array([zero_idx[0], one_idx[0]]).reshape(1, -1)
+        # next_actions = numpy.repeat(no_change_action,
+        #                             repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+        # next_actions[row_idx, 0] = col_idx[0]
+        # next_actions[row_idx, 1] = col_idx[1]
+        # the last row of next_states means don't change any card
         return next_states, next_actions
 
     def step(self, action):
         """ step an action on self.cur_state """
         old_out = self.output(self.cur_state)
+        # action format(idx_to_remove, idx_to_add)
         idx_to_remove, idx_to_add = action[0], action[1]
         self.cur_state[idx_to_remove] = 0
         self.cur_state[idx_to_add] = 1
@@ -117,7 +132,43 @@ class Environment:
         #     reward = new_out
         # else:
         #     reward = -1
-        # reward = new_out
-        reward = numpy.exp(new_out / 100. - 35.)
+        reward = new_out
+        # reward = numpy.exp(new_out / 100. - 36.)  # distilled reward
         return self.cur_state.copy(), reward
+
+    def all_possible_next_states(self, state_and_step):
+        state, step = state_and_step[:-1], state_and_step[-1]
+        zero_idx = numpy.where(state == 0)[0]
+        one_idx = numpy.where(state == 1)[0]
+        next_state_template = state_and_step.copy().reshape(1, -1)
+        next_state_template[0, -1] = step + 1
+        next_states = numpy.repeat(next_state_template,
+                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
+
+        # pythonic implementation (faster):
+        action_idx = 0
+        for zi in zero_idx:
+            for oi in one_idx:
+                next_states[action_idx, oi] = 0
+                next_states[action_idx, zi] = 1
+                action_idx += 1
+
+        # numpy implementation:
+        # row_idx = numpy.arange(len(zero_idx) * len(one_idx))
+        # # first row: one_idx to change to 0, second row: zero idx to change to 1
+        # col_idx = numpy.array(numpy.meshgrid(one_idx, zero_idx)).reshape(2, -1)
+        # next_states[row_idx, col_idx[0]] = 0
+        # next_states[row_idx, col_idx[1]] = 1
+        # the last row of next_states means don't change any card
+        return next_states
+
+    def step_state(self, state_and_step, action):
+        """ step an action on state_and_step """
+        idx_to_remove, idx_to_add = action[0], action[1]
+        state_and_step = state_and_step.copy()
+        state_and_step[idx_to_remove] = 0
+        state_and_step[idx_to_add] = 1
+        state_and_step[-1] += 1  # increase the step
+        return state_and_step
+
 

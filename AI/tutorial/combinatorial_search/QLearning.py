@@ -6,132 +6,23 @@ import time
 import numpy as np
 import tensorflow as tf
 import numpy
-from collections import deque
-from prioritized_exp import RL_brain
 import os
 import pickle
 from tfboard import TensorboardWriter
-
-
-class Memory(object):
-
-    def __init__(self, capacity, prioritized, n_features, n_actions,
-                 n_total_episode, batch_size, n_mem_size_learn_start):
-        self.size = 0
-        self.capacity = capacity
-        self.prioritized = prioritized
-        self.n_actions = n_actions
-        self.n_features = n_features
-        self.n_total_episode = n_total_episode
-        self.batch_size = batch_size
-        self.n_mem_size_learn_start = n_mem_size_learn_start
-
-        if self.prioritized:
-            self.memory = RL_brain.Memory(self.capacity)
-        else:
-            self.memory = deque(maxlen=self.capacity)
-
-    def store(self, transition):
-        if self.prioritized:
-            if transition[2] > 4407:
-                print('save 4408')
-            self.memory.store(transition)
-        else:
-            if transition[2] > 4407:
-                print('save 4408')
-            self.memory.append(transition)
-        self.size += 1
-        if self.size > self.capacity:
-            self.size = self.capacity
-
-    def sample(self):
-        if self.prioritized:
-            return self._prioritized_sample()
-        else:
-            return self._no_prioritized_sample()
-
-    def _prioritized_sample(self):
-        tree_idx, samples, is_weights = self.memory.sample(self.batch_size)
-
-        qsa_feature = numpy.zeros((self.batch_size, self.n_features))
-        qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
-        rewards = numpy.zeros(self.batch_size)
-        terminal_weights = numpy.ones(self.batch_size)
-        is_weights = numpy.squeeze(is_weights)   # morvan's memory return 2d is_weights array
-
-        for i, (state, action, reward, next_state, terminal) in enumerate(samples):
-            rewards[i] = reward
-            if reward > 4407:
-                print('sample 4408')
-            terminal_weights[i] = 0 if terminal else 1
-            qsa_feature[i] = self.step_state(state, action)
-            qsa_next_feature[i] = self.all_possible_next_states(next_state)
-
-        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, tree_idx
-
-    def _no_prioritized_sample(self):
-        assert self.batch_size <= len(self.memory)
-        sample_mem_idxs = numpy.random.choice(len(self.memory), self.batch_size, replace=False)
-
-        qsa_feature = numpy.zeros((self.batch_size, self.n_features))
-        qsa_next_feature = numpy.zeros((self.batch_size, self.n_actions, self.n_features))
-        rewards = numpy.zeros(self.batch_size)
-        terminal_weights = numpy.ones(self.batch_size)
-        # every sample is equally important in non-prioritized sampling
-        is_weights = numpy.ones(self.batch_size)
-
-        for i, mem_idx in enumerate(sample_mem_idxs):
-            state, action, reward, next_state, terminal = self.memory[mem_idx]
-            if reward > 4407:
-                print('sample 4408')
-            rewards[i] = reward
-            terminal_weights[i] = 0 if terminal else 1
-            qsa_feature[i] = self.step_state(state, action)
-            qsa_next_feature[i] = self.all_possible_next_states(next_state)
-
-        return qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, sample_mem_idxs
-
-    def update_priority(self, e_ids, abs_errors):
-        assert self.prioritized
-        self.memory.batch_update(e_ids, abs_errors)
-
-    def all_possible_next_states(self, state_and_step):
-        state, step = state_and_step[:-1], state_and_step[-1]
-        # action format (idx_to_remove, idx_to_add)
-        zero_idx = numpy.where(state == 0)[0]
-        one_idx = numpy.where(state == 1)[0]
-        next_state_template = state_and_step.copy().reshape(1, -1)
-        next_state_template[0, -1] = step + 1
-        next_states = numpy.repeat(next_state_template,
-                                   repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
-        action_idx = 0
-        for zi in zero_idx:
-            for oi in one_idx:
-                next_states[action_idx, oi] = 0
-                next_states[action_idx, zi] = 1
-                action_idx += 1
-        # the last row of next_states means don't change any card
-        return next_states
-
-    def step_state(self, state_and_step, action):
-        """ step an action on state_and_step """
-        idx_to_remove, idx_to_add = action[0], action[1]
-        state_and_step = state_and_step.copy()
-        state_and_step[idx_to_remove] = 0
-        state_and_step[idx_to_add] = 1
-        state_and_step[-1] += 1  # increase the step
-        return state_and_step
+from prioritized_memory import Memory
+from env_time import Environment
+import multiprocessing
 
 
 class QLearning:
 
     def __init__(
             self,
+            k,
+            d,
             n_features,
             n_actions,
             n_hidden,
-            n_total_episode,
-            n_mem_size_learn_start,
             save_and_load_path,
             load,
             tensorboard_path,
@@ -145,11 +36,10 @@ class QLearning:
             e_greedy_increment=0.0001,
             prioritized=True,
     ):
+        self.env = Environment(k=k, d=d)
         self.n_features = n_features
         self.n_actions = n_actions
         self.n_hidden = n_hidden
-        self.n_total_episode = n_total_episode
-        self.n_mem_size_learn_start = n_mem_size_learn_start
         self.save_and_load_path = save_and_load_path
         self.load = load
         self.tensorboard_path = tensorboard_path
@@ -176,20 +66,24 @@ class QLearning:
                 self.sess.run(tf.global_variables_initializer())
             self.memory = Memory(prioritized=self.prioritized, capacity=self.memory_capacity,
                                  n_features=self.n_features, n_actions=self.n_actions,
-                                 n_total_episode=self.n_total_episode, batch_size=self.batch_size,
-                                 n_mem_size_learn_start=self.n_mem_size_learn_start)
+                                 batch_size=self.batch_size,
+                                 qsa_feature_extract=self.env.step_state,
+                                 qsa_next_feature_extract=self.env.all_possible_next_states)
         else:
             self.load_model()
 
         self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
+        self.memory_lock = multiprocessing.Lock()     # lock for memory modification
 
     def save_model(self):
         with self.graph.as_default():
             saver = tf.train.Saver()
             path = saver.save(self.sess, self.save_and_load_path)
-            print('save model to', path)
+            self.memory_lock.acquire()
             with open(self.save_and_load_path + '_memory.pickle', 'wb') as f:
                 pickle.dump(self.memory, f, protocol=-1)   # -1: highest protocol
+            self.memory_lock.release()
+            print('save model to', path)
 
     def load_model(self):
         with self.graph.as_default():
@@ -282,8 +176,16 @@ class QLearning:
         self.train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss, name='train_op')
 
     def store_transition(self, s, a, r, s_, terminal):
+        self.memory_lock.acquire()
         # transition is a tuple (current_state, action, reward, next_state, whether_terminal)
         self.memory.store((s, a, r, s_, terminal))
+        self.memory_lock.release()
+
+    def update_memory_priority(self, exp_ids, abs_errors):
+        """ update memory priority """
+        self.memory_lock.acquire()
+        self.memory.update_priority(exp_ids, abs_errors)
+        self.memory_lock.release()
 
     def choose_action(self, state, next_possible_states, next_possbile_actions, epsilon_greedy=True):
         pred_q_values = self.sess.run(self.q_eval, feed_dict={self.s: next_possible_states}).flatten()
@@ -302,36 +204,35 @@ class QLearning:
             self.sess.run([tf.assign(t, e) for t, e in zip(t_params, e_params)])
             print('target_params_replaced')
 
-    def learn(self):
-        if self.learn_step_counter % self.replace_target_iter == 0:
-            self._replace_target_params()
-            # if self.prioritized:
-            #     print('4408 reward samples in total:', numpy.sum([d[2] > 4407 for d in self.memory.memory.tree.data]))
+    def learn(self, MEMORY_CAPACITY_START_LEARNING):
+        while True:
+            if self.memory_size() < MEMORY_CAPACITY_START_LEARNING:
+                print('wait for more samples')
+                time.sleep(1)
+                continue
 
-        if self.learn_step_counter % self.save_model_iter == 0:
-            self.save_model()
+            if self.learn_step_counter % self.replace_target_iter == 0:
+                self._replace_target_params()
 
-        qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_idx \
-            = self.memory.sample()
+            if self.learn_step_counter % self.save_model_iter == 0:
+                self.save_model()
 
-        # q_target, q_next, q_eval = self.sess.run(
-        #     [self.q_target, self.q_next, self.q_eval],
-        #     feed_dict={self.s: qsa_feature,
-        #                self.s_: qsa_next_feature,
-        #                self.reward: rewards})
+            qsa_feature, qsa_next_feature, rewards, terminal_weights, is_weights, exp_ids \
+                = self.memory.sample()
 
-        _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
-                                            feed_dict={self.s: qsa_feature,
-                                                       self.s_: qsa_next_feature,
-                                                       self.rewards: rewards,
-                                                       self.terminal_weights: terminal_weights,
-                                                       self.is_weights: is_weights})
+            _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
+                                                feed_dict={self.s: qsa_feature,
+                                                           self.s_: qsa_next_feature,
+                                                           self.rewards: rewards,
+                                                           self.terminal_weights: terminal_weights,
+                                                           self.is_weights: is_weights})
 
-        if self.prioritized:
-            self.memory.update_priority(exp_idx, abs_errors)
+            if self.prioritized:
+                self.update_memory_priority(exp_ids, abs_errors)
 
-        self.epsilon = self.cur_epsilon()
-        self.learn_step_counter += 1
+            self.epsilon = self.cur_epsilon()
+            self.learn_step_counter += 1
+            print('learn at memory virtual size:', self.memory_virtual_size())
 
     def cur_epsilon(self):
         return self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
@@ -342,3 +243,40 @@ class QLearning:
 
     def memory_size(self):
         return self.memory.size
+
+    def memory_virtual_size(self):
+        return self.memory.virtual_size
+
+    def collect_samples(self, EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED):
+        for i_episode in range(EPISODE_SIZE):
+            cur_state = self.env.reset()
+            for i_epsisode_step in range(TRIAL_SIZE):
+                next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
+                action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
+                                               epsilon_greedy=True)
+                cur_state_, reward = self.env.step(action)
+                terminal = True if i_epsisode_step == TRIAL_SIZE - 1 else False
+                self.store_transition(cur_state, action, reward, cur_state_, terminal)
+                cur_state = cur_state_
+            print('episode ', i_episode, ' finished with value', self.env.output(cur_state),
+                  '\tcur_epsilon', self.cur_epsilon(), '\tmem_size', self.memory_virtual_size())
+
+            if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING and i_episode % TEST_PERIOD == 0:
+                cur_state = self.env.reset()
+                for i_episode_test_step in range(TRIAL_SIZE):
+                    next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
+                    action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
+                                                       epsilon_greedy=False)
+                    cur_state, reward = self.env.step(action)
+                    test_output = self.env.output(cur_state)
+                    print('TEST step {0}, output: {1}, at {2}, qval: {3}, reward {4}'.
+                          format(i_episode_test_step, test_output, cur_state, q_val, reward))
+
+                self.tb_write(tags=['Prioritized={0}, gamma={1}, seed={2}/Test Ending Output'.
+                                format(self.prioritized, self.gamma, RANDOM_SEED),
+                                      'Prioritized={0}, gamma={1}, seed={2}/Test Ending Qvalue'.
+                                format(self.prioritized, self.gamma, RANDOM_SEED),
+                                      ],
+                                values=[test_output,
+                                        q_val],
+                                step=self.learn_step_counter)
