@@ -14,15 +14,15 @@ from multiprocessing.managers import BaseManager
 # Raw parameters
 k = 20   # total available card size
 d = 6    # deck size
-USE_PRIORITIZED_REPLAY = True
+USE_PRIORITIZED_REPLAY = False
 gamma = 0.9
 n_hidden_ql = 200                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
-MEMORY_CAPACITY = 64000
-MEMORY_CAPACITY_START_LEARNING = 64000
+MEMORY_CAPACITY = 100000
+MEMORY_CAPACITY_START_LEARNING = 100000
 EPISODE_SIZE = 10000001          # the size of training episodes
 TEST_PERIOD = 20                 # how many per training episodes to do testing
-RANDOM_SEED = 2214               # seed for random behavior except coefficient generation
+RANDOM_SEED = 224               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 model_save_load_path = 'optimizer_model/qlearning'
 

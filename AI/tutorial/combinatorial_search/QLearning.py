@@ -30,7 +30,7 @@ class QLearning:
             reward_decay=0.9,
             e_greedy=0.8,
             replace_target_iter=500,
-            save_model_iter=3000,
+            save_model_iter=5000,
             memory_capacity=10000,
             batch_size=32,
             e_greedy_increment=0.0001,
