@@ -184,12 +184,7 @@ class QLearning:
     #         print('target_params_replaced')
 
     def planning_learn(self, qsa_next_features, qsa_features):
-        """
-        additional learning from planning:
-        for a sample s, a, r, s', we know all 's,'a that lead to s'
-        :param qsa_next_features: features for Q(s',a') for all a'
-        :param qsa_features: features for Q('s,'a) for all 'a which leads to s'
-        """
+        """ additional learning from planning """
         pass
 
     def learn(self, MEMORY_CAPACITY_START_LEARNING):
@@ -205,7 +200,7 @@ class QLearning:
             if self.learn_step_counter % self.save_model_iter == 0:
                 self.save_model()
 
-            qsa_feature, qsa_features, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
+            qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
                 = self.memory.sample()
 
             _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
@@ -219,11 +214,12 @@ class QLearning:
                 self.update_memory_priority(exp_ids, abs_errors)
 
             if self.planning:
-                self.planning_learn(qsa_feature)
+                self.planning_learn()
 
             self.epsilon = self.cur_epsilon()
             self.learn_step_counter += 1
-            print('learn at memory virtual size:', self.memory_virtual_size())
+            print('learn at learn step {0} memory virtual size {1}'.
+                  format(self.learn_step_counter, self.memory_virtual_size()))
 
     def cur_epsilon(self):
         return self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
