@@ -23,7 +23,7 @@ MEMORY_CAPACITY_START_LEARNING = 10000
 EPISODE_SIZE = 10000001          # the size of training episodes
 TEST_PERIOD = 200                 # how many per training episodes to do testing
 RANDOM_SEED = 204               # seed for random behavior except coefficient generation
-LOAD = False                     # whether to load existing model
+LOAD = True                     # whether to load existing model
 PLANNING = False                 # whether to use planning
 MODEL_SAVE_ITERATION = 500
 
