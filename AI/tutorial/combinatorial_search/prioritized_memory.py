@@ -6,7 +6,7 @@ import numpy
 class Memory(object):
 
     def __init__(self, capacity, prioritized, planning, n_features, n_actions, batch_size,
-                 qsa_feature_extract, qsa_feature_extract_for_all_acts):
+                 qsa_feature_extractor, qsa_feature_extractor_for_all_acts):
         self.size = 0            # current memory size: 0 ~ capacity
         self.virtual_size = 0    # the size of memory if there is no cap
         self.capacity = capacity
@@ -15,9 +15,9 @@ class Memory(object):
         self.n_actions = n_actions
         self.n_features = n_features
         self.batch_size = batch_size
-        self.qsa_feature_extract = qsa_feature_extract   # feature vector for Q(s,a)
-        self.qsa_feature_extract_for_all_acts = qsa_feature_extract_for_all_acts  # feature vectors for Q(s', a') for all a'
-
+        self.qsa_feature_extractor = qsa_feature_extractor   # extract feature vector for Q(s,a)
+        self.qsa_feature_extractor_for_all_acts = qsa_feature_extractor_for_all_acts  # extract feature vectors for
+                                                                                      #  Q(s', a') for all a'
         if self.prioritized:
             self.memory = RL_brain.Memory(self.capacity)
         else:
@@ -33,7 +33,7 @@ class Memory(object):
             #     print('save 4408')
             self.memory.append(transition)
         self.size += 1
-        self.virtual_size += 1
+        self.virtual_size += 1  # the number of transitions saved historically
         if self.size > self.capacity:
             self.size = self.capacity
 
@@ -68,8 +68,8 @@ class Memory(object):
             # if reward > 4407:
             #     print('sample 4408')
             terminal_weights[i] = 0 if terminal else 1
-            qsa_feature[i] = self.qsa_feature_extract(state, action)
-            qsa_next_features[i] = self.qsa_feature_extract_for_all_acts(next_state)
+            qsa_feature[i] = self.qsa_feature_extractor(state, action)
+            qsa_next_features[i] = self.qsa_feature_extractor_for_all_acts(next_state)
             # we do not directly save feature vectors in memory because that may take too much memory
 
         return qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, tree_idx
@@ -78,7 +78,7 @@ class Memory(object):
         assert self.batch_size <= len(self.memory)
         sample_mem_idxs = numpy.random.choice(len(self.memory), self.batch_size, replace=False)
 
-        qsa_feature = numpy.zeros((self.batch_size, self.n_features)) # feature for Q(s,a)
+        qsa_feature = numpy.zeros((self.batch_size, self.n_features))  # feature for Q(s,a)
         qsa_next_features = numpy.zeros((self.batch_size, self.n_actions,
                                          self.n_features))     # features for Q(s',a') for all a'
         rewards = numpy.zeros(self.batch_size)
@@ -91,9 +91,9 @@ class Memory(object):
             # if reward > 4407:
             #     print('sample 4408')
             rewards[i] = reward
-            terminal_weights[i] = 0 if terminal else 1
-            qsa_feature[i] = self.qsa_feature_extract(state, action)
-            qsa_next_features[i] = self.qsa_feature_extract_for_all_acts(next_state)
+            terminal_weights[i] = 0. if terminal else 1.
+            qsa_feature[i] = self.qsa_feature_extractor(state, action)
+            qsa_next_features[i] = self.qsa_feature_extractor_for_all_acts(next_state)
 
         return qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, sample_mem_idxs
 

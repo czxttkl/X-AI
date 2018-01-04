@@ -1,12 +1,13 @@
 """
 Optimization environment, a function, which is feed-forward neural network.
-However, the state takes into account time.
+Moreover, the state takes time into account.
 """
 import numpy
+import time
 import tensorflow as tf
 
 
-MONTE_CARLO_ITERATIONS = 20000     # use monte carlo samples to determine max and min
+MONTE_CARLO_ITERATIONS = 200000     # use monte carlo samples to determine max and min
 COEF_SEED = 1234      # seed for coefficient generation
 n_hidden_func = 100   # number of hidden units in the black-box function
 
@@ -16,7 +17,6 @@ class Environment:
         self.k = k
         self.d = d
         self.func_generate()
-        self.monte_carlo()
 
     def func_generate(self):
         # back up original random seed
@@ -30,10 +30,12 @@ class Environment:
         # restore random seed for other randomness
         numpy.random.set_state(s)
 
-    def monte_carlo(self):
+    def monte_carlo(self, logger):
         """ Use monte carlo to find the max value """
         min_val = 9e16
         max_val = -9e16
+
+        start_time = time.time()
         for i in range(MONTE_CARLO_ITERATIONS):
             random_state = numpy.zeros(self.k + 1)   # state + step
             one_idx = numpy.random.choice(self.k, self.d, replace=False)
@@ -45,7 +47,9 @@ class Environment:
             if random_state_output > max_val:
                 max_val = random_state_output
                 max_state = random_state
-        print("monte carlo max: {0} at {1}\nmin: {2} at {3}".format(max_val, max_state, min_val, min_state))
+        duration = time.time() - start_time
+
+        logger.log_monte_carlo(max_val, max_state, min_val, min_state, duration)
 
     def reset(self):
         random_state = numpy.zeros(self.k + 1)  # the last component is step
@@ -90,7 +94,7 @@ class Environment:
         next_states = numpy.repeat(next_state_template,
                                    repeats=len(zero_idx) * len(one_idx) + 1, axis=0)
 
-        # pythonic implementation (faster)
+        # pythonic implementation (faster):
         next_actions = []
         action_idx = 0
         for zi in zero_idx:
@@ -128,12 +132,14 @@ class Environment:
         new_out = self.output(self.cur_state)
         # reward = new_out - old_out
         # reward = old_out - new_out
+        reward = new_out
+        # distilled reward
+        # reward = numpy.exp(new_out / 100. - 36.)
+        # extreme distilled reward
         # if new_out > 4407:
         #     reward = new_out
         # else:
         #     reward = -1
-        reward = new_out
-        # reward = numpy.exp(new_out / 100. - 36.)  # distilled reward
         return self.cur_state.copy(), reward
 
     def all_possible_next_states(self, state_and_step):
