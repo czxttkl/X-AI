@@ -177,7 +177,6 @@ class QLearning:
             self.q_next = tf.squeeze(out_, name='q_next')
 
         # ------------------ loss function ----------------------
-        # importance sampling weight
         self.q_target = tf.add(self.rewards,
                                self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1)),
                                name='q_target')
@@ -312,7 +311,7 @@ class QLearning:
             self.sample_wall_time += sample_wall_time
 
             print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall time:{:.2f}:total:{:.2f}'.
-                  format(i_episode, self.env.output(cur_state), self.cur_epsilon(),
+                  format(i_episode, self.env.still(self.env.output(cur_state)), self.cur_epsilon(),
                          self.memory_size(), self.memory_virtual_size(),
                          sample_wall_time, self.sample_wall_time))
 
@@ -325,6 +324,7 @@ class QLearning:
                                                        epsilon_greedy=False)
                     cur_state, reward = self.env.step(action)
                     test_output = self.env.output(cur_state)
+                    test_output = self.env.still(test_output)
                     print('TEST  :{}:output: {:.5f}, at {}, qval: {:.5f}, reward {:.5f}'.
                           format(i_episode_test_step, test_output, cur_state, q_val, reward))
 

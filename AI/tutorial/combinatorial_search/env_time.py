@@ -4,6 +4,8 @@ Moreover, the state takes time into account.
 """
 import numpy
 import time
+import math
+from scipy.special import expit
 import tensorflow as tf
 
 
@@ -23,10 +25,10 @@ class Environment:
         s = numpy.random.get_state()
         # set seed for nn coef
         numpy.random.seed(COEF_SEED)
-        self.w1 = numpy.random.randn(self.k, n_hidden_func) * 10
-        self.b1 = numpy.random.randn(n_hidden_func) * 10
-        self.w2 = numpy.random.randn(n_hidden_func, 1) * 10
-        self.b2 = numpy.random.randn(1) * 10
+        self.w1 = numpy.random.randn(self.k, n_hidden_func) * 0.1
+        self.b1 = numpy.random.randn(n_hidden_func) * 0.1
+        self.w2 = numpy.random.randn(n_hidden_func, 1) * 0.1
+        self.b2 = numpy.random.randn(1) * 0.1
         # restore random seed for other randomness
         numpy.random.set_state(s)
 
@@ -49,7 +51,7 @@ class Environment:
                 max_state = random_state
         duration = time.time() - start_time
 
-        logger.log_monte_carlo(max_val, max_state, min_val, min_state, duration)
+        logger.log_monte_carlo(self.still(max_val), max_state, self.still(min_val), min_state, duration)
 
     def reset(self):
         random_state = numpy.zeros(self.k + 1)  # the last component is step
@@ -57,6 +59,29 @@ class Environment:
         random_state[one_idx] = 1
         self.cur_state = random_state
         return self.cur_state.copy()
+
+    @staticmethod
+    def sigmoid(x):
+        """
+        This python native function is faster than scipy.special.expit for single input.
+        See: https://stackoverflow.com/questions/3985619/how-to-calculate-a-logistic-sigmoid-function-in-python/
+        """
+        try:
+            res = 1 / (1 + math.exp(-x))
+        except OverflowError:
+            res = 0.0
+        return res
+
+    @staticmethod
+    def distill(out):
+        """ we did experiments and find distilled help converge faster """
+        return numpy.exp(out * 10)
+        # return out
+
+    @staticmethod
+    def still(distill_out):
+        return numpy.log(distill_out) / 10.
+        # return distill_out
 
     def output(self, state):
         # t1 = time.time()
@@ -67,9 +92,11 @@ class Environment:
                                   + self.b1
                                  ),
                         self.w2) + self.b2
+        out = self.sigmoid(out[0])
+        out = self.distill(out)
         # t2 = time.time()
         # print('step output time', t2 - t1)
-        return out[0]
+        return out
 
     def outputs(self, states):
         assert len(states.shape) == 2 and states.shape[1] == self.k + 1
@@ -79,6 +106,8 @@ class Environment:
                                    + self.b1
                                   ),
                          self.w2) + self.b2
+        outs = expit(outs)
+        outs = self.distill(outs)
         return outs
 
     def relu(self, x):

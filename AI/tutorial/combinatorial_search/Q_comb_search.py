@@ -21,11 +21,11 @@ MEMORY_CAPACITY = 300000
 MEMORY_CAPACITY_START_LEARNING = 10000
 EPISODE_SIZE = 10000001          # the size of training episodes
 TEST_PERIOD = 200                 # how many per training episodes to do testing
-RANDOM_SEED = 204               # seed for random behavior except coefficient generation
+RANDOM_SEED = 206               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
 MODEL_SAVE_ITERATION = 500
-LEARN_CPU_TIME_LIMIT = 3600      # seconds of limit of cpu time the algorithm can learn
+LEARN_CPU_TIME_LIMIT = 3600000      # seconds of limit of cpu time the algorithm can learn
 
 # Read parameters
 # parser = argparse.ArgumentParser(description='Process some integers.')
