@@ -11,3 +11,8 @@ class Logger:
         with open(self.log_path, 'a') as f:
             f.write(output_str)
 
+    def log_wall_time(self, wall_time):
+        output_str = 'program wall time:{}'.format(wall_time)
+        print(output_str)
+        with open(self.log_path, 'a') as f:
+            f.write(output_str)
