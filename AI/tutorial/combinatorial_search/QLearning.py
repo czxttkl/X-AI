@@ -2,19 +2,20 @@
 Neural network approximation Q-Learning with prioritized experience replay
 experience replay implementation taken from: https://github.com/Damcy/prioritized-experience-replay
 """
+import glob
+import multiprocessing
+import os
+import pickle
+import resource
 import time
+
+import numpy
 import numpy as np
 import tensorflow as tf
-import numpy
-import os
-import glob
-import pickle
-from tfboard import TensorboardWriter
-from prioritized_memory import Memory
-from env_time import Environment
-import multiprocessing
+
 from logger import Logger
-import resource
+from prioritized_memory import Memory
+from tfboard import TensorboardWriter
 
 
 class QLearning:
@@ -23,8 +24,7 @@ class QLearning:
             self,
             k,
             d,
-            n_features,
-            n_actions,
+            env_name,
             n_hidden,
             save_and_load_path,
             load,
@@ -40,9 +40,10 @@ class QLearning:
             prioritized=True,
             planning=False
     ):
-        self.env = Environment(k=k, d=d)
-        self.n_features = n_features
-        self.n_actions = n_actions
+        self.env_name = env_name
+        self.env, self.n_features, self.n_actions = self.get_env(env_name, k, d)
+        self.env.reset()
+
         self.n_hidden = n_hidden
         self.save_and_load_path = os.path.abspath(save_and_load_path)
         self.load = load
@@ -87,6 +88,19 @@ class QLearning:
 
         self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
         self.memory_lock = multiprocessing.Lock()     # lock for memory modification
+
+    def get_env(self, env_name, k, d):
+        if env_name == 'env_nn':
+            from environment.env_nn import Environment
+            # n_actions: # of one-card modification
+            # n_features: input dimension to qlearning network (k plus time step as a feature)
+            env, n_features, n_actions = Environment(k=k, d=d), k + 1, d * (k-d) + 1
+        elif env_name == 'env_nn_xo':
+            from environment.env_nn_xo import Environment
+            # n_actions: # of one-card modification
+            # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature)
+            env, n_features, n_actions = Environment(k=k, d=d), 2 * k + 1, d * (k - d) + 1
+        return env, n_features, n_actions
 
     def path_check(self, load):
         save_and_load_path_dir = os.path.dirname(self.save_and_load_path)
@@ -316,25 +330,7 @@ class QLearning:
                          sample_wall_time, self.sample_wall_time))
 
             # test every once a while
-            if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING and i_episode % TEST_PERIOD == 0:
-                cur_state = self.env.reset()
-                for i_episode_test_step in range(TRIAL_SIZE):
-                    next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
-                    action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
-                                                       epsilon_greedy=False)
-                    cur_state, reward = self.env.step(action)
-                    test_output = self.env.output(cur_state)
-                    test_output = self.env.still(test_output)
-                    print('TEST  :{}:output: {:.5f}, at {}, qval: {:.5f}, reward {:.5f}'.
-                          format(i_episode_test_step, test_output, cur_state, q_val, reward))
-
-                self.tb_write(tags=['Prioritized={0}, gamma={1}, seed={2}/Test Ending Output'.
-                                format(self.prioritized, self.gamma, RANDOM_SEED),
-                                      'Prioritized={0}, gamma={1}, seed={2}/Test Ending Qvalue'.
-                                format(self.prioritized, self.gamma, RANDOM_SEED),
-                                      ],
-                                values=[test_output,
-                                        q_val],
-                                step=self.learn_step_counter)
-
-
+            if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING \
+                    and self.learn_step_counter % TEST_PERIOD == 0:
+                self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.cpu_time, self.env_name,
+                              rl_model=self)

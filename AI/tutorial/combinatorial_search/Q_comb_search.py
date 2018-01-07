@@ -24,9 +24,9 @@ TEST_PERIOD = 200                 # how many per training episodes to do testing
 RANDOM_SEED = 206               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
-MODEL_SAVE_ITERATION = 500
+MODEL_SAVE_ITERATION = 5000
 LEARN_CPU_TIME_LIMIT = 3600000      # seconds of limit of cpu time the algorithm can learn
-
+env_name = 'env_nn_xo'
 # Read parameters
 # parser = argparse.ArgumentParser(description='Process some integers.')
 # parser.add_argument('--timed', dest='timed', action='store_true')
@@ -35,9 +35,7 @@ LEARN_CPU_TIME_LIMIT = 3600000      # seconds of limit of cpu time the algorithm
 # timed = args.timed
 
 # Derived parameters
-n_actions = d * (k-d) + 1    # number of one-card modification
 TRIAL_SIZE = d                # how many card modification allowed
-n_input_ql = k+1   # input dimension to qlearning network (k plus time step as a feature)
 tensorboard_path = 'comb_search_k{}_d{}_t{}/{}'.format(k, d, LEARN_CPU_TIME_LIMIT, time.time())
 model_save_load_path = 'comb_search_k{}_d{}_t{}/optimizer_model/qlearning'.format(k, d, LEARN_CPU_TIME_LIMIT)
 numpy.random.seed(RANDOM_SEED)
@@ -50,7 +48,7 @@ BaseManager.register('QLearning', QLearning)
 manager = BaseManager()
 manager.start()
 RL = manager.QLearning(
-    k=k, d=d, n_features=n_input_ql, n_actions=n_actions, n_hidden=n_hidden_ql, load=LOAD,
+    k=k, d=d, env_name=env_name, n_hidden=n_hidden_ql, load=LOAD,
     memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
     save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
     save_model_iter=MODEL_SAVE_ITERATION,
