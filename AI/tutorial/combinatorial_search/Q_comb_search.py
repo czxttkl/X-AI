@@ -6,7 +6,7 @@ import numpy
 import tensorflow as tf
 from QLearning import QLearning
 import time
-from multiprocessing import Process
+from multiprocessing import Process, freeze_support
 from multiprocessing.managers import BaseManager
 
 
@@ -41,39 +41,44 @@ model_save_load_path = 'comb_search_k{}_d{}_t{}/optimizer_model/qlearning'.forma
 numpy.random.seed(RANDOM_SEED)
 tf.set_random_seed(RANDOM_SEED)
 
-wall_time = time.time()
 
-# initialize critical components
-BaseManager.register('QLearning', QLearning)
-manager = BaseManager()
-manager.start()
-RL = manager.QLearning(
-    k=k, d=d, env_name=env_name, n_hidden=n_hidden_ql, load=LOAD,
-    memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
-    save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
-    save_model_iter=MODEL_SAVE_ITERATION,
-)
+if __name__ == '__main__':
+    # for multiprocessing on windows
+    freeze_support()
 
+    wall_time = time.time()
 
-def collect_samples(RL):
-    RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
-                       LEARN_CPU_TIME_LIMIT)
-
-
-def learn(RL):
-    RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
+    # initialize critical components
+    BaseManager.register('QLearning', QLearning)
+    manager = BaseManager()
+    manager.start()
+    RL = manager.QLearning(
+        k=k, d=d, env_name=env_name, n_hidden=n_hidden_ql, load=LOAD,
+        memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
+        save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
+        save_model_iter=MODEL_SAVE_ITERATION,
+    )
 
 
-# collect samples and learning run in two separate processes
-p1 = Process(target=collect_samples, args=[RL])
-p1.start()
-p2 = Process(target=learn, args=[RL])
-p2.start()
-p1.join()
-p2.join()
+    def collect_samples(RL):
+        RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
+                           LEARN_CPU_TIME_LIMIT)
 
-# log wall time
-wall_time = time.time() - wall_time
-RL.get_logger().log_wall_time(wall_time)
+
+    def learn(RL):
+        RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
+
+
+    # collect samples and learning run in two separate processes
+    p1 = Process(target=collect_samples, args=[RL])
+    p1.start()
+    p2 = Process(target=learn, args=[RL])
+    p2.start()
+    p1.join()
+    p2.join()
+
+    # log wall time
+    wall_time = time.time() - wall_time
+    RL.get_logger().log_wall_time(wall_time)
 
 
