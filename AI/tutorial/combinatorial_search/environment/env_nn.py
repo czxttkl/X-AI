@@ -21,6 +21,7 @@ class Environment:
         self.k = k
         self.d = d
         self.func_generate()
+        self.reset()
 
     def func_generate(self):
         # back up original random seed

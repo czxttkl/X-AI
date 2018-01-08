@@ -22,6 +22,7 @@ class Environment:
         self.k = k
         self.d = d
         self.func_generate()
+        self.reset()
 
     def func_generate(self):
         # back up original random seed
@@ -67,6 +68,8 @@ class Environment:
         random_xo = numpy.zeros(self.k)
         one_idx = numpy.random.choice(self.k, self.d, replace=False)
         random_xo[one_idx] = 1
+        # for debug, fix random_xo
+        # random_xo[:self.d] = 1
 
         random_xp = numpy.zeros(self.k + 1)  # the last component is step
         one_idx = numpy.random.choice(self.k, self.d, replace=False)
@@ -151,7 +154,7 @@ class Environment:
                 next_actions.append((self.k + oi, self.k + zi))
                 action_idx += 1
         # the last row of next_states means don't change any card
-        next_actions.append((zi, oi))
+        next_actions.append((self.k + zi, self.k + oi))
 
         # numpy implementation:
         # row_idx = numpy.arange(len(zero_idx) * len(one_idx))
@@ -236,9 +239,13 @@ class Environment:
         rl_model.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
                                  output_rl=test_output, state_rl=cur_state, duration_rl=duration_rl,
                                  learn_step_counter=learn_step_counter, cpu_time=cpu_time)
+
         rl_model.tb_write(tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}/Ending Output (RL-MC)'.
-                          format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name)],
-                          values=[test_output - max_val_mc],
+                          format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name),
+                                'Prioritized={0}, gamma={1}, seed={2}, env={3}/Ending Output (RL)'.
+                          format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name),
+                                ],
+                          values=[test_output - max_val_mc, test_output],
                           step=rl_model.learn_step_counter)
 
 

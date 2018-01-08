@@ -6,7 +6,7 @@ import glob
 import multiprocessing
 import os
 import pickle
-import resource
+import psutil
 import time
 
 import numpy
@@ -42,7 +42,6 @@ class QLearning:
     ):
         self.env_name = env_name
         self.env, self.n_features, self.n_actions = self.get_env(env_name, k, d)
-        self.env.reset()
 
         self.n_hidden = n_hidden
         self.save_and_load_path = os.path.abspath(save_and_load_path)
@@ -235,14 +234,12 @@ class QLearning:
 
     @property
     def cpu_time(self):
-        return resource.getrusage(resource.RUSAGE_SELF).ru_stime + \
-               resource.getrusage(resource.RUSAGE_SELF).ru_utime + \
+        return psutil.Process().cpu_times().user + \
+               psutil.Process().cpu_times().system + \
                self.last_cpu_time
 
     def learn(self, MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT):
         while True:
-            cpu_time = self.cpu_time
-
             if self.memory_size() < MEMORY_CAPACITY_START_LEARNING:
                 print('LEARN:wait for more samples:CPU time:{}'.format(self.cpu_time))
                 time.sleep(1)
