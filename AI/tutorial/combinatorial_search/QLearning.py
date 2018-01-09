@@ -30,6 +30,7 @@ class QLearning:
             load,
             tensorboard_path,
             logger_path,
+            learn_interval,
             learning_rate=0.005,
             reward_decay=0.9,
             e_greedy=0.8,
@@ -49,6 +50,7 @@ class QLearning:
         self.load = load
         self.tensorboard_path = tensorboard_path
         self.logger_path = logger_path
+        self.learn_interval = learn_interval
 
         self.lr = learning_rate
         self.gamma = reward_decay
@@ -84,6 +86,8 @@ class QLearning:
             self.sample_step_counter = 0
             self.sample_wall_time = 0.
             self.last_cpu_time = 0.
+            self.last_learn_step = 0
+            self.last_test_step = 0
         else:
             self.load_model()
 
@@ -127,7 +131,8 @@ class QLearning:
         # save variables
         with open(self.save_and_load_path + '_variables.pickle', 'wb') as f:
             pickle.dump((self.learn_step_counter, self.sample_step_counter,
-                         self.learn_wall_time, self.sample_wall_time, self.cpu_time), f, protocol=-1)
+                         self.learn_wall_time, self.sample_wall_time, self.cpu_time,
+                         self.last_learn_step, self.last_test_step), f, protocol=-1)
         print('save model to', path)
 
     def load_model(self):
@@ -159,7 +164,8 @@ class QLearning:
         # load variables
         with open(self.save_and_load_path + '_variables.pickle', 'rb') as f:
             self.learn_step_counter, self.sample_step_counter, \
-            self.learn_wall_time, self.sample_wall_time, self.last_cpu_time = pickle.load(f)
+            self.learn_wall_time, self.sample_wall_time, self.last_cpu_time, \
+            self.last_learn_step, self.last_test_step = pickle.load(f)
 
     def _build_net(self):
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
@@ -243,8 +249,14 @@ class QLearning:
     def learn(self, MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT):
         while True:
             if self.memory_size() < MEMORY_CAPACITY_START_LEARNING:
-                print('LEARN:wait for more samples:CPU time:{}'.format(self.cpu_time))
-                time.sleep(1)
+                print('LEARN:{}:wait for more samples:CPU time:{}'.format(self.learn_step_counter, self.cpu_time))
+                time.sleep(2)
+                continue
+
+            if self.memory_virtual_size() - self.last_learn_step < self.learn_interval:
+                # print('LEARN:{}:wait for more samples:virtual:{}:last learn:{}:CPU time:{}'.
+                #       format(self.learn_step_counter, self.memory_virtual_size(), self.last_learn_step, self.cpu_time))
+                time.sleep(0.2)
                 continue
             #
             # if self.learn_step_counter % self.replace_target_iter == 0:
@@ -260,6 +272,7 @@ class QLearning:
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
                 = self.memory.sample()
+            self.last_learn_step = self.memory_virtual_size()
 
             _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
                                                 feed_dict={self.s: qsa_feature,
@@ -330,6 +343,8 @@ class QLearning:
 
             # test every once a while
             if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING \
-                    and self.learn_step_counter % TEST_PERIOD == 0:
+                    and self.learn_step_counter % TEST_PERIOD == 0 \
+                    and self.learn_step_counter > self.last_test_step:
                 self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.cpu_time, self.env_name,
                               rl_model=self)
+                self.last_test_step = self.learn_step_counter

@@ -12,8 +12,8 @@ import os
 
 
 # Raw parameters
-k = 20   # total available card size
-d = 6    # deck size
+k = 50   # total available card size
+d = 30    # deck size
 USE_PRIORITIZED_REPLAY = False
 gamma = 0.9
 n_hidden_ql = 400                 # number of hidden units in Qlearning NN
@@ -37,6 +37,7 @@ env_name = 'env_nn_xo'
 
 # Derived parameters
 TRIAL_SIZE = d                # how many card modification allowed
+LEARN_INTERVAL = TRIAL_SIZE   # at least how many experiences to collect between two learning iterations
 parent_path = os.path.abspath('comb_search_k{}_d{}_t{}'.format(k, d, LEARN_CPU_TIME_LIMIT))
 tensorboard_path = os.path.join(parent_path, str(time.time()))
 model_save_load_path = os.path.join(parent_path, 'optimizer_model', 'qlearning')
@@ -59,7 +60,7 @@ if __name__ == '__main__':
         k=k, d=d, env_name=env_name, n_hidden=n_hidden_ql, load=LOAD,
         memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
         save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
-        logger_path=logger_path, save_model_iter=MODEL_SAVE_ITERATION,
+        logger_path=logger_path, save_model_iter=MODEL_SAVE_ITERATION, learn_interval=LEARN_INTERVAL,
     )
 
 

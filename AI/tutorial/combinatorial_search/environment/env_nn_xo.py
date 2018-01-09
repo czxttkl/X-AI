@@ -246,6 +246,6 @@ class Environment:
                           format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name),
                                 ],
                           values=[test_output - max_val_mc, test_output],
-                          step=rl_model.learn_step_counter)
+                          step=learn_step_counter)
 
 
