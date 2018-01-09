@@ -46,6 +46,16 @@ numpy.random.seed(RANDOM_SEED)
 tf.set_random_seed(RANDOM_SEED)
 
 
+def collect_samples(RL):
+    RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
+                       LEARN_CPU_TIME_LIMIT)
+
+
+def learn(RL):
+    RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
+
+
+
 if __name__ == '__main__':
     # for multiprocessing on windows
     freeze_support()
@@ -62,16 +72,6 @@ if __name__ == '__main__':
         save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
         logger_path=logger_path, save_model_iter=MODEL_SAVE_ITERATION, learn_interval=LEARN_INTERVAL,
     )
-
-
-    def collect_samples(RL):
-        RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
-                           LEARN_CPU_TIME_LIMIT)
-
-
-    def learn(RL):
-        RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
-
 
     # collect samples and learning run in two separate processes
     p1 = Process(target=collect_samples, args=[RL])
