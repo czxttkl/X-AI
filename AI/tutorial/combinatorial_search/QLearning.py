@@ -29,6 +29,7 @@ class QLearning:
             save_and_load_path,
             load,
             tensorboard_path,
+            logger_path,
             learning_rate=0.005,
             reward_decay=0.9,
             e_greedy=0.8,
@@ -44,9 +45,10 @@ class QLearning:
         self.env, self.n_features, self.n_actions = self.get_env(env_name, k, d)
 
         self.n_hidden = n_hidden
-        self.save_and_load_path = os.path.abspath(save_and_load_path)
+        self.save_and_load_path = save_and_load_path
         self.load = load
         self.tensorboard_path = tensorboard_path
+        self.logger_path = logger_path
 
         self.lr = learning_rate
         self.gamma = reward_decay
@@ -62,7 +64,7 @@ class QLearning:
 
         # create a logger
         self.path_check(load)
-        self.logger = Logger(os.path.dirname(os.path.dirname(self.save_and_load_path)) + '/logger.log')
+        self.logger = Logger(self.logger_path)
 
         # create a graph for model variables and session
         self.graph = tf.Graph()

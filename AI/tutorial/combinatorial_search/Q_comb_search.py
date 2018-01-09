@@ -8,6 +8,7 @@ from QLearning import QLearning
 import time
 from multiprocessing import Process, freeze_support
 from multiprocessing.managers import BaseManager
+import os
 
 
 # Raw parameters
@@ -20,7 +21,7 @@ BATCH_SIZE = 64
 MEMORY_CAPACITY = 300000
 MEMORY_CAPACITY_START_LEARNING = 10000
 EPISODE_SIZE = 10000001          # the size of training episodes
-TEST_PERIOD = 2000                 # how many per training episodes to do testing
+TEST_PERIOD = 200                 # how many per training episodes to do testing
 RANDOM_SEED = 206               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
@@ -36,8 +37,10 @@ env_name = 'env_nn_xo'
 
 # Derived parameters
 TRIAL_SIZE = d                # how many card modification allowed
-tensorboard_path = 'comb_search_k{}_d{}_t{}/{}'.format(k, d, LEARN_CPU_TIME_LIMIT, time.time())
-model_save_load_path = 'comb_search_k{}_d{}_t{}/optimizer_model/qlearning'.format(k, d, LEARN_CPU_TIME_LIMIT)
+parent_path = os.path.abspath('comb_search_k{}_d{}_t{}'.format(k, d, LEARN_CPU_TIME_LIMIT))
+tensorboard_path = os.path.join(parent_path, str(time.time()))
+model_save_load_path = os.path.join(parent_path, 'optimizer_model', 'qlearning')
+logger_path = os.path.join(parent_path, 'logger.log')
 numpy.random.seed(RANDOM_SEED)
 tf.set_random_seed(RANDOM_SEED)
 
@@ -56,7 +59,7 @@ if __name__ == '__main__':
         k=k, d=d, env_name=env_name, n_hidden=n_hidden_ql, load=LOAD,
         memory_capacity=MEMORY_CAPACITY, prioritized=USE_PRIORITIZED_REPLAY, planning=PLANNING, batch_size=BATCH_SIZE,
         save_and_load_path=model_save_load_path, reward_decay=gamma, tensorboard_path=tensorboard_path,
-        save_model_iter=MODEL_SAVE_ITERATION,
+        logger_path=logger_path, save_model_iter=MODEL_SAVE_ITERATION,
     )
 
 
