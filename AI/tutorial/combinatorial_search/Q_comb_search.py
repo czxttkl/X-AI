@@ -55,7 +55,6 @@ def learn(RL):
     RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
 
 
-
 if __name__ == '__main__':
     # for multiprocessing on windows
     freeze_support()
