@@ -164,7 +164,7 @@ class PointerNet(nn.Module):
     def forward(self, inputs):
         """
         Args:
-            inputs: [batch_size x 1 x sourceL]
+            inputs: [batch_size x 2 x sourceL]
         """
         batch_size = inputs.size(0)
         seq_len = inputs.size(2)
@@ -319,7 +319,7 @@ class TrainModel:
 
                 self.actor_optim.step()
 
-                critic_exp_mvg_avg = critic_exp_mvg_avg.detach()
+                # critic_exp_mvg_avg = critic_exp_mvg_avg.detach()
 
                 self.train_tour.append(R.mean().data[0])
 
@@ -368,15 +368,14 @@ class TrainModel:
 if __name__ == '__main__':
     train_size = 1000000
     val_size = 10000
+    seq_len = 20
 
-    train_20_dataset = TSPDataset(20, train_size)
-    val_20_dataset = TSPDataset(20, val_size)
-
-    train_50_dataset = TSPDataset(50, train_size)
-    val_50_dataset = TSPDataset(50, val_size)
+    train_20_dataset = TSPDataset(seq_len, train_size)
+    val_20_dataset = TSPDataset(seq_len, val_size)
 
     embedding_size = 128
     hidden_size = 128
+    batch_size = 64
     n_glimpses = 1
     tanh_exploration = 10
     use_tanh = True
@@ -387,7 +386,7 @@ if __name__ == '__main__':
     tsp_20_model = CombinatorialRL(
         embedding_size,
         hidden_size,
-        20,
+        seq_len,
         n_glimpses,
         tanh_exploration,
         use_tanh,
@@ -397,6 +396,7 @@ if __name__ == '__main__':
     tsp_20_train = TrainModel(tsp_20_model,
                               train_20_dataset,
                               val_20_dataset,
-                              threshold=3.99)
+                              threshold=3.99,
+                              batch_size=batch_size)
 
     tsp_20_train.train_and_validate(5)
