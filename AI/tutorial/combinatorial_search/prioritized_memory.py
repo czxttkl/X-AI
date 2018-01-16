@@ -67,7 +67,7 @@ class Memory(object):
             rewards[i] = reward
             # if reward > 4407:
             #     print('sample 4408')
-            terminal_weights[i] = 0 if terminal else 1
+            terminal_weights[i] = 0. if terminal else 1.
             qsa_feature[i] = self.qsa_feature_extractor(state, action)
             qsa_next_features[i] = self.qsa_feature_extractor_for_all_acts(next_state)
             # we do not directly save feature vectors in memory because that may take too much memory

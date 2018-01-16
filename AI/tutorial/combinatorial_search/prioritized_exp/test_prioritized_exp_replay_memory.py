@@ -30,7 +30,9 @@ print('total priority after update', memory.tree.total_p)
 print()
 print()
 
-
+# what you will see is that:
+# (1) for data points not with high abs_errors, their importance weights are high. But they are sampled less often.
+# (2) for data points with high abs_errors, their importance weights are low. But they are sampled more often.
 print('check sampling after update')
 for i in range(3):
     tree_idx, batch_memory, ISWeights = memory.sample(5)

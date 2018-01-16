@@ -14,7 +14,7 @@ import os
 # Raw parameters
 k = 50   # total available card size
 d = 30    # deck size
-USE_PRIORITIZED_REPLAY = False
+USE_PRIORITIZED_REPLAY = True
 gamma = 0.9
 n_hidden_ql = 400                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
