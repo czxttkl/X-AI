@@ -98,8 +98,9 @@ class QLearning:
         if env_name == 'env_nn':
             from environment.env_nn import Environment
             # n_actions: # of one-card modification
-            # n_features: input dimension to qlearning network (k plus time step as a feature)
-            env, n_features, n_actions = Environment(k=k, d=d), k + 1, d * (k-d) + 1
+            # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature,
+            # however x_o is fixed)
+            env, n_features, n_actions = Environment(k=k, d=d), 2 * k + 1, d * (k - d) + 1
         elif env_name == 'env_nn_xo':
             from environment.env_nn_xo import Environment
             # n_actions: # of one-card modification

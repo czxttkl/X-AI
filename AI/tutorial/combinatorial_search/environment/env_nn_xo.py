@@ -3,7 +3,7 @@ Optimization environment, a function, which is feed-forward neural network.
 The neural network's input has two parts, each of k-length-and-d-activation.
 The first part is x_o, and the second part is x_p. An optimizer can only optimize on x_p.
 Moreover, the state takes time_step into account.
-This environment simulates f(x_p, x_o, A_p, A_o) where x_o is changed
+This environment simulates f(x_p, x_o, A_p, A_o) where x_o is varied.
 """
 import numpy
 import time
@@ -68,8 +68,6 @@ class Environment:
         random_xo = numpy.zeros(self.k)
         one_idx = numpy.random.choice(self.k, self.d, replace=False)
         random_xo[one_idx] = 1
-        # for debug, fix random_xo
-        # random_xo[:self.d] = 1
 
         random_xp = numpy.zeros(self.k + 1)  # the last component is step
         one_idx = numpy.random.choice(self.k, self.d, replace=False)

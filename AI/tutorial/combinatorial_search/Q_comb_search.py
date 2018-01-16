@@ -27,7 +27,7 @@ LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
 MODEL_SAVE_ITERATION = 5000
 LEARN_CPU_TIME_LIMIT = 3600000      # seconds of limit of cpu time the algorithm can learn
-env_name = 'env_nn_xo'
+env_name = 'env_nn'
 # Read parameters
 # parser = argparse.ArgumentParser(description='Process some integers.')
 # parser.add_argument('--timed', dest='timed', action='store_true')
