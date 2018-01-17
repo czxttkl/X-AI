@@ -64,6 +64,14 @@ class Environment:
 
         return self.still(max_val), max_state, self.still(min_val), min_state, duration
 
+    @property
+    def x_o(self):
+        return self.cur_state[:self.k]
+
+    @property
+    def x_p(self):
+        return self.cur_state[self.k:-1]
+
     def reset(self):
         random_xo = numpy.zeros(self.k)
         one_idx = numpy.random.choice(self.k, self.d, replace=False)
