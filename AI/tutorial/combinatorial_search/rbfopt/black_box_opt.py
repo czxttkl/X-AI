@@ -6,11 +6,14 @@ import rbfopt
 import numpy as np
 from environment.env_nn_xo import Environment
 
-k=50
-d=30
+k=20
+d=6
 env = Environment(k=k, d=d)
 x_o = env.x_o
 call_counts = 0
+seed = 2008
+
+np.random.seed(seed)
 
 
 def output(x):
@@ -27,7 +30,11 @@ def output(x):
 
 bb = rbfopt.RbfoptUserBlackBox(k, np.array([0] * k), np.array([1] * k),
                                np.array(['I'] * k), output)
-settings = rbfopt.RbfoptSettings(max_evaluations=1e30, max_iterations=1e30, max_clock_time=3600)
+
+# since evaluating f(x) would require parallelism for the deck recommendation problem,
+# we don't increase num_cpus here
+settings = rbfopt.RbfoptSettings(max_evaluations=1e30, max_iterations=1e30,
+                                 max_clock_time=4800, num_cpus=1)
 alg = rbfopt.RbfoptAlgorithm(settings, bb)
 # minimize
 val, x, itercount, evalcount, faslt_evalcount = alg.optimize()
