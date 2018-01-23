@@ -263,7 +263,7 @@ class BaseTask(object):
                 if i == 0:
                     sys.stderr.write(format_str % (indentation, param_name, param['type'], param['values'][i]))
                 else:
-                    sys.stderr.write(format_str % (indentation, '',                        param['values'][i]))
+                    sys.stderr.write(format_str % (indentation, '', param['type'], param['values'][i]))
 
     # Converts a vector in input space to the corresponding dict of params
     def paramify(self, data_vector):

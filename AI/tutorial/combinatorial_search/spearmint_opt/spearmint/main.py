@@ -210,10 +210,22 @@ def get_options():
                       help="Configuration file name.",
                       type="string", default="config.json")
 
+    parser.add_option("--exp_name", dest="exp_name",
+                      help="experiment name in examples folder",
+                      type="string", default="constrained")
+
+    parser.add_option("--wall_time_limit", dest="wall_time_limit",
+                      help="wall time limit",
+                      type="int", default="180")
+
     (commandline_kwargs, args) = parser.parse_args()
 
     # Read in the config file
-    expt_dir  = os.path.realpath(os.path.expanduser(args[0]))
+    expt_dir = os.path.join('..', 'examples', commandline_kwargs.exp_name)
+    expt_dir  = os.path.realpath(expt_dir)
+
+    time_limit = int(commandline_kwargs.wall_time_limit)
+
     if not os.path.isdir(expt_dir):
         raise Exception("Cannot find directory %s" % expt_dir)
     expt_file = os.path.join(expt_dir, commandline_kwargs.config_file)
@@ -257,7 +269,7 @@ def main():
 
     # Connect to the database
     db_address = options['database']['address']
-    sys.stderr.write('Using database at %s.\n' % db_address)        
+    sys.stderr.write('Using database at %s.\n' % db_address)
     db         = MongoDB(database_address=db_address)
     
     while True:

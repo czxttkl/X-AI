@@ -6,7 +6,7 @@ def evaluate(job_id, params):
     x = params['X']
     y = params['Y']
 
-    print 'Evaluating at (%f, %f)' % (x, y)
+    print('Evaluating at (%f, %f)' % (x, y))
 
     if x < 0 or x > 5.0 or y > 5.0:
         return np.nan
@@ -26,10 +26,11 @@ def evaluate(job_id, params):
 
     # True minimum is at 2.945, 2.945, with a value of 0.8447
 
+
 def main(job_id, params):
     try:
         return evaluate(job_id, params)
     except Exception as ex:
-        print ex
-        print 'An error occurred in branin_con.py'
+        print(ex)
+        print('An error occurred in branin_con.py')
         return np.nan

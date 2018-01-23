@@ -1,0 +1,21 @@
+{
+    "language"        : "PYTHON",
+    "main-file"       : "env_nn_xo",
+    "experiment-name" : "env_nn_xo",
+    "variables": {
+        "X": {
+            "type": "INT",
+            "size": 6,
+            "min":  0,
+            "max":  1
+        }
+    },
+    "tasks": {
+      "obj" : {
+          "type"        : "OBJECTIVE",
+          "likelihood"  : "NOISELESS"
+      }
+    },
+    "polling-time" : 1
+}
+
