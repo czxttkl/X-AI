@@ -12,9 +12,9 @@ import os
 
 
 # Raw parameters
-k = 19   # total available card size
-d = 6    # deck size
-USE_PRIORITIZED_REPLAY = False
+k = 59   # total available card size
+d = 30    # deck size
+USE_PRIORITIZED_REPLAY = True
 gamma = 0.9
 n_hidden_ql = 400                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
@@ -25,8 +25,8 @@ TEST_PERIOD = 100                 # how many per training episodes to do testing
 RANDOM_SEED = 206               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
-MODEL_SAVE_ITERATION = 5000
-LEARN_CPU_TIME_LIMIT = 3600000      # seconds of limit of cpu time the algorithm can learn
+MODEL_SAVE_ITERATION = 100
+LEARN_WALL_TIME_LIMIT = 500      # seconds of limit of wall time the algorithm can learn
 env_name = 'env_nn'
 # Read parameters
 # parser = argparse.ArgumentParser(description='Process some integers.')
@@ -38,7 +38,7 @@ env_name = 'env_nn'
 # Derived parameters
 TRIAL_SIZE = d                # how many card modification allowed
 LEARN_INTERVAL = TRIAL_SIZE   # at least how many experiences to collect between two learning iterations
-parent_path = os.path.abspath('comb_search_k{}_d{}_t{}'.format(k, d, LEARN_CPU_TIME_LIMIT))
+parent_path = os.path.abspath('comb_search_k{}_d{}_t{}'.format(k, d, LEARN_WALL_TIME_LIMIT))
 tensorboard_path = os.path.join(parent_path, str(time.time()))
 model_save_load_path = os.path.join(parent_path, 'optimizer_model', 'qlearning')
 logger_path = os.path.join(parent_path, 'logger.log')
@@ -48,11 +48,11 @@ tf.set_random_seed(RANDOM_SEED)
 
 def collect_samples(RL):
     RL.collect_samples(EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
-                       LEARN_CPU_TIME_LIMIT)
+                       LEARN_WALL_TIME_LIMIT)
 
 
 def learn(RL):
-    RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT)
+    RL.learn(MEMORY_CAPACITY_START_LEARNING, LEARN_WALL_TIME_LIMIT)
 
 
 if __name__ == '__main__':

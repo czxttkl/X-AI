@@ -86,6 +86,7 @@ class QLearning:
             self.sample_step_counter = 0
             self.sample_wall_time = 0.
             self.last_cpu_time = 0.
+            self.last_wall_time = 0.
             self.last_learn_step = 0
             self.last_test_step = 0
         else:
@@ -132,7 +133,8 @@ class QLearning:
         # save variables
         with open(self.save_and_load_path + '_variables.pickle', 'wb') as f:
             pickle.dump((self.learn_step_counter, self.sample_step_counter,
-                         self.learn_wall_time, self.sample_wall_time, self.cpu_time,
+                         self.learn_wall_time, self.sample_wall_time,
+                         self.cpu_time, self.wall_time,
                          self.last_learn_step, self.last_test_step), f, protocol=-1)
         print('save model to', path)
 
@@ -165,7 +167,8 @@ class QLearning:
         # load variables
         with open(self.save_and_load_path + '_variables.pickle', 'rb') as f:
             self.learn_step_counter, self.sample_step_counter, \
-            self.learn_wall_time, self.sample_wall_time, self.last_cpu_time, \
+            self.learn_wall_time, self.sample_wall_time, \
+            self.last_cpu_time, self.last_wall_time, \
             self.last_learn_step, self.last_test_step = pickle.load(f)
 
     def _build_net(self):
@@ -247,16 +250,18 @@ class QLearning:
                psutil.Process().cpu_times().system + \
                self.last_cpu_time
 
-    def learn(self, MEMORY_CAPACITY_START_LEARNING, LEARN_CPU_TIME_LIMIT):
+    @property
+    def wall_time(self):
+        return time.time() - psutil.Process().create_time() + self.last_wall_time
+
+    def learn(self, MEMORY_CAPACITY_START_LEARNING, LEARN_WALL_TIME_LIMIT):
         while True:
             if self.memory_size() < MEMORY_CAPACITY_START_LEARNING:
-                print('LEARN:{}:wait for more samples:CPU time:{}'.format(self.learn_step_counter, self.cpu_time))
+                print('LEARN:{}:wait for more samples:wall time:{}'.format(self.learn_step_counter, self.wall_time))
                 time.sleep(2)
                 continue
 
             if self.memory_virtual_size() - self.last_learn_step < self.learn_interval:
-                # print('LEARN:{}:wait for more samples:virtual:{}:last learn:{}:CPU time:{}'.
-                #       format(self.learn_step_counter, self.memory_virtual_size(), self.last_learn_step, self.cpu_time))
                 time.sleep(0.2)
                 continue
             #
@@ -264,10 +269,10 @@ class QLearning:
             #     self._replace_target_params()
 
             if (self.learn_step_counter % self.save_model_iter == 0) \
-                    or (self.cpu_time > LEARN_CPU_TIME_LIMIT):
+                    or (self.wall_time > LEARN_WALL_TIME_LIMIT):
                 self.save_model()
 
-            if self.cpu_time > LEARN_CPU_TIME_LIMIT:
+            if self.wall_time > LEARN_WALL_TIME_LIMIT:
                 break
 
             learn_time = time.time()
@@ -294,9 +299,9 @@ class QLearning:
             self.learn_step_counter += 1
             self.learn_wall_time += learn_time
 
-            print('LEARN:{}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:cpu_time:{:.2f}:pid:{}'.
+            print('LEARN:{}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:cpu_time:{:.2f}:pid:{}:wall_t:{:.2f}:'.
                   format(self.learn_step_counter, self.memory_size(), self.memory_virtual_size(),
-                         learn_time, self.learn_wall_time, self.cpu_time, os.getpid()))
+                         learn_time, self.learn_wall_time, self.cpu_time, os.getpid(), self.wall_time))
 
     def cur_epsilon(self):
         return self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
@@ -315,10 +320,10 @@ class QLearning:
         return self.memory.virtual_size
 
     def collect_samples(self, EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
-                        LEARN_CPU_TIME_LIMIT):
+                        LEARN_WALL_TIME_LIMIT):
         """ collect samples in a process """
         for i_episode in range(self.sample_step_counter, EPISODE_SIZE):
-            if self.cpu_time > LEARN_CPU_TIME_LIMIT:
+            if self.wall_time > LEARN_WALL_TIME_LIMIT:
                 break
 
             sample_wall_time = time.time()
@@ -337,15 +342,15 @@ class QLearning:
             self.sample_step_counter += 1
             self.sample_wall_time += sample_wall_time
 
-            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}'.
+            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:'.
                   format(i_episode, self.env.still(self.env.output(cur_state)), self.cur_epsilon(),
                          self.memory_size(), self.memory_virtual_size(),
-                         sample_wall_time, self.sample_wall_time, os.getpid()))
+                         sample_wall_time, self.sample_wall_time, os.getpid(), self.wall_time))
 
             # test every once a while
             if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING \
                     and self.learn_step_counter % TEST_PERIOD == 0 \
                     and self.learn_step_counter > self.last_test_step:
-                self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.cpu_time, self.env_name,
+                self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
                               rl_model=self)
                 self.last_test_step = self.learn_step_counter

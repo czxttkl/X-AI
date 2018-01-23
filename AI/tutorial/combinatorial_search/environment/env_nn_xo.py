@@ -225,7 +225,7 @@ class Environment:
         state_and_step[-1] += 1  # increase the step
         return state_and_step
 
-    def test(self, TRIAL_SIZE, RANDOM_SEED, learn_step_counter, cpu_time, env_name, rl_model):
+    def test(self, TRIAL_SIZE, RANDOM_SEED, learn_step_counter, wall_time, env_name, rl_model):
         cur_state = self.reset()
         duration_rl = time.time()
 
@@ -244,7 +244,7 @@ class Environment:
         max_val_mc, max_state_mc, _, _, duration_mc = self.monte_carlo()
         rl_model.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
                                  output_rl=test_output, state_rl=cur_state, duration_rl=duration_rl,
-                                 learn_step_counter=learn_step_counter, cpu_time=cpu_time)
+                                 learn_step_counter=learn_step_counter, wall_time=wall_time)
 
         rl_model.tb_write(tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}/Ending Output (RL-MC)'.
                           format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name),

@@ -19,9 +19,9 @@ class Logger:
 
     def log_test(self, output_mc, state_mc, duration_mc,
                  output_rl, state_rl, duration_rl,
-                 learn_step_counter, cpu_time):
-        output_str = 'learn step:' + str(learn_step_counter) + ', time:' + str(cpu_time) + '\n'
-        output_str += 'qlearning: {}, time: {:.2f}, state: {}\n'.format(output_rl, duration_rl, state_rl)
-        output_str += 'monte carlo: {}, time: {:.2f}, state: {}\n\n'.format(output_mc, duration_mc, state_mc)
+                 learn_step_counter, wall_time):
+        output_str = 'learn step:' + str(learn_step_counter) + ', wall time:' + str(wall_time) + '\n'
+        output_str += 'qlearning: {}, duration: {:.2f}, state: {}\n'.format(output_rl, duration_rl, state_rl)
+        output_str += 'monte carlo: {}, duration: {:.2f}, state: {}\n\n'.format(output_mc, duration_mc, state_mc)
         with open(self.log_path, 'a') as f:
             f.write(output_str)
