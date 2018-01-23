@@ -294,9 +294,9 @@ class QLearning:
             self.learn_step_counter += 1
             self.learn_wall_time += learn_time
 
-            print('LEARN:{}:mem_size:{}:virtual:{}:wall_time:{:.2f}:total:{:.2f}:cpu_time:{:.2f}'.
+            print('LEARN:{}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:cpu_time:{:.2f}:pid:{}'.
                   format(self.learn_step_counter, self.memory_size(), self.memory_virtual_size(),
-                         learn_time, self.learn_wall_time, self.cpu_time))
+                         learn_time, self.learn_wall_time, self.cpu_time, os.getpid()))
 
     def cur_epsilon(self):
         return self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
@@ -337,10 +337,10 @@ class QLearning:
             self.sample_step_counter += 1
             self.sample_wall_time += sample_wall_time
 
-            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall time:{:.2f}:total:{:.2f}'.
+            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}'.
                   format(i_episode, self.env.still(self.env.output(cur_state)), self.cur_epsilon(),
                          self.memory_size(), self.memory_virtual_size(),
-                         sample_wall_time, self.sample_wall_time))
+                         sample_wall_time, self.sample_wall_time, os.getpid()))
 
             # test every once a while
             if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING \

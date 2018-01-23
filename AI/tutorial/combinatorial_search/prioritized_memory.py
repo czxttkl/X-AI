@@ -25,12 +25,8 @@ class Memory(object):
 
     def store(self, transition):
         if self.prioritized:
-            # if transition[2] > 4407:
-            #     print('save 4408')
             self.memory.store(transition)
         else:
-            # if transition[2] > 4407:
-            #     print('save 4408')
             self.memory.append(transition)
         self.size += 1
         self.virtual_size += 1  # the number of transitions saved historically
@@ -65,8 +61,6 @@ class Memory(object):
 
         for i, (state, action, reward, next_state, terminal) in enumerate(samples):
             rewards[i] = reward
-            # if reward > 4407:
-            #     print('sample 4408')
             terminal_weights[i] = 0. if terminal else 1.
             qsa_feature[i] = self.qsa_feature_extractor(state, action)
             qsa_next_features[i] = self.qsa_feature_extractor_for_all_acts(next_state)
@@ -88,8 +82,6 @@ class Memory(object):
 
         for i, mem_idx in enumerate(sample_mem_idxs):
             state, action, reward, next_state, terminal = self.memory[mem_idx]
-            # if reward > 4407:
-            #     print('sample 4408')
             rewards[i] = reward
             terminal_weights[i] = 0. if terminal else 1.
             qsa_feature[i] = self.qsa_feature_extractor(state, action)

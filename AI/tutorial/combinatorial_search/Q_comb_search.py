@@ -12,16 +12,16 @@ import os
 
 
 # Raw parameters
-k = 50   # total available card size
-d = 30    # deck size
-USE_PRIORITIZED_REPLAY = True
+k = 19   # total available card size
+d = 6    # deck size
+USE_PRIORITIZED_REPLAY = False
 gamma = 0.9
 n_hidden_ql = 400                 # number of hidden units in Qlearning NN
 BATCH_SIZE = 64
 MEMORY_CAPACITY = 300000
 MEMORY_CAPACITY_START_LEARNING = 10000
 EPISODE_SIZE = 10000001          # the size of training episodes
-TEST_PERIOD = 200                 # how many per training episodes to do testing
+TEST_PERIOD = 100                 # how many per training episodes to do testing
 RANDOM_SEED = 206               # seed for random behavior except coefficient generation
 LOAD = False                     # whether to load existing model
 PLANNING = False                 # whether to use planning
@@ -72,6 +72,7 @@ if __name__ == '__main__':
         logger_path=logger_path, save_model_iter=MODEL_SAVE_ITERATION, learn_interval=LEARN_INTERVAL,
     )
 
+    print('original process', os.getpid())
     # collect samples and learning run in two separate processes
     p1 = Process(target=collect_samples, args=[RL])
     p1.start()

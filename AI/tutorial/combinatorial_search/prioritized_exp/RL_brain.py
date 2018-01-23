@@ -94,8 +94,8 @@ class Memory(object):  # stored as ( s, a, r, s_ ) in SumTree
     """
     epsilon = 0.01  # small amount to avoid zero priority
     alpha = 0.6  # [0~1] convert the importance of TD error to priority
-    beta = 0.4  # importance-sampling, from initial value increasing to 1
-    beta_increment_per_sampling = 0.001
+    beta = 0.0  # importance-sampling, from initial value increasing to 1
+    beta_increment_per_sampling = 0.00001
     abs_err_default = 1.  # clipped abs error
 
     def __init__(self, capacity):
