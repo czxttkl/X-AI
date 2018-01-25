@@ -25,53 +25,67 @@ class QLearning:
             k,
             d,
             env_name,
+            env_dir,
+            env_fixed_xo,
             n_hidden,
             save_and_load_path,
             load,
             tensorboard_path,
             logger_path,
             learn_interval,
+            learn_wall_time_limit,
+            prioritized,
+            trial_size,
             learning_rate=0.005,
             reward_decay=0.9,
             e_greedy=0.8,
-            replace_target_iter=500,
             save_model_iter=5000,
-            memory_capacity=10000,
-            batch_size=32,
+            memory_capacity=300000,
+            memory_capacity_start_learning=10000,
+            batch_size=64,
             e_greedy_increment=0.0001,
-            prioritized=True,
-            planning=False
+            replace_target_iter=500,
+            planning=False,
+            random_seed=123,
     ):
         self.env_name = env_name
-        self.env, self.n_features, self.n_actions = self.get_env(env_name, k, d)
-
-        self.n_hidden = n_hidden
+        self.env, self.n_features, self.n_actions = self.get_env(env_name, env_dir, env_fixed_xo, k, d)
         self.save_and_load_path = save_and_load_path
         self.load = load
-        self.tensorboard_path = tensorboard_path
-        self.logger_path = logger_path
-        self.learn_interval = learn_interval
 
-        self.lr = learning_rate
-        self.gamma = reward_decay
-        self.epsilon_max = e_greedy
-        self.replace_target_iter = replace_target_iter
-        self.save_model_iter = save_model_iter
-        self.memory_capacity = memory_capacity
-        self.batch_size = batch_size
-        self.epsilon_increment = e_greedy_increment
-        self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
-        self.prioritized = prioritized  # decide to use double q or not
-        self.planning = planning  # decide to use planning for additional learning
-
-        # create a logger
         self.path_check(load)
-        self.logger = Logger(self.logger_path)
 
         # create a graph for model variables and session
         self.graph = tf.Graph()
         self.sess = tf.Session(graph=self.graph)
+
         if not load:
+            self.random_seed = random_seed
+            numpy.random.seed(self.random_seed)
+            tf.set_random_seed(self.random_seed)
+
+            self.tensorboard_path = tensorboard_path
+            self.logger_path = logger_path
+            self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
+            self.logger = Logger(self.logger_path)
+
+            self.n_hidden = n_hidden
+            self.learn_interval = learn_interval
+            self.lr = learning_rate
+            self.gamma = reward_decay
+            self.epsilon_max = e_greedy
+            self.save_model_iter = save_model_iter
+            self.memory_capacity = memory_capacity
+            self.memory_capacity_start_learning = memory_capacity_start_learning
+            self.learn_wall_time_limit = learn_wall_time_limit
+            self.batch_size = batch_size
+            self.epsilon_increment = e_greedy_increment
+            self.epsilon = 0 if e_greedy_increment is not None else self.epsilon_max
+            self.prioritized = prioritized   # decide to use prioritized experience replay or not
+            self.trial_size = trial_size
+            self.replace_target_iter = replace_target_iter
+            self.planning = planning  # decide to use planning for additional learning
+
             with self.graph.as_default():
                 self._build_net()
                 self.sess.run(tf.global_variables_initializer())
@@ -80,7 +94,7 @@ class QLearning:
                                  batch_size=self.batch_size, planning=self.planning,
                                  qsa_feature_extractor=self.env.step_state,
                                  qsa_feature_extractor_for_all_acts=self.env.all_possible_next_states)
-            self.env.monte_carlo(self.logger)
+            # self.env.monte_carlo(logger=self.logger)
             self.learn_step_counter = 0
             self.learn_wall_time = 0.
             self.sample_step_counter = 0
@@ -92,21 +106,20 @@ class QLearning:
         else:
             self.load_model()
 
-        self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
         self.memory_lock = multiprocessing.Lock()     # lock for memory modification
 
-    def get_env(self, env_name, k, d):
+    def get_env(self, env_name, env_dir, env_fixed_xo, k, d):
+        # n_actions: # of one-card modification
+        # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature)
         if env_name == 'env_nn':
             from environment.env_nn import Environment
-            # n_actions: # of one-card modification
-            # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature,
-            # however x_o is fixed)
-            env, n_features, n_actions = Environment(k=k, d=d), 2 * k + 1, d * (k - d) + 1
-        elif env_name == 'env_nn_xo':
-            from environment.env_nn_xo import Environment
-            # n_actions: # of one-card modification
-            # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature)
-            env, n_features, n_actions = Environment(k=k, d=d), 2 * k + 1, d * (k - d) + 1
+            if env_dir:
+                env = Environment.load(env_dir)
+            else:
+                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+
+            n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
+
         return env, n_features, n_actions
 
     def path_check(self, load):
@@ -132,7 +145,17 @@ class QLearning:
         self.memory_lock.release()
         # save variables
         with open(self.save_and_load_path + '_variables.pickle', 'wb') as f:
-            pickle.dump((self.learn_step_counter, self.sample_step_counter,
+            pickle.dump((self.random_seed,
+                         self.tensorboard_path, self.logger_path,
+                         self.n_hidden, self.learn_interval,
+                         self.lr, self.gamma,
+                         self.epsilon_max, self.save_model_iter,
+                         self.memory_capacity, self.memory_capacity_start_learning,
+                         self.learn_wall_time_limit, self.batch_size,
+                         self.epsilon_increment, self.epsilon,
+                         self.prioritized, self.trial_size,
+                         self.replace_target_iter, self.planning,
+                         self.learn_step_counter, self.sample_step_counter,
                          self.learn_wall_time, self.sample_wall_time,
                          self.cpu_time, self.wall_time,
                          self.last_learn_step, self.last_test_step), f, protocol=-1)
@@ -166,10 +189,30 @@ class QLearning:
             self.memory = pickle.load(f)  # -1: highest protocol
         # load variables
         with open(self.save_and_load_path + '_variables.pickle', 'rb') as f:
-            self.learn_step_counter, self.sample_step_counter, \
-            self.learn_wall_time, self.sample_wall_time, \
-            self.last_cpu_time, self.last_wall_time, \
-            self.last_learn_step, self.last_test_step = pickle.load(f)
+            self.random_seed, \
+            self.tensorboard_path, self.logger_path, \
+            self.n_hidden, self.learn_interval, \
+            self.lr, self.gamma, \
+            self.epsilon_max, self.save_model_iter, \
+            self.memory_capacity, self.memory_capacity_start_learning, \
+            self.learn_wall_time_limit, self.batch_size, \
+            self.epsilon_increment, self.epsilon, \
+            self.prioritized, self.trial_size, \
+            self.replace_target_iter, self.planning, \
+            self.learn_step_counter, \
+            self.sample_step_counter, \
+            self.learn_wall_time, \
+            self.sample_wall_time, \
+            self.last_cpu_time, \
+            self.last_wall_time, \
+            self.last_learn_step, \
+            self.last_test_step = pickle.load(f)
+
+        numpy.random.seed(self.random_seed)
+        tf.set_random_seed(self.random_seed)
+
+        self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
+        self.logger = Logger(self.logger_path)
 
     def _build_net(self):
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
@@ -254,9 +297,9 @@ class QLearning:
     def wall_time(self):
         return time.time() - psutil.Process().create_time() + self.last_wall_time
 
-    def learn(self, MEMORY_CAPACITY_START_LEARNING, LEARN_WALL_TIME_LIMIT):
+    def learn(self):
         while True:
-            if self.memory_size() < MEMORY_CAPACITY_START_LEARNING:
+            if self.memory_size() < self.memory_capacity_start_learning:
                 print('LEARN:{}:wait for more samples:wall time:{}'.format(self.learn_step_counter, self.wall_time))
                 time.sleep(2)
                 continue
@@ -269,10 +312,10 @@ class QLearning:
             #     self._replace_target_params()
 
             if (self.learn_step_counter % self.save_model_iter == 0) \
-                    or (self.wall_time > LEARN_WALL_TIME_LIMIT):
+                    or (self.wall_time > self.learn_wall_time_limit):
                 self.save_model()
 
-            if self.wall_time > LEARN_WALL_TIME_LIMIT:
+            if self.wall_time > self.learn_wall_time_limit:
                 break
 
             learn_time = time.time()
@@ -308,7 +351,8 @@ class QLearning:
 
     def tb_write(self, tags, values, step):
         """ write to tensorboard """
-        self.tb_writer.write(tags, values, step)
+        if self.tb_writer:
+            self.tb_writer.write(tags, values, step)
 
     def get_logger(self):
         return self.logger
@@ -319,22 +363,21 @@ class QLearning:
     def memory_virtual_size(self):
         return self.memory.virtual_size
 
-    def collect_samples(self, EPISODE_SIZE, TRIAL_SIZE, MEMORY_CAPACITY_START_LEARNING, TEST_PERIOD, RANDOM_SEED,
-                        LEARN_WALL_TIME_LIMIT):
+    def collect_samples(self, EPISODE_SIZE, TEST_PERIOD):
         """ collect samples in a process """
         for i_episode in range(self.sample_step_counter, EPISODE_SIZE):
-            if self.wall_time > LEARN_WALL_TIME_LIMIT:
+            if self.wall_time > self.learn_wall_time_limit:
                 break
 
             sample_wall_time = time.time()
             cur_state = self.env.reset()
 
-            for i_epsisode_step in range(TRIAL_SIZE):
+            for i_epsisode_step in range(self.trial_size):
                 next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
                 action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=True)
                 cur_state_, reward = self.env.step(action)
-                terminal = True if i_epsisode_step == TRIAL_SIZE - 1 else False
+                terminal = True if i_epsisode_step == self.trial_size - 1 else False
                 self.store_transition(cur_state, action, reward, cur_state_, terminal)
                 cur_state = cur_state_
 
@@ -348,9 +391,54 @@ class QLearning:
                          sample_wall_time, self.sample_wall_time, os.getpid(), self.wall_time))
 
             # test every once a while
-            if self.memory_virtual_size() >= MEMORY_CAPACITY_START_LEARNING \
+            if self.memory_virtual_size() >= self.memory_capacity_start_learning \
                     and self.learn_step_counter % TEST_PERIOD == 0 \
                     and self.learn_step_counter > self.last_test_step:
-                self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
-                              rl_model=self)
+                #self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
+                #               rl_model=self)
+                max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl = self.exp_test()
+
+                max_val_mc, max_state_mc, _, _, duration_mc = self.env.monte_carlo()
+                self.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
+                                     output_rl=max_val_rl, state_rl=max_state_rl, duration_rl=duration_rl,
+                                     learn_step_counter=self.learn_step_counter, wall_time=self.wall_time)
+
+                self.tb_write(
+                    tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL-MC)'.
+                              format(self.prioritized, self.gamma, self.random_seed, self.env_name,
+                                     self.env.if_set_fixed_xo()),
+                          'Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL)'.
+                              format(self.prioritized, self.gamma, self.random_seed, self.env_name,
+                                     self.env.if_set_fixed_xo()),
+                          ],
+                    values=[max_val_rl - max_val_mc,
+                            end_val_rl],   # note we record end value for RL
+                    step=self.learn_step_counter)
+
                 self.last_test_step = self.learn_step_counter
+
+    def exp_test(self):
+        cur_state = self.env.reset()
+        duration_rl = time.time()
+        end_output = max_output = -99999.
+        max_state = None
+
+        for i in range(self.trial_size):
+            next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
+            action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
+                                               epsilon_greedy=False)
+            cur_state, reward = self.env.step(action)
+            end_output = self.env.still(self.env.output(cur_state))
+            print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
+                  format(i, end_output, q_val, reward, cur_state))
+            if end_output > max_output:
+                max_output = end_output
+                max_state = cur_state.copy()
+
+        duration_rl = time.time() - duration_rl
+
+        return max_output, max_state, end_output, cur_state, duration_rl
+
+
+
+
