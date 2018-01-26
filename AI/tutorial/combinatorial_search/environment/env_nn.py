@@ -38,12 +38,14 @@ class Environment:
         # restore random seed for other randomness
         numpy.random.set_state(s)
 
-    def monte_carlo(self, MONTE_CARLO_ITERATIONS=20000, logger=None):
+    def monte_carlo(self, MONTE_CARLO_ITERATIONS=20000, WALL_TIME_LIMIT=9e30):
         """ Use monte carlo to find the max value """
         min_val = 9e16
         max_val = -9e16
 
         start_time = time.time()
+        last_print_time = 0
+
         for i in range(MONTE_CARLO_ITERATIONS):
             x_o = self.cur_state[:self.k]
 
@@ -61,7 +63,12 @@ class Environment:
                 max_val = random_state_output
                 max_state = random_state
 
-        duration = time.time() - start_time
+            duration = time.time() - start_time
+            if duration > WALL_TIME_LIMIT:
+                break
+            if duration - last_print_time > 15:
+                print("monte carlo duration: {}, max: {}".format(duration, self.still(max_val)))
+                last_print_time = duration
 
         return self.still(max_val), max_state, self.still(min_val), min_state, duration
 

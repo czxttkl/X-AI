@@ -73,7 +73,20 @@ if __name__ == '__main__':
     prob_env_name, prob_env_class = get_prob_env_name_class(kwargs.prob_env_dir)
     prob_env = prob_env_class.load(kwargs.prob_env_dir)
 
-    if kwargs.method == 'rl_prtr':
+    if kwargs.method == 'random':
+        # problem environment has not fixed x_o.
+        # however, we want to fix x_o for monto carlo random search
+        assert not prob_env.if_set_fixed_xo()
+        prob_env.set_fixed_xo(prob_env.x_o)
+        assert prob_env.if_set_fixed_xo()
+        opt_val, opt_state, _, _, duration = \
+            prob_env.monte_carlo(
+                MONTE_CARLO_ITERATIONS=int(9e30),  # never stop until wall_time_limt
+                WALL_TIME_LIMIT=kwargs.wall_time_limit)
+        start_x_o = prob_env.fixed_xo
+        start_x_p = None   # meaningless in random method
+        opt_x_p = opt_state[prob_env.k:]
+    elif kwargs.method == 'rl_prtr':
         model_env_name = get_model_env_name(kwargs.prtr_model_dir)
         assert model_env_name == prob_env_name
         opt = QLearning(
