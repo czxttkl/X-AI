@@ -12,7 +12,7 @@ import os
 import optparse
 
 
-def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, env_dir, fixed_xo):
+def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, env_dir, fixed_xo, root_dir):
     parser = optparse.OptionParser(usage="usage: %prog [options]")
     parser.add_option("--k", dest="k", type="int")
     parser.add_option("--d", dest="d", type="int")
@@ -25,6 +25,7 @@ def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, en
     parser.add_option("--env_name", dest="env_name", type="string")
     parser.add_option("--env_dir", dest="env_dir", type="string")   # only used if we want to load an environment
     parser.add_option("--fixed_xo", dest="fixed_xo", type="int")
+    parser.add_option("--root_dir", dest="root_dir", type="string")
     (kwargs, args) = parser.parse_args()
     if kwargs.k:
         k = kwargs.k
@@ -36,6 +37,8 @@ def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, en
         test_period = kwargs.test_period
     if kwargs.random_seed:
         random_seed = kwargs.random_seed
+    else:
+        random_seed = None
     if kwargs.load:
         load = bool(kwargs.load)
     if kwargs.msi:
@@ -48,8 +51,10 @@ def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, en
         env_dir = kwargs.env_dir
     if kwargs.fixed_xo:
         fixed_xo = bool(kwargs.fixed_xo)
+    if kwargs.root_dir:
+        root_dir = kwargs.root_dir
 
-    return k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, env_dir, fixed_xo
+    return k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, env_dir, fixed_xo, root_dir
 
 
 def collect_samples(RL):
@@ -82,10 +87,12 @@ if __name__ == '__main__':
     env_name = 'env_nn'
     env_dir = ''                   # directory to load the environment
     fixed_xo = False               # whether to set x_o fixed in the environment
+    root_dir = ''                  # the root directory to save model, tensorflow, logger, etc.
     # PLANNING = False             # whether to use planning
 
     # Derived parameters
-    k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, env_dir, fixed_xo = \
+    k, d, USE_PRIORITIZED_REPLAY, TEST_PERIOD, RANDOM_SEED, LOAD, \
+        MODEL_SAVE_ITERATION, LEARN_WALL_TIME_LIMIT, env_name, env_dir, fixed_xo, root_dir = \
         read_args(k,
                   d,
                   USE_PRIORITIZED_REPLAY,
@@ -96,11 +103,13 @@ if __name__ == '__main__':
                   LEARN_WALL_TIME_LIMIT,
                   env_name,
                   env_dir,
-                  fixed_xo)
+                  fixed_xo,
+                  root_dir)
     numpy.set_printoptions(linewidth=10000)
     TRIAL_SIZE = d  # how many card modification allowed
     LEARN_INTERVAL = 1  # at least how many experiences to collect between two learning iterations
-    parent_path = os.path.abspath('rl_prtr_{}_k{}_d{}_t{}'.format(env_name, k, d, LEARN_WALL_TIME_LIMIT))
+    parent_path = os.path.join(root_dir,
+                               'rl_prtr_{}_k{}_d{}_t{}'.format(env_name, k, d, LEARN_WALL_TIME_LIMIT))
     tensorboard_path = os.path.join(parent_path, str(time.time()))
     model_save_load_path = os.path.join(parent_path, 'optimizer_model_fixedxo{}'.format(fixed_xo), 'qlearning')
     logger_path = os.path.join(parent_path, 'logger_fixedxo{}.log'.format(fixed_xo))

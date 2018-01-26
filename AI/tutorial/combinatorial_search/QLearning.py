@@ -46,7 +46,7 @@ class QLearning:
             e_greedy_increment=0.0001,
             replace_target_iter=500,
             planning=False,
-            random_seed=123,
+            random_seed=None,
     ):
         self.env_name = env_name
         self.env, self.n_features, self.n_actions = self.get_env(env_name, env_dir, env_fixed_xo, k, d)
@@ -396,7 +396,7 @@ class QLearning:
                     and self.learn_step_counter > self.last_test_step:
                 #self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
                 #               rl_model=self)
-                max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl = self.exp_test()
+                max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl, _, _ = self.exp_test()
 
                 max_val_mc, max_state_mc, _, _, duration_mc = self.env.monte_carlo()
                 self.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
@@ -419,7 +419,8 @@ class QLearning:
 
     def exp_test(self):
         cur_state = self.env.reset()
-        duration_rl = time.time()
+        duration = time.time()
+        start_state = cur_state.copy()
         end_output = max_output = -99999.
         max_state = None
 
@@ -435,10 +436,18 @@ class QLearning:
                 max_output = end_output
                 max_state = cur_state.copy()
 
-        duration_rl = time.time() - duration_rl
+        duration = time.time() - duration
+        end_state = cur_state
 
-        return max_output, max_state, end_output, cur_state, duration_rl
+        if_set_fixed_xo = self.env.if_set_fixed_xo()
 
+        return max_output, max_state, end_output, end_state, duration, if_set_fixed_xo, start_state
 
+    # very adhoc methods to query environment's information
+    def set_env_fixed_xo(self, x_o):
+        self.env.set_fixed_xo(x_o)
+
+    def get_env_if_set_fixed_xo(self):
+        return self.env.if_set_fixed_xo()
 
 

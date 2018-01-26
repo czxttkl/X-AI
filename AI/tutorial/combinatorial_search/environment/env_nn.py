@@ -278,23 +278,13 @@ class Environment:
         self.fixed_xo = None
 
     def save(self, dir):
-        if not self.if_set_fixed_xo():
-            fixed_xo = None
-        else:
-            fixed_xo = self.fixed_xo
         with open(os.path.join(dir, 'env.pickle'), 'wb') as f:
-            pickle.dump((self.k, self.d, fixed_xo, self.COEF_SEED,
-                         self.w1, self.b1, self.w2, self.b2), f)
+            pickle.dump(self, f)
 
     @staticmethod
     def load(dir):
-        with open(os.path.join(dir, 'env.pickle'), 'wb') as f:
-            k, d, xo, COEF_SEED, w1, b1, w2, b2 = pickle.load(f)
-        env = Environment(k=k, d=d, COEF_SEED=COEF_SEED)
-        env.w1, env.b1, env.w2, env.b2 = w1, b1, w2, b2
-        if xo:
-            env.set_fixed_xo(xo)
-        env.reset()
+        with open(os.path.join(dir, 'env.pickle'), 'rb') as f:
+            env = pickle.load(f)
         return env
 
 
