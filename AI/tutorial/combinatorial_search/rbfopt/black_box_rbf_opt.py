@@ -4,11 +4,13 @@ system PATH variable
 """
 import rbfopt
 import numpy as np
-from environment.env_nn_xo import Environment
+from environment.env_nn import Environment
 
-k=20
-d=6
+k=200
+d=30
 env = Environment(k=k, d=d)
+env.set_fixed_xo(env.x_o)
+assert env.if_set_fixed_xo()
 x_o = env.x_o
 call_counts = 0
 seed = 2008
@@ -20,8 +22,9 @@ def output(x):
     global call_counts
     # barrier method to invalidate constrained violaion
     if np.sum(x) != d:
-        out = 0.
+        out = 0. + np.abs(np.sum(x) - d)
     else:
+        # since rbf-opt is a minimizer, we need to make the output negative
         out = - env.output(np.hstack((x_o, x, 0)))  # the last one is step placeholder
     call_counts += 1
     print("{} call, x: {}, out: {}".format(call_counts, x, out))
@@ -34,7 +37,7 @@ bb = rbfopt.RbfoptUserBlackBox(k, np.array([0] * k), np.array([1] * k),
 # since evaluating f(x) would require parallelism for the deck recommendation problem,
 # we don't increase num_cpus here
 settings = rbfopt.RbfoptSettings(max_evaluations=1e30, max_iterations=1e30,
-                                 max_clock_time=4800, num_cpus=1)
+                                 max_clock_time=7200, num_cpus=1)
 alg = rbfopt.RbfoptAlgorithm(settings, bb)
 # minimize
 val, x, itercount, evalcount, faslt_evalcount = alg.optimize()
