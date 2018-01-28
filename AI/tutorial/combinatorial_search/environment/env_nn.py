@@ -50,6 +50,7 @@ class Environment:
             x_o = self.cur_state[:self.k]
 
             random_xp = numpy.zeros(self.k + 1)  # state + step
+            # the last component (step) will always be zero as a placeholder
             one_idx = numpy.random.choice(self.k, self.d, replace=False)
             random_xp[one_idx] = 1
 

@@ -9,6 +9,7 @@ import time
 from multiprocessing import Process, freeze_support
 from multiprocessing.managers import BaseManager
 import os
+import rbfopt
 
 
 def get_prob_env_name_class(env_dir):
@@ -85,7 +86,7 @@ if __name__ == '__main__':
                 WALL_TIME_LIMIT=kwargs.wall_time_limit)
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in random method
-        opt_x_p = opt_state[prob_env.k:]
+        opt_x_p = opt_state[prob_env.k:-1]   # exclude the step
     elif kwargs.method == 'rl_prtr':
         model_env_name = get_model_env_name(kwargs.prtr_model_dir)
         assert model_env_name == prob_env_name
@@ -96,7 +97,7 @@ if __name__ == '__main__':
             env_dir=kwargs.prob_env_dir,     # env_dir will load environment
             env_fixed_xo=False,
             n_hidden=0,
-            save_and_load_path=kwargs.prtr_model_dir,
+            save_and_load_path=kwargs.prtr_model_dir,  # model dir will load model
             load=True,
             tensorboard_path=None,
             logger_path=None,
@@ -162,6 +163,38 @@ if __name__ == '__main__':
         p1.join()
         p2.join()
         opt_val, start_x_o, opt_x_p, start_x_p = extract_exp_result(opt, prob_env)
+    elif kwargs.method == 'rbf':
+        # problem environment has not fixed x_o.
+        # however, we want to fix x_o for rbf method
+        assert not prob_env.if_set_fixed_xo()
+        prob_env.set_fixed_xo(prob_env.x_o)
+        assert prob_env.if_set_fixed_xo()
+
+        def rbf_output(x_p):
+            # barrier method to invalidate constrained violaion
+            if numpy.sum(x_p) != prob_env.d:
+                out = numpy.abs(numpy.sum(x_p) - prob_env.d)
+            else:
+                # since rbf-opt is a minimizer, we need to make the output negative
+                out = - prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
+            print("x: {}, out: {}".format(x_p, out))
+            return out
+
+        rbf_bb = rbfopt.RbfoptUserBlackBox(prob_env.k,  # dimension
+                                           numpy.array([0] * prob_env.k),  # lower bound
+                                           numpy.array([1] * prob_env.k),  # upper bound
+                                           numpy.array(['I'] * prob_env.k),  # type: integer
+                                           rbf_output)
+        # since evaluating f(x) would require parallelism for the deck recommendation problem,
+        # we don't increase num_cpus here
+        settings = rbfopt.RbfoptSettings(max_evaluations=1e30, max_iterations=1e30,
+                                         max_clock_time=kwargs.wall_time_limit, num_cpus=1)
+        opt = rbfopt.RbfoptAlgorithm(settings, rbf_bb)
+        # minimize
+        opt_val, opt_x_p, _, _, _ = opt.optimize()
+        opt_val = prob_env.still(-opt_val)
+        start_x_o = prob_env.fixed_xo
+        start_x_p = None    # meaningless in rbf method
 
     # output test results
     numpy.set_printoptions(linewidth=10000)
