@@ -48,6 +48,7 @@ def read_args(k, d, upr, test_period, random_seed, load, msi, lwtl, env_name, en
     if kwargs.env_name:
         env_name = kwargs.env_name
     if kwargs.env_dir:
+        assert kwargs.k and kwargs.d, "if loading from env_dir, you need to specify k and d in advance"
         env_dir = kwargs.env_dir
     if kwargs.fixed_xo:
         fixed_xo = bool(kwargs.fixed_xo)

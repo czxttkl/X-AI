@@ -46,7 +46,7 @@ def rl_opt(RL):
     RL.exp_test()
 
 
-def extract_exp_result(opt, prob_env):
+def extract_rl_exp_result(opt, prob_env):
     opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_test()
     opt_x_o = opt_state[:prob_env.k]
     opt_x_p = opt_state[prob_env.k:]
@@ -55,7 +55,7 @@ def extract_exp_result(opt, prob_env):
     assert if_set_fixed_xo
     assert (numpy.array_equal(opt_x_o, prob_env.x_o) and numpy.array_equal(start_x_o, opt_x_o))
     assert (len(opt_x_p) == prob_env.k + 1)
-    return opt_val, start_x_o, opt_x_p, start_x_p
+    return opt_val, start_x_o, opt_x_p, start_x_p, duration
 
 
 if __name__ == '__main__':
@@ -122,7 +122,7 @@ if __name__ == '__main__':
         assert not opt.get_env_if_set_fixed_xo()
         opt.set_env_fixed_xo(prob_env.x_o)
         assert opt.get_env_if_set_fixed_xo()
-        opt_val, start_x_o, opt_x_p, start_x_p = extract_exp_result(opt, prob_env)
+        opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
     elif kwargs.method == 'rl':
         parent_path = os.path.abspath(os.path.join(
             kwargs.prob_env_dir,
@@ -170,7 +170,9 @@ if __name__ == '__main__':
         p2.start()
         p1.join()
         p2.join()
-        opt_val, start_x_o, opt_x_p, start_x_p = extract_exp_result(opt, prob_env)
+        opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
+        # for rl method, duration should be training time
+        duration = kwargs.wall_time_limit
     elif kwargs.method == 'rbf':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -203,6 +205,7 @@ if __name__ == '__main__':
         opt_val = prob_env.still(-opt_val)
         start_x_o = prob_env.fixed_xo
         start_x_p = None    # meaningless in rbf method
+        duration = kwargs.wall_time_limit
     elif kwargs.method == 'ga':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -272,6 +275,7 @@ if __name__ == '__main__':
         opt_x_p = numpy.array(best_ind, dtype=numpy.float)
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in genetic algorithm
+        duration = kwargs.wall_time_limit
 
     # output test results
     numpy.set_printoptions(linewidth=10000)
@@ -279,12 +283,12 @@ if __name__ == '__main__':
     # write header
     if not os.path.exists(test_result_path):
         with open(test_result_path, 'w') as f:
-            line = "method, wall_time_limit, opt_val, start_x_o, opt_x_p, start_x_p \n"
+            line = "method, wall_time_limit, duration, opt_val, start_x_o, opt_x_p, start_x_p \n"
             f.write(line)
     # write data
     with open(test_result_path, 'a') as f:
-        line = "{}, {}, {}, {}, {}, {}\n".\
-            format(kwargs.method, kwargs.wall_time_limit, opt_val, start_x_o, opt_x_p, start_x_p)
+        line = "{}, {}, {}, {}, {}, {}, {}\n".\
+            format(kwargs.method, kwargs.wall_time_limit, duration, opt_val, start_x_o, opt_x_p, start_x_p)
         f.write(line)
 
 

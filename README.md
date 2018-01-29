@@ -13,11 +13,11 @@ python3.6 problem_generator.py --k=20 --d=6 --env=env_nn --pv=0 --env_seed=303
 ```
 Test different methods
 ```
-python3.6 experimenter.py --method="rl" --wall_time_limit=300 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" 
-python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k25_d6_t500/optimizer_model_fixedxoFalse/qlearning"
-python3.6 experimenter.py --method="random" --wall_time_limit=300 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
+python3.6 experimenter.py --method="rl" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
+python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k20_d6_t500/optimizer_model_fixedxoFalse/qlearning"
+python3.6 experimenter.py --method="random" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
 python3.6 experimenter.py --method="rbf" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
-python3.6 experimenter.py --method="ga" --wall_time_limit=300 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
+python3.6 experimenter.py --method="ga" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
 ```
 Generate pre-training RL model
 ```

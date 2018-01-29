@@ -299,6 +299,10 @@ class QLearning:
 
     def learn(self):
         while True:
+            if self.wall_time > self.learn_wall_time_limit:
+                self.save_model()
+                break
+
             if self.memory_size() < self.memory_capacity_start_learning:
                 print('LEARN:{}:wait for more samples:wall time:{}'.format(self.learn_step_counter, self.wall_time))
                 time.sleep(2)
@@ -311,12 +315,8 @@ class QLearning:
             # if self.learn_step_counter % self.replace_target_iter == 0:
             #     self._replace_target_params()
 
-            if (self.learn_step_counter % self.save_model_iter == 0) \
-                    or (self.wall_time > self.learn_wall_time_limit):
+            if self.learn_step_counter % self.save_model_iter == 0:
                 self.save_model()
-
-            if self.wall_time > self.learn_wall_time_limit:
-                break
 
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
