@@ -20,7 +20,7 @@ np.random.seed(seed)
 
 def output(x):
     global call_counts
-    # barrier method to invalidate constrained violaion
+    # barrier method to invalidate constrained violation
     if np.sum(x) != d:
         out = 0. + np.abs(np.sum(x) - d)
     else:

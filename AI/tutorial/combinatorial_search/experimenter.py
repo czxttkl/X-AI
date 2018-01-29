@@ -11,6 +11,13 @@ from multiprocessing.managers import BaseManager
 import os
 import rbfopt
 
+import array
+import random
+from deap import algorithms
+from deap import base
+from deap import creator
+from deap import tools
+
 
 def get_prob_env_name_class(env_dir):
     env_name = env_dir.split('prob_')[1].split('_pv')[0]
@@ -57,7 +64,7 @@ if __name__ == '__main__':
 
     parser = optparse.OptionParser(usage="usage: %prog [options]")
     parser.add_option("--wall_time_limit", dest="wall_time_limit",
-                      help="wall time limit", type="int", default=999)
+                      help="wall time limit", type="int", default=0)
     parser.add_option("--prob_env_dir", dest="prob_env_dir",
                       help="environment directory", type="string", default="test_probs/prob_env_nn_0")
     parser.add_option("--prtr_model_dir", dest="prtr_model_dir",
@@ -67,6 +74,7 @@ if __name__ == '__main__':
     # 2. rl (no-pretraining)
     # 3. rbf
     # 4. random
+    # 5. ga (genetic algorithm)
     parser.add_option("--method", dest='method',
                       help="method to test", type="string", default="rl")
     (kwargs, args) = parser.parse_args()
@@ -171,7 +179,7 @@ if __name__ == '__main__':
         assert prob_env.if_set_fixed_xo()
 
         def rbf_output(x_p):
-            # barrier method to invalidate constrained violaion
+            # barrier method to invalidate constrained violation
             if numpy.sum(x_p) != prob_env.d:
                 out = numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
@@ -195,6 +203,75 @@ if __name__ == '__main__':
         opt_val = prob_env.still(-opt_val)
         start_x_o = prob_env.fixed_xo
         start_x_p = None    # meaningless in rbf method
+    elif kwargs.method == 'ga':
+        # problem environment has not fixed x_o.
+        # however, we want to fix x_o for rbf method
+        assert not prob_env.if_set_fixed_xo()
+        prob_env.set_fixed_xo(prob_env.x_o)
+        assert prob_env.if_set_fixed_xo()
+
+        creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+        creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
+        toolbox = base.Toolbox()
+        toolbox.register("attr_bool", random.randint, 0, 1)
+        toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, prob_env.k)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+        def ga_output(x_p):
+            # barrier method to invalidate constrained violation
+            # different than rbf, genetic algorithm is a maximizer
+            if numpy.sum(x_p) != prob_env.d:
+                out = - numpy.abs(numpy.sum(x_p) - prob_env.d)
+            else:
+                out = prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
+            return float(out),
+
+        toolbox.register("evaluate", ga_output)
+        toolbox.register("mate", tools.cxTwoPoint)
+        toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+        toolbox.register("select", tools.selTournament, tournsize=3)
+        # create an initial population of 300 individuals (where
+        # each individual is a list of integers)
+        pop = toolbox.population(n=300)
+        CXPB, MUTPB = 0.5, 0.2
+        fitnesses = list(map(toolbox.evaluate, pop))
+        for ind, fit in zip(pop, fitnesses):
+            ind.fitness.values = fit
+        gen = 0
+        start_time = time.time()
+        last_gen_print_time = time.time()
+        while True:
+            gen = gen + 1
+            offspring = toolbox.select(pop, len(pop))
+            offspring = list(map(toolbox.clone, offspring))
+            if time.time() - last_gen_print_time > 15:
+                last_gen_print_time = time.time()
+                print("-- Generation {}, Size {}, Time {} --".format(gen, len(offspring), time.time() - start_time))
+                print("  Min %s" % min(fits))
+                print("  Max %s" % max(fits))
+            for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                if random.random() < CXPB:
+                    toolbox.mate(child1, child2)
+                    del child1.fitness.values
+                    del child2.fitness.values
+            for mutant in offspring:
+                if random.random() < MUTPB:
+                    toolbox.mutate(mutant)
+                    del mutant.fitness.values
+            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = map(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
+            pop[:] = offspring
+            fits = [ind.fitness.values[0] for ind in pop]
+            if time.time() - start_time > kwargs.wall_time_limit:
+                break
+
+        best_ind = tools.selBest(pop, 1)[0]
+        opt_val = prob_env.still(best_ind.fitness.values[0])
+        opt_x_p = numpy.array(best_ind, dtype=numpy.float)
+        start_x_o = prob_env.fixed_xo
+        start_x_p = None   # meaningless in genetic algorithm
 
     # output test results
     numpy.set_printoptions(linewidth=10000)
