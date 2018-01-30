@@ -4,6 +4,7 @@ from card import HeroClass
 from player import RandomPlayer, QLearningPlayer
 import logging
 import numpy
+import time
 
 
 def test_rd_vs_ql_exact_all_fireblast_deck():
@@ -160,7 +161,7 @@ def test_rd_vs_ql_dqn_mage_fix_deck():
     player1.reset(test=True)
     player2.reset(test=True)
     match = Match(player1, player2)
-    match.play_n_match(n=100)
+    match.play_n_match(n=6000)
 
 
 if __name__ == "__main__":

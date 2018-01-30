@@ -25,14 +25,14 @@ class Match:
         self.winner_reason = None
 
     def play_n_match(self, n):
-        # t1 = time.time()
+        t1 = time.time()
         for i in range(n):
             self.play_one_match(i)
             if (i+1) % constant.test_win_rate_num_games == 0 \
                     and not self.player1.test and not self.player2.test:
                 self.test_match()
+        logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
         return self.player1_win_rate
-        # logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
 
     def test_match(self):
         """ test matches to get win rate after every while """
