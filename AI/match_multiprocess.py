@@ -5,10 +5,9 @@ from player.player import Player
 from game_world import GameWorld
 
 
-logger = logging.getLogger('hearthstone')
-
-
 class Match:
+
+    logger = logging.getLogger('hearthstone')
 
     def __init__(self, player1: 'Player', player2: 'Player'):
         self.player1 = player1
@@ -27,7 +26,7 @@ class Match:
 
             match_end = player.turn_begin_init(turn)      # update mana, etc. at the beginning of a turn
             game_world = GameWorld(self.player1, self.player2, turn)
-            logger.info("Turn {0}. {1}".format(turn, player))
+            self.logger.info("Turn {0}. {1}".format(turn, player))
 
             # match end due to insufficient deck to draw
             if match_end:
@@ -44,7 +43,7 @@ class Match:
             while not isinstance(act, NullAction):
                 act.apply(game_world)
                 game_world.update_player(self.player1, self.player2)
-                logger.info(game_world)
+                self.logger.info(game_world)
                 match_end = self.check_for_match_end(game_world)
                 if match_end:
                     break
@@ -54,7 +53,7 @@ class Match:
             if match_end:
                 break
 
-            logger.info("")
+            self.logger.info("")
 
         self.post_one_match(game_world, match_idx)
         return self.winner
@@ -70,8 +69,9 @@ class Match:
         self.player2.post_match()
 
     def match_end(self, game_world, winner, loser, match_idx, reason):
-        logger.warning("%dth match ends at turn %d. winner=%r, loser=%r, reason=%r" %
-                       (match_idx, game_world.turn, winner.name, loser.name, reason))
+        # multiprocessing doesn't work with logger
+        print("%dth match ends at turn %d. winner=%r, loser=%r, reason=%r" %
+              (match_idx, game_world.turn, winner.name, loser.name, reason))
         winner.post_action(game_world, match_end=True, winner=True)
         loser.post_action(game_world, match_end=True, winner=False)
         self.winner = winner
