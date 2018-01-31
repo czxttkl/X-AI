@@ -1,4 +1,3 @@
-from match import *
 from card import *
 import random
 import mycopy as copy

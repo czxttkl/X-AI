@@ -2,7 +2,6 @@ from player.player import Player
 import random
 import logging
 
-
 logger = logging.getLogger('hearthstone')
 
 
