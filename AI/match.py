@@ -5,7 +5,7 @@ import numpy
 import logging
 import time
 import constant
-from player import Player
+from player.player import Player
 from game_world import GameWorld
 
 
@@ -31,7 +31,7 @@ class Match:
             if (i+1) % constant.test_win_rate_num_games == 0 \
                     and not self.player1.test and not self.player2.test:
                 self.test_match()
-        logger.warning('playing %d matches takes %d seconds.' % (n, time.time() - t1))
+        logger.warning('playing %d matches takes %f seconds.' % (n, time.time() - t1))
         return self.player1_win_rate
 
     def test_match(self):

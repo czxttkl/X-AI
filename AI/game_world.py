@@ -1,4 +1,4 @@
-from player import Player
+from player.player import Player
 from typing import Union
 import mycopy as copy
 from card import *

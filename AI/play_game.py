@@ -1,10 +1,8 @@
 from match import Match
 import constant
 from card import HeroClass
-from player import RandomPlayer, QLearningPlayer
 import logging
 import numpy
-import time
 
 
 def test_rd_vs_ql_exact_all_fireblast_deck():
@@ -164,13 +162,35 @@ def test_rd_vs_ql_dqn_mage_fix_deck():
     match.play_n_match(n=6000)
 
 
+def test_rd_vs_rd_all_fireblast_deck():
+    """ test random vs. random """
+    start_health = 30
+    deck = constant.mage_fix_deck
+    logger = logging.getLogger('hearthstone')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.WARNING)
+    player1 = RandomPlayer(cls=HeroClass.MAGE, name='player1', first_player=True,
+                           start_health=start_health, fix_deck=deck)
+    player2 = RandomPlayer(cls=HeroClass.MAGE, name='player2', first_player=False,
+                           start_health=start_health, fix_deck=deck)
+    # test
+    # logger.setLevel(logging.INFO)
+    player1.reset(test=True)
+    player2.reset(test=True)
+    match = Match(player1, player2)
+    match.play_n_match(n=100)
+
+
 if __name__ == "__main__":
     numpy.set_printoptions(linewidth=1000, precision=5, threshold=1000)
+    from player.q_player import QLearningPlayer
+    from player.random_player import RandomPlayer
 
     # test_rd_vs_ql_exact_all_fireblast_deck()
     # test_rd_vs_ql_all_fireblast_deck()
     # test_rd_vs_ql_la_all_fireblast_deck()
     # test_rd_vs_ql_dqn_all_fireblast_deck()
-    test_rd_vs_ql_dqn_mage_fix_deck()
+    # test_rd_vs_ql_dqn_mage_fix_deck()
+    test_rd_vs_rd_all_fireblast_deck()
 
 
