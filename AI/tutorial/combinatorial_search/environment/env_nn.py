@@ -104,7 +104,7 @@ class Environment:
         return numpy.log(distill_out) / 10.
         # return distill_out
 
-    def output(self, state):
+    def output(self, state, delay=0, noise_var=0):
         # t1 = time.time()
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         out = numpy.dot(

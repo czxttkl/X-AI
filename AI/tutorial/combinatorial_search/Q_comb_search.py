@@ -78,14 +78,14 @@ if __name__ == '__main__':
     USE_PRIORITIZED_REPLAY = True
     n_hidden_ql = 400  # number of hidden units in Qlearning NN
     MEMORY_CAPACITY = 300000
-    MEMORY_CAPACITY_START_LEARNING = 10000
+    MEMORY_CAPACITY_START_LEARNING = 1000
     EPISODE_SIZE = 10000001  # the size of training episodes
     TEST_PERIOD = 100  # how many per training episodes to do testing
     RANDOM_SEED = 208  # seed for random behavior except coefficient generation
     LOAD = False  # whether to load existing model
     MODEL_SAVE_ITERATION = 1000
     LEARN_WALL_TIME_LIMIT = 50000  # seconds of limit of wall time the algorithm can learn
-    env_name = 'env_nn'
+    env_name = 'env_nn_noisy'
     env_dir = ''                   # directory to load the environment
     fixed_xo = False               # whether to set x_o fixed in the environment
     root_dir = ''                  # the root directory to save model, tensorflow, logger, etc.
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                   root_dir)
     numpy.set_printoptions(linewidth=10000)
     TRIAL_SIZE = d  # how many card modification allowed
-    LEARN_INTERVAL = 1  # at least how many experiences to collect between two learning iterations
+    LEARN_INTERVAL = d  # at least how many experiences to collect between two learning iterations
     parent_path = os.path.join(root_dir,
                                'rl_prtr_{}_k{}_d{}_t{}'.format(env_name, k, d, LEARN_WALL_TIME_LIMIT))
     tensorboard_path = os.path.join(parent_path, str(time.time()))

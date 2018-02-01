@@ -117,7 +117,13 @@ class QLearning:
                 env = Environment.load(env_dir)
             else:
                 env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
-
+            n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
+        elif env_name == 'env_nn_noisy':
+            from environment.env_nn_noisy import Environment
+            if env_dir:
+                env = Environment.load(env_dir)
+            else:
+                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
 
         return env, n_features, n_actions
@@ -385,7 +391,7 @@ class QLearning:
             self.sample_step_counter += 1
             self.sample_wall_time += sample_wall_time
 
-            # end_state output = reward
+            # end_state distilled output = reward (might be noisy)
             end_output = self.env.still(reward)
             print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:'.
                   format(i_episode, end_output, self.cur_epsilon(),
@@ -431,8 +437,7 @@ class QLearning:
             action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=False)
             cur_state, reward = self.env.step(action)
-            # end_state output = reward
-            end_output = self.env.still(reward)
+            end_output = self.env.still(self.env.output(cur_state, delay=0, noise_var=0))
             print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
                   format(i, end_output, q_val, reward, cur_state))
             if end_output > max_output:
