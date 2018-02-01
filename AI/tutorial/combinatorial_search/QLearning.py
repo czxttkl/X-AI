@@ -385,8 +385,10 @@ class QLearning:
             self.sample_step_counter += 1
             self.sample_wall_time += sample_wall_time
 
+            # end_state output = reward
+            end_output = self.env.still(reward)
             print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:'.
-                  format(i_episode, self.env.still(self.env.output(cur_state)), self.cur_epsilon(),
+                  format(i_episode, end_output, self.cur_epsilon(),
                          self.memory_size(), self.memory_virtual_size(),
                          sample_wall_time, self.sample_wall_time, os.getpid(), self.wall_time))
 
@@ -404,7 +406,7 @@ class QLearning:
                                      learn_step_counter=self.learn_step_counter, wall_time=self.wall_time)
 
                 self.tb_write(
-                    tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL-MC)'.
+                    tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/(Max_RL-MC)'.
                               format(self.prioritized, self.gamma, self.random_seed, self.env_name,
                                      self.env.if_set_fixed_xo()),
                           'Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL)'.
@@ -429,7 +431,8 @@ class QLearning:
             action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=False)
             cur_state, reward = self.env.step(action)
-            end_output = self.env.still(self.env.output(cur_state))
+            # end_state output = reward
+            end_output = self.env.still(reward)
             print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
                   format(i, end_output, q_val, reward, cur_state))
             if end_output > max_output:

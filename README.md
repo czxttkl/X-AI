@@ -21,7 +21,7 @@ python3.6 experimenter.py --method="ga" --wall_time_limit=500 --prob_env_dir="te
 ```
 Generate pre-training RL model
 ```
-python3.6 Q_comb_search.py --env_name="env_nn" --test_period=100 --load=0 --env_dir="test_probs/prob_env_nn_pv0_envseed303" --learn_wall_time_limit=500 --root_dir="prtr_models"
+python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --load=0 --env_dir="test_probs/prob_env_nn_pv0_envseed303" --learn_wall_time_limit=500 --root_dir="prtr_models"
 ```
 
 ### Requirement
