@@ -52,7 +52,7 @@ class Environment(env_nn.Environment):
                 print("monte carlo duration: {}, max: {}".format(duration, self.still(max_val)))
                 last_print_time = duration
 
-        return self.still(max_val), max_state, self.still(min_val), min_state, duration
+        return self.still(max_val), max_state, self.still(min_val), min_state, duration, i+1
 
     def output(self, state, delay=0.0, noise_var=0.07):
         """ output with delay and noise"""
