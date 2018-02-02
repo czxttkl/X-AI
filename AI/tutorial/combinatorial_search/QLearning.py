@@ -32,7 +32,6 @@ class QLearning:
             load,
             tensorboard_path,
             logger_path,
-            learn_interval,
             learn_wall_time_limit,
             prioritized,
             trial_size,
@@ -70,7 +69,6 @@ class QLearning:
             self.logger = Logger(self.logger_path)
 
             self.n_hidden = n_hidden
-            self.learn_interval = learn_interval
             self.lr = learning_rate
             self.gamma = reward_decay
             self.epsilon_max = e_greedy
@@ -95,14 +93,14 @@ class QLearning:
                                  qsa_feature_extractor=self.env.step_state,
                                  qsa_feature_extractor_for_all_acts=self.env.all_possible_next_states)
             # self.env.monte_carlo(logger=self.logger)
-            self.learn_step_counter = 0
+            self.learn_iterations = 0
             self.learn_wall_time = 0.
-            self.sample_step_counter = 0
+            self.sample_iterations = 0
             self.sample_wall_time = 0.
             self.last_cpu_time = 0.
             self.last_wall_time = 0.
             self.last_learn_step = 0
-            self.last_test_step = 0
+            self.last_test_learn_iterations = 0
         else:
             self.load_model()
 
@@ -153,7 +151,7 @@ class QLearning:
         with open(self.save_and_load_path + '_variables.pickle', 'wb') as f:
             pickle.dump((self.random_seed,
                          self.tensorboard_path, self.logger_path,
-                         self.n_hidden, self.learn_interval,
+                         self.n_hidden,
                          self.lr, self.gamma,
                          self.epsilon_max, self.save_model_iter,
                          self.memory_capacity, self.memory_capacity_start_learning,
@@ -161,10 +159,10 @@ class QLearning:
                          self.epsilon_increment, self.epsilon,
                          self.prioritized, self.trial_size,
                          self.replace_target_iter, self.planning,
-                         self.learn_step_counter, self.sample_step_counter,
+                         self.learn_iterations, self.sample_iterations,
                          self.learn_wall_time, self.sample_wall_time,
                          self.cpu_time, self.wall_time,
-                         self.last_learn_step, self.last_test_step), f, protocol=-1)
+                         self.last_learn_step, self.last_test_learn_iterations), f, protocol=-1)
         print('save model to', path)
 
     def load_model(self):
@@ -197,7 +195,7 @@ class QLearning:
         with open(self.save_and_load_path + '_variables.pickle', 'rb') as f:
             self.random_seed, \
             self.tensorboard_path, self.logger_path, \
-            self.n_hidden, self.learn_interval, \
+            self.n_hidden, \
             self.lr, self.gamma, \
             self.epsilon_max, self.save_model_iter, \
             self.memory_capacity, self.memory_capacity_start_learning, \
@@ -205,14 +203,14 @@ class QLearning:
             self.epsilon_increment, self.epsilon, \
             self.prioritized, self.trial_size, \
             self.replace_target_iter, self.planning, \
-            self.learn_step_counter, \
-            self.sample_step_counter, \
+            self.learn_iterations, \
+            self.sample_iterations, \
             self.learn_wall_time, \
             self.sample_wall_time, \
             self.last_cpu_time, \
             self.last_wall_time, \
             self.last_learn_step, \
-            self.last_test_step = pickle.load(f)
+            self.last_test_learn_iterations = pickle.load(f)
 
         numpy.random.seed(self.random_seed)
         tf.set_random_seed(self.random_seed)
@@ -310,18 +308,21 @@ class QLearning:
                 break
 
             if self.memory_size() < self.memory_capacity_start_learning:
-                print('LEARN:{}:wait for more samples:wall time:{}'.format(self.learn_step_counter, self.wall_time))
+                print('LEARN:{}:wait for more samples:wall time:{}'.format(self.learn_iterations, self.wall_time))
                 time.sleep(2)
                 continue
 
-            if self.memory_virtual_size() - self.last_learn_step < self.learn_interval:
+            # don't learn too fast
+            if self.sample_iterations > 0 and \
+                self.learn_iterations > 0 and \
+                    self.learn_iterations / self.sample_iterations > 0.5:
                 time.sleep(0.2)
                 continue
             #
             # if self.learn_step_counter % self.replace_target_iter == 0:
             #     self._replace_target_params()
 
-            if self.learn_step_counter % self.save_model_iter == 0:
+            if self.learn_iterations % self.save_model_iter == 0:
                 self.save_model()
 
             learn_time = time.time()
@@ -345,11 +346,11 @@ class QLearning:
             self.epsilon = self.cur_epsilon()
 
             learn_time = time.time() - learn_time
-            self.learn_step_counter += 1
+            self.learn_iterations += 1
             self.learn_wall_time += learn_time
 
             print('LEARN:{}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:cpu_time:{:.2f}:pid:{}:wall_t:{:.2f}:'.
-                  format(self.learn_step_counter, self.memory_size(), self.memory_virtual_size(),
+                  format(self.learn_iterations, self.memory_size(), self.memory_virtual_size(),
                          learn_time, self.learn_wall_time, self.cpu_time, os.getpid(), self.wall_time))
 
     def cur_epsilon(self):
@@ -371,9 +372,15 @@ class QLearning:
 
     def collect_samples(self, EPISODE_SIZE, TEST_PERIOD):
         """ collect samples in a process """
-        for i_episode in range(self.sample_step_counter, EPISODE_SIZE):
+        for i_episode in range(self.sample_iterations, EPISODE_SIZE):
             if self.wall_time > self.learn_wall_time_limit:
                 break
+
+            # don't sample too fast
+            while self.sample_iterations > 0 and \
+                self.learn_iterations > 0 and \
+                    self.learn_iterations / self.sample_iterations < 0.5:
+                time.sleep(0.2)
 
             sample_wall_time = time.time()
             cur_state = self.env.reset()
@@ -388,7 +395,7 @@ class QLearning:
                 cur_state = cur_state_
 
             sample_wall_time = time.time() - sample_wall_time
-            self.sample_step_counter += 1
+            self.sample_iterations += 1
             self.sample_wall_time += sample_wall_time
 
             # end_state distilled output = reward (might be noisy)
@@ -400,8 +407,8 @@ class QLearning:
 
             # test every once a while
             if self.memory_virtual_size() >= self.memory_capacity_start_learning \
-                    and self.learn_step_counter % TEST_PERIOD == 0 \
-                    and self.learn_step_counter > self.last_test_step:
+                    and self.learn_iterations % TEST_PERIOD == 0 \
+                    and self.learn_iterations > self.last_test_learn_iterations:
                 #self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
                 #               rl_model=self)
                 max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl, _, _ = self.exp_test()
@@ -409,7 +416,7 @@ class QLearning:
                 max_val_mc, max_state_mc, _, _, duration_mc = self.env.monte_carlo()
                 self.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
                                      output_rl=max_val_rl, state_rl=max_state_rl, duration_rl=duration_rl,
-                                     learn_step_counter=self.learn_step_counter, wall_time=self.wall_time)
+                                     learn_step_counter=self.learn_iterations, wall_time=self.wall_time)
 
                 self.tb_write(
                     tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/(Max_RL-MC)'.
@@ -421,9 +428,9 @@ class QLearning:
                           ],
                     values=[max_val_rl - max_val_mc,
                             end_val_rl],   # note we record end value for RL
-                    step=self.learn_step_counter)
+                    step=self.learn_iterations)
 
-                self.last_test_step = self.learn_step_counter
+                self.last_test_learn_iterations = self.learn_iterations
 
     def exp_test(self):
         cur_state = self.env.reset()

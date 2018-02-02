@@ -49,7 +49,7 @@ class Environment(env_nn.Environment):
 
         return self.still(max_val), max_state, self.still(min_val), min_state, duration
 
-    def output(self, state, delay=0.28, noise_var=0.07):
+    def output(self, state, delay=0.0, noise_var=0.07):
         """ output with delay and noise"""
         # if we allow RL to pretrain for one day,
         # and allow it to train 10K rounds,

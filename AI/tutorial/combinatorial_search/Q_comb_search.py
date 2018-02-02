@@ -83,7 +83,7 @@ if __name__ == '__main__':
     TEST_PERIOD = 100  # how many per training episodes to do testing
     RANDOM_SEED = 208  # seed for random behavior except coefficient generation
     LOAD = False  # whether to load existing model
-    MODEL_SAVE_ITERATION = 1000
+    MODEL_SAVE_ITERATION = 100
     LEARN_WALL_TIME_LIMIT = 50000  # seconds of limit of wall time the algorithm can learn
     env_name = 'env_nn_noisy'
     env_dir = ''                   # directory to load the environment
@@ -108,7 +108,6 @@ if __name__ == '__main__':
                   root_dir)
     numpy.set_printoptions(linewidth=10000)
     TRIAL_SIZE = d  # how many card modification allowed
-    LEARN_INTERVAL = d  # at least how many experiences to collect between two learning iterations
     parent_path = os.path.join(root_dir,
                                'rl_prtr_{}_k{}_d{}_t{}'.format(env_name, k, d, LEARN_WALL_TIME_LIMIT))
     tensorboard_path = os.path.join(parent_path, str(time.time()))
@@ -135,7 +134,6 @@ if __name__ == '__main__':
         load=LOAD,
         tensorboard_path=tensorboard_path,
         logger_path=logger_path,
-        learn_interval=LEARN_INTERVAL,
         memory_capacity=MEMORY_CAPACITY,
         memory_capacity_start_learning=MEMORY_CAPACITY_START_LEARNING,
         learn_wall_time_limit=LEARN_WALL_TIME_LIMIT,
