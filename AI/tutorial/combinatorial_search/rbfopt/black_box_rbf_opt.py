@@ -42,7 +42,7 @@ alg = rbfopt.RbfoptAlgorithm(settings, bb)
 # minimize
 val, x, itercount, evalcount, faslt_evalcount = alg.optimize()
 # monte carlo
-mc_val, mc_x, _, _, _ = env.monte_carlo()
+mc_val, mc_x, _, _, _, _ = env.monte_carlo()
 
 print('rbf optimized val:', val)
 print('rbf distilled val:', env.still(-val))

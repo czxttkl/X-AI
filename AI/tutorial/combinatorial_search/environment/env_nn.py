@@ -38,8 +38,17 @@ class Environment:
         # restore random seed for other randomness
         numpy.random.set_state(s)
 
-    def monte_carlo(self, MONTE_CARLO_ITERATIONS=20000, WALL_TIME_LIMIT=9e30):
-        """ Use monte carlo to find the max value """
+    def monte_carlo(self,
+                    MONTE_CARLO_ITERATIONS=20000,
+                    WALL_TIME_LIMIT=9e30,
+                    noise_var=0):
+        """
+        Use monte carlo to find the max value
+
+        MONTE_CARLO_ITERATIONS: maximum number of trials
+        WALL_TIME_LIMIT: maximum wall time
+        noise_var: noise variance to add on the output (before distill).
+        """
         min_val = 9e16
         max_val = -9e16
 
@@ -71,7 +80,7 @@ class Environment:
                 print("monte carlo duration: {}, max: {}".format(duration, self.still(max_val)))
                 last_print_time = duration
 
-        return self.still(max_val), max_state, self.still(min_val), min_state, duration
+        return self.still(max_val), max_state, self.still(min_val), min_state, duration, i+1 # MC rounds
 
     @property
     def x_o(self):

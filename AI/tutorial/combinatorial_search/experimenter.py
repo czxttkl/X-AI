@@ -25,6 +25,9 @@ def get_prob_env_name_class(env_dir):
     if env_name == 'env_nn':
         from environment.env_nn import Environment
         env_cls = Environment
+    elif env_name == 'env_nn_noisy':
+        from environment.env_nn_noisy import Environment
+        env_cls = Environment
     return env_name, env_cls
 
 
@@ -88,13 +91,18 @@ if __name__ == '__main__':
         assert not prob_env.if_set_fixed_xo()
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
-        opt_val, opt_state, _, _, duration = \
+        _, opt_state, _, _, duration, call_counts = \
             prob_env.monte_carlo(
                 MONTE_CARLO_ITERATIONS=int(9e30),  # never stop until wall_time_limt
-                WALL_TIME_LIMIT=kwargs.wall_time_limit)
+                WALL_TIME_LIMIT=kwargs.wall_time_limit,
+                noise_var=0.07,   # monte carlo with noisy evaluation
+            )
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in random method
         opt_x_p = opt_state[prob_env.k:-1]   # exclude the step
+        opt_val = prob_env.still(
+            prob_env.output(opt_state, delay=0, noise_var=0)
+        )
     elif kwargs.method == 'rl_prtr':
         model_env_name = get_model_env_name(kwargs.prtr_model_dir)
         assert model_env_name == prob_env_name
@@ -122,6 +130,7 @@ if __name__ == '__main__':
         opt.set_env_fixed_xo(prob_env.x_o)
         assert opt.get_env_if_set_fixed_xo()
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
+        call_counts = opt.function_call_counts_training()
     elif kwargs.method == 'rl':
         parent_path = os.path.abspath(os.path.join(
             kwargs.prob_env_dir,
@@ -171,6 +180,7 @@ if __name__ == '__main__':
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         # for rl method, duration should be training time
         duration = kwargs.wall_time_limit
+        call_counts = opt.function_call_counts_training()
     elif kwargs.method == 'rbf':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -178,13 +188,17 @@ if __name__ == '__main__':
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
 
+        call_counts = 0
+
         def rbf_output(x_p):
+            global call_counts
             # barrier method to invalidate constrained violation
             if numpy.sum(x_p) != prob_env.d:
                 out = numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
                 # since rbf-opt is a minimizer, we need to make the output negative
                 out = - prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
+            call_counts += 1
             print("x: {}, out: {}".format(x_p, out))
             return out
 
@@ -199,10 +213,13 @@ if __name__ == '__main__':
                                          max_clock_time=kwargs.wall_time_limit, num_cpus=1)
         opt = rbfopt.RbfoptAlgorithm(settings, rbf_bb)
         # minimize
-        opt_val, opt_x_p, _, _, _ = opt.optimize()
-        opt_val = prob_env.still(-opt_val)
+        _, opt_x_p, _, _, _ = opt.optimize()
         start_x_o = prob_env.fixed_xo
         start_x_p = None    # meaningless in rbf method
+        # noiseless opt_val
+        opt_val = prob_env.still(
+            prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
+        )
         duration = kwargs.wall_time_limit
     elif kwargs.method == 'ga':
         # problem environment has not fixed x_o.
@@ -218,13 +235,17 @@ if __name__ == '__main__':
         toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, prob_env.k)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
+        call_counts = 0
+
         def ga_output(x_p):
+            global call_counts
             # barrier method to invalidate constrained violation
             # different than rbf, genetic algorithm is a maximizer
             if numpy.sum(x_p) != prob_env.d:
                 out = - numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
                 out = prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
+            call_counts += 1
             return float(out),
 
         toolbox.register("evaluate", ga_output)
@@ -269,10 +290,13 @@ if __name__ == '__main__':
                 break
 
         best_ind = tools.selBest(pop, 1)[0]
-        opt_val = prob_env.still(best_ind.fitness.values[0])
         opt_x_p = numpy.array(best_ind, dtype=numpy.float)
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in genetic algorithm
+        # noiseless opt_val
+        opt_val = prob_env.still(
+            prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
+        )
         duration = kwargs.wall_time_limit
 
     # output test results
@@ -281,12 +305,12 @@ if __name__ == '__main__':
     # write header
     if not os.path.exists(test_result_path):
         with open(test_result_path, 'w') as f:
-            line = "method, wall_time_limit, duration, opt_val, start_x_o, opt_x_p, start_x_p \n"
+            line = "method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p \n"
             f.write(line)
     # write data
     with open(test_result_path, 'a') as f:
         line = "{}, {}, {}, {}, {}, {}, {}\n".\
-            format(kwargs.method, kwargs.wall_time_limit, duration, opt_val, start_x_o, opt_x_p, start_x_p)
+            format(kwargs.method, kwargs.wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p)
         f.write(line)
 
 

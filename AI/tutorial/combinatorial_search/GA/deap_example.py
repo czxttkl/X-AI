@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     ga_val, ga_x = env.still(evalOneMax(hof[0])[0]), hof[0]
     # monte carlo
-    mc_val, mc_x, _, _, _ = env.monte_carlo(MONTE_CARLO_ITERATIONS=call_counts)
+    mc_val, mc_x, _, _, _, _ = env.monte_carlo(MONTE_CARLO_ITERATIONS=call_counts)
 
     print('ga stilled val:', ga_val)
     print('ga x*:', ga_x)

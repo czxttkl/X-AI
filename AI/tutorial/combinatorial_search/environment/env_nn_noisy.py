@@ -6,16 +6,21 @@ such that the output behavior is closer to deck evaluation
 import environment.env_nn as env_nn
 import numpy
 import time
-import math
-from scipy.special import expit
-import os
-import pickle
 
 
 class Environment(env_nn.Environment):
 
-    def monte_carlo(self, MONTE_CARLO_ITERATIONS=20000, WALL_TIME_LIMIT=9e30):
-        """ Use monte carlo to find the max value """
+    def monte_carlo(self,
+                    MONTE_CARLO_ITERATIONS=20000,
+                    WALL_TIME_LIMIT=9e30,
+                    noise_var=0):
+        """
+        Use monte carlo to find the max value
+
+        MONTE_CARLO_ITERATIONS: maximum number of trials
+        WALL_TIME_LIMIT: maximum wall time
+        noise_var: noise variance to add on the output (before distill).
+        """
         min_val = 9e16
         max_val = -9e16
 
@@ -31,7 +36,7 @@ class Environment(env_nn.Environment):
             random_xp[one_idx] = 1
 
             random_state = numpy.hstack((x_o, random_xp))
-            random_state_output = self.output(random_state, delay=0, noise_var=0)
+            random_state_output = self.output(random_state, delay=0, noise_var=noise_var)
 
             if random_state_output < min_val:
                 min_val = random_state_output
@@ -51,10 +56,13 @@ class Environment(env_nn.Environment):
 
     def output(self, state, delay=0.0, noise_var=0.07):
         """ output with delay and noise"""
+        # WHY delay=0 BY DEFAULT?
         # if we allow RL to pretrain for one day,
         # and allow it to train 10K rounds,
         # then each function evaluation should finish within:
         # 3600*24/10000/30 = 0.288
+        # however, to quickly perform experiments, we set delay to zero
+        # WHY noise_var=0.07 BY DEFAULT?
         # based on preliminary tests, random plays have ~7% variance
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         time.sleep(delay)

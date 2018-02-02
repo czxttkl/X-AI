@@ -370,6 +370,10 @@ class QLearning:
     def memory_virtual_size(self):
         return self.memory.virtual_size
 
+    def function_call_counts_training(self):
+        """ number of function calls during training, which equals to memory virtual size """
+        return self.memory.virtual_size
+
     def collect_samples(self, EPISODE_SIZE, TEST_PERIOD):
         """ collect samples in a process """
         for i_episode in range(self.sample_iterations, EPISODE_SIZE):
@@ -413,7 +417,7 @@ class QLearning:
                 #               rl_model=self)
                 max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl, _, _ = self.exp_test()
 
-                max_val_mc, max_state_mc, _, _, duration_mc = self.env.monte_carlo()
+                max_val_mc, max_state_mc, _, _, duration_mc, _ = self.env.monte_carlo()
                 self.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
                                      output_rl=max_val_rl, state_rl=max_state_rl, duration_rl=duration_rl,
                                      learn_step_counter=self.learn_iterations, wall_time=self.wall_time)
