@@ -313,9 +313,7 @@ class QLearning:
                 continue
 
             # don't learn too fast
-            if self.sample_iterations > 0 and \
-                self.learn_iterations > 0 and \
-                    self.learn_iterations / self.sample_iterations > 0.5:
+            if self.learn_iterations > self.sample_iterations > 0:
                 time.sleep(0.2)
                 continue
             #
@@ -381,9 +379,7 @@ class QLearning:
                 break
 
             # don't sample too fast
-            while self.sample_iterations > 0 and \
-                self.learn_iterations > 0 and \
-                    self.learn_iterations / self.sample_iterations < 0.5:
+            while 0 < self.learn_iterations < self.sample_iterations - 3:
                 time.sleep(0.2)
 
             sample_wall_time = time.time()
