@@ -103,6 +103,7 @@ if __name__ == '__main__':
         opt_val = prob_env.still(
             prob_env.output(opt_state, delay=0, noise_var=0)
         )
+        wall_time_limit = kwargs.wall_time_limit
     elif kwargs.method == 'rl_prtr':
         model_env_name = get_model_env_name(kwargs.prtr_model_dir)
         assert model_env_name == prob_env_name
@@ -131,6 +132,7 @@ if __name__ == '__main__':
         assert opt.get_env_if_set_fixed_xo()
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         call_counts = opt.function_call_counts_training()
+        wall_time_limit = opt.learn_wall_time_limit
     elif kwargs.method == 'rl':
         parent_path = os.path.abspath(os.path.join(
             kwargs.prob_env_dir,
@@ -180,6 +182,7 @@ if __name__ == '__main__':
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         # for rl method, duration should be training time
         duration = kwargs.wall_time_limit
+        wall_time_limit = kwargs.wall_time_limit
         call_counts = opt.function_call_counts_training()
     elif kwargs.method == 'rbf':
         # problem environment has not fixed x_o.
@@ -221,6 +224,7 @@ if __name__ == '__main__':
             prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
         )
         duration = kwargs.wall_time_limit
+        wall_time_limit = kwargs.wall_time_limit
     elif kwargs.method == 'ga':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -298,6 +302,7 @@ if __name__ == '__main__':
             prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
         )
         duration = kwargs.wall_time_limit
+        wall_time_limit = kwargs.wall_time_limit
 
     # output test results
     numpy.set_printoptions(linewidth=10000)
@@ -310,7 +315,7 @@ if __name__ == '__main__':
     # write data
     with open(test_result_path, 'a') as f:
         line = "{}, {}, {}, {}, {}, {}, {}\n".\
-            format(kwargs.method, kwargs.wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p)
+            format(kwargs.method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p)
         f.write(line)
 
 

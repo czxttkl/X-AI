@@ -9,7 +9,7 @@ duration_dict = defaultdict(list)
 opt_val_dict = defaultdict(list)
 file_count = 0
 
-prob_prefix = "prob_env_nn_pv"
+prob_prefix = "prob_env_nn_noisy_pv"
 for filename in glob.iglob('test_probs/{}*/test_result.csv'.format(prob_prefix), recursive=True):
     file_count += 1
     with open(filename, 'r') as f:
