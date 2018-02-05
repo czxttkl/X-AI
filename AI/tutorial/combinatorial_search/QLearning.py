@@ -36,7 +36,9 @@ class QLearning:
             prioritized,
             trial_size,
             learning_rate=0.005,
-            reward_decay=0.9,
+            # we have finite horizon, so we don't worry about reward explosion
+            # see: https://goo.gl/Ew4629 (Other Prediction Problems and Update Rules)
+            reward_decay=1.0,
             e_greedy=0.8,
             save_model_iter=5000,
             memory_capacity=300000,
