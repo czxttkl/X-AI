@@ -194,14 +194,14 @@ if __name__ == '__main__':
         call_counts = 0
 
         def rbf_output(x_p):
-            global call_counts
             # barrier method to invalidate constrained violation
             if numpy.sum(x_p) != prob_env.d:
                 out = numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
                 # since rbf-opt is a minimizer, we need to make the output negative
                 out = - prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
-            call_counts += 1
+                global call_counts
+                call_counts += 1
             print("x: {}, out: {}".format(x_p, out))
             return out
 
@@ -242,14 +242,14 @@ if __name__ == '__main__':
         call_counts = 0
 
         def ga_output(x_p):
-            global call_counts
             # barrier method to invalidate constrained violation
             # different than rbf, genetic algorithm is a maximizer
             if numpy.sum(x_p) != prob_env.d:
                 out = - numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
                 out = prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
-            call_counts += 1
+                global call_counts
+                call_counts += 1
             return float(out),
 
         toolbox.register("evaluate", ga_output)
