@@ -65,5 +65,18 @@ if __name__ == '__main__':
         print('env_nn.xp', env.x_p)
         print('env_nn.if_set_fixed_xo', env.if_set_fixed_xo())
         assert not env.if_set_fixed_xo()
+    elif kwargs.env == 'env_greedymove':
+        from environment.env_greedymove import Environment
+        numpy.random.seed(kwargs.pv)  # use problem version to seed xo generation
+        env = Environment(k=kwargs.k, d=kwargs.d)
+        env.save(prob_dir)
+        print('env_nn generated.')
+        print('env_nn.xo', env.x_o)
+        print('env_nn.xp', env.x_p)
+        print('env_nn.if_set_fixed_xo', env.if_set_fixed_xo())
+        assert not env.if_set_fixed_xo()
+
+
+
 
 

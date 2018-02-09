@@ -45,3 +45,9 @@ class Environment(env_nn.Environment):
 
     def outputs(self, states):
         raise NotImplementedError
+
+    def monte_carlo(self,
+                    MONTE_CARLO_ITERATIONS=20000,
+                    WALL_TIME_LIMIT=9e30,
+                    noise_var=0):
+        raise NotImplementedError
