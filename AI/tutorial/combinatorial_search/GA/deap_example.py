@@ -33,7 +33,7 @@ assert env.if_set_fixed_xo()
 x_o = env.x_o
 call_counts = 0
 seed = 2008
-wall_time_limit = 60
+wall_time_limit = 7
 version = 'long'
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
@@ -162,6 +162,7 @@ def main_long():
         print("  Avg %s" % mean)
         print("  Std %s" % std)
 
+        print("generation {} call counts: {}".format(g, call_counts))
         if time.time() - start_time > wall_time_limit:
             break
 
