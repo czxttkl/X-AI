@@ -388,6 +388,10 @@ class QLearning:
             cur_state = self.env.reset()
 
             for i_epsisode_step in range(self.trial_size):
+                # prevent wall time over limit during sampling
+                if self.wall_time > self.learn_wall_time_limit:
+                    break
+
                 next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
                 action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=True)
@@ -410,7 +414,8 @@ class QLearning:
             # test every once a while
             if self.memory_virtual_size() >= self.memory_capacity_start_learning \
                     and self.learn_iterations % TEST_PERIOD == 0 \
-                    and self.learn_iterations > self.last_test_learn_iterations:
+                    and self.learn_iterations > self.last_test_learn_iterations \
+                    and self.wall_time < self.learn_wall_time_limit:
                 #self.env.test(TRIAL_SIZE, RANDOM_SEED, self.learn_step_counter, self.wall_time, self.env_name,
                 #               rl_model=self)
                 max_val_rl, max_state_rl, end_val_rl, end_state_rl, duration_rl, _, _ = self.exp_test()

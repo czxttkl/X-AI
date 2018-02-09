@@ -240,8 +240,11 @@ if __name__ == '__main__':
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         call_counts = 0
+        start_time = time.time()
 
         def ga_output(x_p):
+            if time.time() - start_time > kwargs.wall_time_limit:
+                return -100
             # barrier method to invalidate constrained violation
             # different than rbf, genetic algorithm is a maximizer
             if numpy.sum(x_p) != prob_env.d:
@@ -264,7 +267,6 @@ if __name__ == '__main__':
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
         gen = 0
-        start_time = time.time()
         last_gen_print_time = time.time()
         while True:
             gen = gen + 1
@@ -276,22 +278,26 @@ if __name__ == '__main__':
                 print("  Min %s" % min(fits))
                 print("  Max %s" % max(fits))
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                if time.time() - start_time > kwargs.wall_time_limit:
+                    break
                 if random.random() < CXPB:
                     toolbox.mate(child1, child2)
                     del child1.fitness.values
                     del child2.fitness.values
             for mutant in offspring:
+                if time.time() - start_time > kwargs.wall_time_limit:
+                    break
                 if random.random() < MUTPB:
                     toolbox.mutate(mutant)
                     del mutant.fitness.values
+            if time.time() - start_time > kwargs.wall_time_limit:
+                break
             invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
             fitnesses = map(toolbox.evaluate, invalid_ind)
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
             pop[:] = offspring
             fits = [ind.fitness.values[0] for ind in pop]
-            if time.time() - start_time > kwargs.wall_time_limit:
-                break
 
         best_ind = tools.selBest(pop, 1)[0]
         opt_x_p = numpy.array(best_ind, dtype=numpy.float)
