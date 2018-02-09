@@ -101,7 +101,7 @@ class QLearning:
             self.sample_wall_time = 0.
             self.last_cpu_time = 0.
             self.last_wall_time = 0.
-            self.last_learn_step = 0
+            self.last_save_time = time.time()
             self.last_test_learn_iterations = 0
         else:
             self.load_model()
@@ -164,7 +164,8 @@ class QLearning:
                          self.learn_iterations, self.sample_iterations,
                          self.learn_wall_time, self.sample_wall_time,
                          self.cpu_time, self.wall_time,
-                         self.last_learn_step, self.last_test_learn_iterations), f, protocol=-1)
+                         self.last_test_learn_iterations), f, protocol=-1)
+        self.last_save_time = time.time()
         print('save model to', path)
 
     def load_model(self):
@@ -211,7 +212,6 @@ class QLearning:
             self.sample_wall_time, \
             self.last_cpu_time, \
             self.last_wall_time, \
-            self.last_learn_step, \
             self.last_test_learn_iterations = pickle.load(f)
 
         numpy.random.seed(self.random_seed)
@@ -219,6 +219,7 @@ class QLearning:
 
         self.tb_writer = TensorboardWriter(folder_name=self.tensorboard_path, session=self.sess)
         self.logger = Logger(self.logger_path)
+        self.last_save_time = time.time()
 
     def _build_net(self):
         self.s = tf.placeholder(tf.float32, [None, self.n_features], name='s')  # Q(s,a) feature
@@ -322,13 +323,12 @@ class QLearning:
             # if self.learn_step_counter % self.replace_target_iter == 0:
             #     self._replace_target_params()
 
-            if self.learn_iterations % self.save_model_iter == 0:
+            if time.time() - self.last_save_time > 15 * 60:
                 self.save_model()
 
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
                 = self.memory.sample()
-            self.last_learn_step = self.memory_virtual_size()
 
             _, loss, abs_errors = self.sess.run([self.train_op, self.loss, self.abs_errors],
                                                 feed_dict={self.s: qsa_feature,
