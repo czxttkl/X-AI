@@ -22,13 +22,30 @@ class Environment(env_nn.Environment):
             self.set_fixed_xo(fixed_xo)
         self.reset()
 
-    def output(self, state, delay=0.0, noise_var=0.0):
-        """ output by calling java program """
+    def output(self, state):
+        """ output with much noise by calling java program 100 games """
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
+        x_o, x_p = state[:self.k], state[self.k:-1]
+        out = self.call_java_program(x_o, x_p, 100)
+        # print(player2_game_lost, player2_game_won, out)
+        out = self.distill(out)
+        return out
+
+    def outputs(self, states):
+        raise NotImplementedError
+
+    def call_java_program(self, x_o, x_p, number_of_games):
+        """
+        Return win rate of deck evaluation
+        """
         # shadow.jar is under the same directory
         cur_dir = os.path.abspath(os.path.dirname(__file__))
-        cmds = ["java", "-jar", os.path.join(cur_dir, "shadow.jar"), "100", "greedymove", "greedymove", "warrior"]
-        x_o, x_p = state[:self.k], state[self.k:-1]
+        cmds = ["java",
+                "-jar",
+                os.path.join(cur_dir, "shadow.jar"),
+                str(number_of_games),
+                "greedymove", "greedymove",
+                "warrior"]
         player1_card_idx = ','.join(map(str, numpy.nonzero(x_o)[0].tolist()))
         player2_card_idx = ','.join(map(str, numpy.nonzero(x_p)[0].tolist()))
         cmds.append(player1_card_idx)
@@ -40,14 +57,19 @@ class Environment(env_nn.Environment):
         player2_game_won, player2_game_lost = float(player2_game_won), float(player2_game_lost)
         out = player2_game_won / (player2_game_lost + player2_game_won)
         # print(player2_game_lost, player2_game_won, out)
-        out = self.distill(out)
+        assert 0. <= out
+        assert out <= 1.
         return out
-
-    def outputs(self, states):
-        raise NotImplementedError
 
     def monte_carlo(self,
                     MONTE_CARLO_ITERATIONS=20000,
-                    WALL_TIME_LIMIT=9e30,
-                    noise_var=0):
+                    WALL_TIME_LIMIT=9e30):
         raise NotImplementedError
+
+    def output_noiseless(self, state):
+        """ noiseless output = calling java program 300 times """
+        assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
+        x_o, x_p = state[:self.k], state[self.k:-1]
+        out = self.call_java_program(x_o, x_p, 300)
+        out = self.distill(out)
+        return out

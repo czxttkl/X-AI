@@ -40,14 +40,12 @@ class Environment:
 
     def monte_carlo(self,
                     MONTE_CARLO_ITERATIONS=20000,
-                    WALL_TIME_LIMIT=9e30,
-                    noise_var=0):
+                    WALL_TIME_LIMIT=9e30):
         """
         Use monte carlo to find the max value
 
         MONTE_CARLO_ITERATIONS: maximum number of trials
         WALL_TIME_LIMIT: maximum wall time
-        noise_var: noise variance to add on the output (before distill).
         """
         min_val = 9e16
         max_val = -9e16
@@ -64,7 +62,7 @@ class Environment:
             random_xp[one_idx] = 1
 
             random_state = numpy.hstack((x_o, random_xp))
-            random_state_output = self.output(random_state)
+            random_state_output = self.output_noiseless(random_state)
 
             if random_state_output < min_val:
                 min_val = random_state_output
@@ -113,32 +111,30 @@ class Environment:
         return numpy.log(distill_out) / 10.
         # return distill_out
 
-    def output(self, state, delay=0, noise_var=0):
+    def nn(self, state):
+        out = numpy.dot(
+            self.relu(
+                numpy.dot(state[:-1], self.w1)
+                + self.b1
+            ),
+            self.w2) + self.b2
+        out = self.sigmoid(out[0])
+        return out
+
+    def output(self, state):
         # t1 = time.time()
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
-        out = numpy.dot(
-                        self.relu(
-                                  numpy.dot(state[:-1], self.w1)
-                                  + self.b1
-                                 ),
-                        self.w2) + self.b2
-        out = self.sigmoid(out[0])
+        out = self.nn(state)
         out = self.distill(out)
         # t2 = time.time()
         # print('step output time', t2 - t1)
         return out
 
     def outputs(self, states):
-        assert len(states.shape) == 2 and states.shape[1] == 2 * self.k + 1
-        outs = numpy.dot(
-                         self.relu(
-                                   numpy.dot(states[:, :-1], self.w1)
-                                   + self.b1
-                                  ),
-                         self.w2) + self.b2
-        outs = expit(outs)  # sigmoid function for vectors
-        outs = self.distill(outs)
-        return outs
+        raise NotImplementedError
+
+    def output_noiseless(self, state):
+        return self.output(state)
 
     def relu(self, x):
         return x * (x > 0)
@@ -230,39 +226,6 @@ class Environment:
         state_and_step[idx_to_add] = 1
         state_and_step[-1] += 1  # increase the step
         return state_and_step
-    #
-    # def test(self, TRIAL_SIZE, RANDOM_SEED, learn_step_counter, wall_time, env_name, rl_model):
-    #     cur_state = self.reset()
-    #     duration_rl = time.time()
-    #     max_test_output = -99999.
-    #
-    #     for i in range(TRIAL_SIZE):
-    #         next_possible_states, next_possible_actions = self.all_possible_next_state_action(cur_state)
-    #         action, q_val = rl_model.choose_action(cur_state, next_possible_states, next_possible_actions,
-    #                                                epsilon_greedy=False)
-    #         cur_state, reward = self.step(action)
-    #         test_output = self.output(cur_state)
-    #         test_output = self.still(test_output)
-    #         print('TEST  :{}:output: {:.5f}, at {}, qval: {:.5f}, reward {:.5f}'.
-    #               format(i, test_output, cur_state, q_val, reward))
-    #         if test_output > max_test_output:
-    #             max_test_output = test_output
-    #
-    #     duration_rl = time.time() - duration_rl
-    #
-    #     max_val_mc, max_state_mc, _, _, duration_mc = self.monte_carlo()
-    #     rl_model.logger.log_test(output_mc=max_val_mc, state_mc=max_state_mc, duration_mc=duration_mc,
-    #                              output_rl=test_output, state_rl=cur_state, duration_rl=duration_rl,
-    #                              learn_step_counter=learn_step_counter, wall_time=wall_time)
-    #
-    #
-    #     rl_model.tb_write(tags=['Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL-MC)'.
-    #                       format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name, self.if_set_fixed_xo()),
-    #                             'Prioritized={0}, gamma={1}, seed={2}, env={3}, fixed_xo={4}/Ending Output (RL)'.
-    #                       format(rl_model.prioritized, rl_model.gamma, RANDOM_SEED, env_name, self.if_set_fixed_xo()),
-    #                             ],
-    #                       values=[max_test_output - max_val_mc, test_output],
-    #                       step=learn_step_counter)
 
     def reset(self):
         random_xo = numpy.zeros(self.k)

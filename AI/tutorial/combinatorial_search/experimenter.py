@@ -3,7 +3,7 @@ Command-line parameterized experiment tool
 """
 import optparse
 import numpy
-import tensorflow as tf
+from random_search import RandomSearch
 from QLearning import QLearning
 import time
 from multiprocessing import Process, freeze_support
@@ -91,17 +91,18 @@ if __name__ == '__main__':
         assert not prob_env.if_set_fixed_xo()
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
+        opt = RandomSearch(prob_env)
         _, opt_state, _, _, duration, call_counts = \
-            prob_env.monte_carlo(
-                MONTE_CARLO_ITERATIONS=int(9e30),  # never stop until wall_time_limt
-                WALL_TIME_LIMIT=kwargs.wall_time_limit,
-                noise_var=0.07,   # monte carlo with noisy evaluation
+            opt.random_search(
+                iteration_limit=int(9e30),  # never stop until wall_time_limt
+                wall_time_limit=kwargs.wall_time_limit,
             )
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in random method
         opt_x_p = opt_state[prob_env.k:-1]   # exclude the step
+        # use noiseless output
         opt_val = prob_env.still(
-            prob_env.output(opt_state, delay=0, noise_var=0)
+            prob_env.output_noiseless(opt_state)
         )
         wall_time_limit = kwargs.wall_time_limit
     elif kwargs.method == 'rl_prtr':
@@ -221,7 +222,7 @@ if __name__ == '__main__':
         start_x_p = None    # meaningless in rbf method
         # noiseless opt_val
         opt_val = prob_env.still(
-            prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
+            prob_env.output_noiseless(numpy.hstack((start_x_o, opt_x_p, 0)))
         )
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limit
@@ -305,7 +306,7 @@ if __name__ == '__main__':
         start_x_p = None   # meaningless in genetic algorithm
         # noiseless opt_val
         opt_val = prob_env.still(
-            prob_env.output(numpy.hstack((start_x_o, opt_x_p, 0)), delay=0, noise_var=0)
+            prob_env.output_noiseless(numpy.hstack((start_x_o, opt_x_p, 0)))
         )
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limit

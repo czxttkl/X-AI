@@ -22,10 +22,10 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-from environment.env_nn import Environment
+from environment.env_nn_noisy import Environment
 
 
-k=200
+k=312
 d=30
 env = Environment(k=k, d=d)
 env.set_fixed_xo(env.x_o)
@@ -33,8 +33,9 @@ assert env.if_set_fixed_xo()
 x_o = env.x_o
 call_counts = 0
 seed = 2008
-wall_time_limit = 7
+wall_time_limit = 1800
 version = 'long'
+pop_size = 300
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
@@ -68,7 +69,7 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 def main_short():
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=pop_size)
     hof = tools.HallOfFame(1)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
@@ -87,7 +88,7 @@ def main_long():
 
     # create an initial population of 300 individuals (where
     # each individual is a list of integers)
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=pop_size)
 
     # CXPB  is the probability with which two individuals
     #       are crossed
@@ -182,11 +183,13 @@ if __name__ == "__main__":
     else:
         _, _, hof = main_short()
 
-    ga_val, ga_x = env.still(evalOneMax(hof[0])[0]), hof[0]
-    # monte carlo
+    ga_noise_val, ga_x = env.still(evalOneMax(hof[0])[0]), hof[0]
+    ga_noiseless_val = env.still(env.output_noiseless(numpy.hstack((x_o, ga_x, 0))))
+    # monte carlo (noiseless)
     mc_val, mc_x, _, _, _, _ = env.monte_carlo(MONTE_CARLO_ITERATIONS=call_counts)
 
-    print('ga stilled val:', ga_val)
+    print('ga stilled noise val:', ga_noise_val)
+    print('ga stilled noiseless val:', ga_noiseless_val)
     print('ga x*:', ga_x)
     print('ga x* deck size:', numpy.sum(ga_x))
     print('ga call counts:', call_counts)

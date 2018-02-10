@@ -73,8 +73,8 @@ if __name__ == '__main__':
     wall_time = time.time()
 
     # Raw parameters
-    k = 25  # total available card size
-    d = 6  # deck size
+    k = 312  # total available card size
+    d = 30  # deck size
     USE_PRIORITIZED_REPLAY = True
     n_hidden_ql = 400  # number of hidden units in Qlearning NN
     MEMORY_CAPACITY = 300000
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     LOAD = False  # whether to load existing model
     MODEL_SAVE_ITERATION = 100
     LEARN_WALL_TIME_LIMIT = 50000  # seconds of limit of wall time the algorithm can learn
-    env_name = 'env_nn_noisy'
+    env_name = 'env_nn'
     env_dir = ''                   # directory to load the environment
     fixed_xo = False               # whether to set x_o fixed in the environment
     root_dir = ''                  # the root directory to save model, tensorflow, logger, etc.

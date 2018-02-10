@@ -94,7 +94,6 @@ class QLearning:
                                  batch_size=self.batch_size, planning=self.planning,
                                  qsa_feature_extractor=self.env.step_state,
                                  qsa_feature_extractor_for_all_acts=self.env.all_possible_next_states)
-            # self.env.monte_carlo(logger=self.logger)
             self.learn_iterations = 0
             self.learn_wall_time = 0.
             self.sample_iterations = 0
@@ -451,7 +450,8 @@ class QLearning:
             action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=False)
             cur_state, reward = self.env.step(action)
-            end_output = self.env.still(self.env.output(cur_state, delay=0, noise_var=0))
+            # noiseless end output
+            end_output = self.env.still(self.env.output_noiseless(cur_state))
             print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
                   format(i, end_output, q_val, reward, cur_state))
             if end_output > max_output:
