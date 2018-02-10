@@ -1,0 +1,144 @@
+https://www.icy-veins.com/hearthstone/tholwmenos-rank-1-legend-pirate-warrior-deck
+
+14 = {SpellCard@2366} "[SPELL 'Upgrade!'
+14 = {SpellCard@2366} "[SPELL 'Upgrade!'
+21 = {MinionCard@2373} "[MINION 'N'Zoth's First Mate'
+21 = {MinionCard@2373} "[MINION 'N'Zoth's First Mate'
+40 = {SpellCard@2392} "[SPELL 'Heroic Strike' 
+40 = {SpellCard@2392} "[SPELL 'Heroic Strike' 
+12 = {MinionCard@2364} "[MINION 'Bloodsail Cultist'
+12 = {MinionCard@2364} "[MINION 'Bloodsail Cultist'
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+7 = {MinionCard@2359} "[MINION 'Frothing Berserker'
+7 = {MinionCard@2359} "[MINION 'Frothing Berserker'
+23 = {MinionCard@2375} "[MINION 'Kor'kron Elite'
+23 = {MinionCard@2375} "[MINION 'Kor'kron Elite'
+15 = {WeaponCard@2367} "[WEAPON 'Arcanite Reaper' 
+15 = {WeaponCard@2367} "[WEAPON 'Arcanite Reaper' 
+
+replace one firefly with patches the pirate 
+307 = {MinionCard@2970} "[MINION 'Patches the Pirate' 
+307 = {MinionCard@2970} "[MINION 'Patches the Pirate' 
+109 = {MinionCard@2570} "[MINION 'Southsea Deckhand' 
+109 = {MinionCard@2570} "[MINION 'Southsea Deckhand' 
+266 = {MinionCard@2828} "[MINION 'Bloodsail Raider' 
+266 = {MinionCard@2828} "[MINION 'Bloodsail Raider' 
+269 = {MinionCard@2831} "[MINION 'Southsea Captain' 
+269 = {MinionCard@2831} "[MINION 'Southsea Captain' 
+265 = {MinionCard@2827} "[MINION 'Dread Corsair' 
+265 = {MinionCard@2827} "[MINION 'Dread Corsair' 
+49 = {MinionCard@2401} "[MINION 'Naga Corsair'
+171 = {MinionCard@2632} "[MINION 'Spellbreaker' 
+253 = {MinionCard@2815} "[MINION 'Captain Greenskin' 
+303 = {MinionCard@2966} "[MINION 'Leeroy Jenkins'
+
+28,29,42,43,80,81,24,25,86,87,14,15,46,47,30,31,614,615,218,219,532,533,538,539,530,531,98,342,506,606
+
+
+
+https://www.icy-veins.com/hearthstone/chakkis-trinity-series-pirate-warrior-deck
+21 = {MinionCard@2373} "[MINION 'N'Zoth's First Mate'
+21 = {MinionCard@2373} "[MINION 'N'Zoth's First Mate'
+12 = {MinionCard@2364} "[MINION 'Bloodsail Cultist'
+12 = {MinionCard@2364} "[MINION 'Bloodsail Cultist'
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+7 = {MinionCard@2359} "[MINION 'Frothing Berserker'
+7 = {MinionCard@2359} "[MINION 'Frothing Berserker'
+23 = {MinionCard@2375} "[MINION 'Kor'kron Elite'
+23 = {MinionCard@2375} "[MINION 'Kor'kron Elite'
+15 = {WeaponCard@2367} "[WEAPON 'Arcanite Reaper' 
+15 = {WeaponCard@2367} "[WEAPON 'Arcanite Reaper' 
+
+replace two Lesser Mithril Spellstone with Malkorok
+19 = {MinionCard@2371} "[MINION 'Malkorok' 
+19 = {MinionCard@2371} "[MINION 'Malkorok' 
+
+replace one firefly with patches the pirate 
+replace one firefly with patches the murloc raider
+
+307 = {MinionCard@2970} "[MINION 'Patches the Pirate' 
+307 = {MinionCard@2970} "[MINION 'Patches the Pirate' 
+308 = {MinionCard@2971} "[MINION 'Murloc Raider' 
+109 = {MinionCard@2570} "[MINION 'Southsea Deckhand' 
+109 = {MinionCard@2570} "[MINION 'Southsea Deckhand' 
+
+replace prince keleseth with Armorsmith
+8 = {MinionCard@2360} "[MINION 'Armorsmith'
+269 = {MinionCard@2831} "[MINION 'Southsea Captain' 
+269 = {MinionCard@2831} "[MINION 'Southsea Captain'
+265 = {MinionCard@2827} "[MINION 'Dread Corsair' 
+265 = {MinionCard@2827} "[MINION 'Dread Corsair' 
+253 = {MinionCard@2815} "[MINION 'Captain Greenskin' 
+303 = {MinionCard@2966} "[MINION 'Leeroy Jenkins'
+
+replace two spiteful summoner with two spiteful smith
+256 = {MinionCard@2818} "[MINION 'Spiteful Smith' 
+256 = {MinionCard@2818} "[MINION 'Spiteful Smith' 
+
+replace two corridor creeper with two bog creeper
+141 = {MinionCard@2602} "[MINION 'Bog Creeper' 
+141 = {MinionCard@2602} "[MINION 'Bog Creeper'
+
+
+
+42,43,24,25,86,87,14,15,46,47,30,31,38,39,614,615,616,218,219,16,538,539,530,531,506,606,512,513,282,283
+
+
+
+
+https://www.icy-veins.com/hearthstone/taunt-warrior-quest-deck
+
+replace one fire plume's heart with blood to Ichor
+0 = {SpellCard@2352} "[SPELL 'Blood To Ichor' 
+48 = {SpellCard@2400} "[SPELL 'Shield Slam' 
+48 = {SpellCard@2400} "[SPELL 'Shield Slam' 
+36 = {SpellCard@2388} "[SPELL 'Execute'
+36 = {SpellCard@2388} "[SPELL 'Execute'
+32 = {SpellCard@2384} "[SPELL 'Sleep with the Fishes' 
+32 = {SpellCard@2384} "[SPELL 'Sleep with the Fishes' 
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+43 = {WeaponCard@2395} "[WEAPON 'Fiery War Axe'
+24 = {MinionCard@2376} "[MINION 'Ravaging Ghoul' 
+45 = {SpellCard@2397} "[SPELL 'Shield Block'
+45 = {SpellCard@2397} "[SPELL 'Shield Block'
+
+replace two blood razor with two razorfen hunter
+288 = {MinionCard@2850} "[MINION 'Razorfen Hunter'
+288 = {MinionCard@2850} "[MINION 'Razorfen Hunter'
+
+11 = {MinionCard@2363} "[MINION 'Bloodhoof Brave' 
+5 = {MinionCard@2357} "[MINION 'Alley Armorsmith' 
+5 = {MinionCard@2357} "[MINION 'Alley Armorsmith' 
+46 = {SpellCard@2398} "[SPELL 'Brawl' 
+46 = {SpellCard@2398} "[SPELL 'Brawl' 
+
+replace one direhorn hatchling
+190 = {MinionCard@2651} "[MINION 'Stranglethorn Tiger' 
+
+225 = {MinionCard@2787} "[MINION 'Acolyte of Pain' 
+225 = {MinionCard@2787} "[MINION 'Acolyte of Pain' 
+
+replace two stonehill defender with two street trickster
+129 = {MinionCard@2590} "[MINION 'Street Trickster'
+129 = {MinionCard@2590} "[MINION 'Street Trickster'
+
+replacet two tar creeper with two Fen creeper
+156 = {MinionCard@2617} "[MINION 'Fen Creeper' 
+156 = {MinionCard@2617} "[MINION 'Fen Creeper' 
+
+228 = {MinionCard@2790} "[MINION 'The Curator' 
+
+replace two primordial drake with medivh, the guardian
+277 = {MinionCard@2839} "[MINION 'Medivh, the Guardian'
+277 = {MinionCard@2839} "[MINION 'Medivh, the Guardian' 
+
+
+replace one The Lich King with boogeymonster
+292 = {MinionCard@2854} "[MINION 'The Boogeymonster' [EntityReference id:-1] Manacost:8]"
+
+0,96,97,72,73,64,65,86,87,58,90,91,576,577,22,10,11,92,93,380,450,451,258,259,312,313,456,554,555,584
+
+
+
