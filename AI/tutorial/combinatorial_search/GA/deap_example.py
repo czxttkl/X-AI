@@ -33,17 +33,22 @@ assert env.if_set_fixed_xo()
 x_o = env.x_o
 call_counts = 0
 seed = 2008
-wall_time_limit = 1800
+wall_time_limit = 25
 version = 'long'
-pop_size = 300
+pop_size = 10
+hof_size = 10
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
-# Attribute generator
-toolbox.register("attr_bool", random.randint, 0, 1)
 # Structure initializers
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, k)
+def my_individual_creator():
+    random_xp = numpy.zeros(k, dtype=numpy.int8)  # state + step
+    one_idx = numpy.random.choice(k, d, replace=False)
+    random_xp[one_idx] = 1
+    return random_xp
+toolbox.register("my_individual_creator", my_individual_creator)
+toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.my_individual_creator)
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
@@ -57,30 +62,40 @@ def evalOneMax(individual):
     if numpy.sum(individual) != d:
         out = - numpy.abs(numpy.sum(individual) - d)
     else:
-        out = env.output(numpy.hstack((x_o, individual, 0)))  # the last one is step placeholder
-    call_counts += 1
+        # in GA, we do not use distill output
+        out = env.still(env.output(numpy.hstack((x_o, individual, 0))))  # the last one is step placeholder
+        call_counts += 1
     # print("{} call, x: {}, out: {}".format(call_counts, individual, out))
     return float(out),
 
 toolbox.register("evaluate", evalOneMax)
 toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.01)
 toolbox.register("select", tools.selTournament, tournsize=3)
+
+
+def select_best_from_hof(hof):
+    res = []
+    for ind_x in hof:
+        noiseless_val = env.still(env.output_noiseless(numpy.hstack((x_o, ind_x, 0))))
+        res.append((noiseless_val, ind_x))
+    best_noiseless_val, best_ind_x = max(res, key=lambda x: x[0])
+    return best_noiseless_val, best_ind_x
 
 
 def main_short():
     pop = toolbox.population(n=pop_size)
-    hof = tools.HallOfFame(1)
+    hof = tools.HallOfFame(hof_size)
     stats = tools.Statistics(lambda ind: ind.fitness.values)
     stats.register("avg", numpy.mean)
     stats.register("std", numpy.std)
     stats.register("min", numpy.min)
     stats.register("max", numpy.max)
 
-    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=500,
+    pop, log = algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2, ngen=50,
                                    stats=stats, halloffame=hof, verbose=True)
 
-    return pop, log, hof
+    return select_best_from_hof(hof)
 
 
 def main_long():
@@ -122,18 +137,15 @@ def main_long():
 
         # Apply crossover and mutation on the offspring
         for child1, child2 in zip(offspring[::2], offspring[1::2]):
-
             # cross two individuals with probability CXPB
             if random.random() < CXPB:
                 toolbox.mate(child1, child2)
-
                 # fitness values of the children
                 # must be recalculated later
                 del child1.fitness.values
                 del child2.fitness.values
 
         for mutant in offspring:
-
             # mutate an individual with probability MUTPB
             if random.random() < MUTPB:
                 toolbox.mutate(mutant)
@@ -163,33 +175,36 @@ def main_long():
         print("  Avg %s" % mean)
         print("  Std %s" % std)
 
-        print("generation {} call counts: {}".format(g, call_counts))
+        # select best ind in all generations
+        # this may end up with a solution with a low mean but high variance
+        # best_ind_cand = tools.selBest(pop, 1)[0]
+        # best_ind_cand_val = best_ind_cand.fitness.values[0]
+        # if best_ind_cand_val > best_ind_val:
+        #     best_ind_val = best_ind_cand_val
+        #     best_ind = best_ind_cand
+
+        print("generation {}, call counts: {}, pop size: {}".format(g, call_counts, len(pop)))
         if time.time() - start_time > wall_time_limit:
             break
 
     print("-- End of (successful) evolution --")
 
-    best_ind = tools.selBest(pop, 1)[0]
-    print("Best individual is %s, %s" % (best_ind, best_ind.fitness.values))
+    best_noiseless_val, best_ind_x = select_best_from_hof(tools.selBest(pop, hof_size))
+    # print("Best individual is %s\n %s" % (best_noiseless_val, best_ind_x))
 
-    # a fake hall of fame object
-    hof = (best_ind,)
-    return None, None, hof
+    return best_noiseless_val, best_ind_x
 
 
 if __name__ == "__main__":
     if version == 'long':
-        _, _, hof = main_long()
+        best_ga_noiseless_val, ga_x = main_long()
     else:
-        _, _, hof = main_short()
+        best_ga_noiseless_val, ga_x = main_short()
 
-    ga_noise_val, ga_x = env.still(evalOneMax(hof[0])[0]), hof[0]
-    ga_noiseless_val = env.still(env.output_noiseless(numpy.hstack((x_o, ga_x, 0))))
-    # monte carlo (noiseless)
+        # monte carlo (noiseless)
     mc_val, mc_x, _, _, _, _ = env.monte_carlo(MONTE_CARLO_ITERATIONS=call_counts)
 
-    print('ga stilled noise val:', ga_noise_val)
-    print('ga stilled noiseless val:', ga_noiseless_val)
+    print('ga stilled noiseless val:', best_ga_noiseless_val)
     print('ga x*:', ga_x)
     print('ga x* deck size:', numpy.sum(ga_x))
     print('ga call counts:', call_counts)
