@@ -11,9 +11,8 @@ from multiprocessing.managers import BaseManager
 import os
 import rbfopt
 
-import array
 import random
-from deap import algorithms
+from genetic_algorithm import cxTwoDeck, mutSwapCard, my_deck_creator_func, select_best_from_hof
 from deap import base
 from deap import creator
 from deap import tools
@@ -234,14 +233,19 @@ if __name__ == '__main__':
         assert prob_env.if_set_fixed_xo()
 
         creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-        creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
+        creator.create("Individual", numpy.ndarray, typecode='b', fitness=creator.FitnessMax)
         toolbox = base.Toolbox()
-        toolbox.register("attr_bool", random.randint, 0, 1)
-        toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, prob_env.k)
+        my_deck_creator = my_deck_creator_func(prob_env.k, prob_env.d)
+        toolbox.register("my_individual_creator", my_deck_creator)
+        toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.my_individual_creator)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
         call_counts = 0
         start_time = time.time()
+        pop_size = 10
+        hof_size = 10
+        CXPB = 0.2  # the probability with which two individuals are crossed
+        MUTPB = 0.2  # the probability for mutating an individual
 
         def ga_output(x_p):
             if time.time() - start_time > kwargs.wall_time_limit:
@@ -251,19 +255,18 @@ if __name__ == '__main__':
             if numpy.sum(x_p) != prob_env.d:
                 out = - numpy.abs(numpy.sum(x_p) - prob_env.d)
             else:
-                out = prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
+                out = prob_env.still(prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0))))   # the last one is step placeholder
                 global call_counts
                 call_counts += 1
             return float(out),
 
         toolbox.register("evaluate", ga_output)
-        toolbox.register("mate", tools.cxTwoPoint)
-        toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
+        toolbox.register("mate", cxTwoDeck)
+        toolbox.register("mutate", mutSwapCard)
         toolbox.register("select", tools.selTournament, tournsize=3)
         # create an initial population of 300 individuals (where
         # each individual is a list of integers)
-        pop = toolbox.population(n=300)
-        CXPB, MUTPB = 0.5, 0.2
+        pop = toolbox.population(n=pop_size)
         fitnesses = list(map(toolbox.evaluate, pop))
         for ind, fit in zip(pop, fitnesses):
             ind.fitness.values = fit
@@ -273,11 +276,14 @@ if __name__ == '__main__':
             gen = gen + 1
             offspring = toolbox.select(pop, len(pop))
             offspring = list(map(toolbox.clone, offspring))
+
             if time.time() - last_gen_print_time > 15:
                 last_gen_print_time = time.time()
-                print("-- Generation {}, Size {}, Time {} --".format(gen, len(offspring), time.time() - start_time))
+                print("-- Generation {}, Size {}, Time {}, Call Counts {} --".
+                      format(gen, len(offspring), time.time() - start_time, call_counts))
                 print("  Min %s" % min(fits))
                 print("  Max %s" % max(fits))
+
             for child1, child2 in zip(offspring[::2], offspring[1::2]):
                 if time.time() - start_time > kwargs.wall_time_limit:
                     break
@@ -300,14 +306,11 @@ if __name__ == '__main__':
             pop[:] = offspring
             fits = [ind.fitness.values[0] for ind in pop]
 
-        best_ind = tools.selBest(pop, 1)[0]
-        opt_x_p = numpy.array(best_ind, dtype=numpy.float)
+        # opt_val is noiseless
+        opt_val, opt_x_p = select_best_from_hof(tools.selBest(pop, hof_size), prob_env)
+        opt_x_p = numpy.array(opt_x_p, dtype=numpy.float)
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in genetic algorithm
-        # noiseless opt_val
-        opt_val = prob_env.still(
-            prob_env.output_noiseless(numpy.hstack((start_x_o, opt_x_p, 0)))
-        )
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limit
 
