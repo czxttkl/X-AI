@@ -16,7 +16,7 @@ class Environment(env_nn.Environment):
         # based on preliminary tests, random plays have ~7% std
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         out = self.nn(state)
-        noise_var = 0.07
+        noise_var = 0.05
         noise = numpy.random.normal(0, noise_var)
         out += noise
         out = min(max(out, 0), 1)  # clip to be [0, 1]

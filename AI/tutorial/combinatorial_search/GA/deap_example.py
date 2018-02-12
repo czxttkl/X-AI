@@ -13,7 +13,6 @@
 #    You should have received a copy of the GNU Lesser General Public
 #    License along with DEAP. If not, see <http://www.gnu.org/licenses/>.
 
-import array
 import random
 import time
 import numpy
@@ -22,24 +21,28 @@ from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
-from environment.env_nn_noisy import Environment
+from environment.env_nn import Environment
+numpy.set_printoptions(linewidth=10000, precision=5)
 
 
 k=312
-d=30
+d=15
 env = Environment(k=k, d=d)
 env.set_fixed_xo(env.x_o)
 assert env.if_set_fixed_xo()
 x_o = env.x_o
 call_counts = 0
 seed = 2008
-wall_time_limit = 25
+wall_time_limit = 1
 version = 'long'
 pop_size = 10
 hof_size = 10
+CXPB = 0.2     # the probability with which two individuals are crossed
+MUTPB = 0.2    # the probability for mutating an individual
+
 
 creator.create("FitnessMax", base.Fitness, weights=(1.0,))
-creator.create("Individual", array.array, typecode='b', fitness=creator.FitnessMax)
+creator.create("Individual", numpy.ndarray, typecode='b', fitness=creator.FitnessMax)
 toolbox = base.Toolbox()
 # Structure initializers
 def my_individual_creator():
@@ -52,9 +55,6 @@ toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.my
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 
-# def evalOneMax(individual):
-#     return float(sum(individual)),
-
 
 def evalOneMax(individual):
     global call_counts
@@ -65,12 +65,56 @@ def evalOneMax(individual):
         # in GA, we do not use distill output
         out = env.still(env.output(numpy.hstack((x_o, individual, 0))))  # the last one is step placeholder
         call_counts += 1
-    # print("{} call, x: {}, out: {}".format(call_counts, individual, out))
     return float(out),
 
 toolbox.register("evaluate", evalOneMax)
-toolbox.register("mate", tools.cxTwoPoint)
-toolbox.register("mutate", tools.mutShuffleIndexes, indpb=0.01)
+
+
+def cxTwoPoint(ind1, ind2):
+    """
+    Exchange non-zero indices
+    """
+    ind1_idx = numpy.nonzero(ind1)[0]
+    ind2_idx = numpy.nonzero(ind2)[0]
+    ind1_idx_not_in_ind2 = numpy.setdiff1d(ind1_idx, ind2_idx)
+    ind2_idx_not_in_ind1 = numpy.setdiff1d(ind2_idx, ind1_idx)
+
+    size = len(ind1_idx_not_in_ind2)
+    if size  == 0:
+        return ind1, ind2
+
+    size_of_sample = numpy.random.randint(1, size + 1)
+    ind1_idx_sample = numpy.random.choice(ind1_idx_not_in_ind2,
+                                          size=size_of_sample, replace=False)
+    ind2_idx_sample = numpy.random.choice(ind2_idx_not_in_ind1,
+                                          size=size_of_sample, replace=False)
+
+    new_ind1_idx = numpy.union1d(
+        numpy.setdiff1d(ind1_idx, ind1_idx_sample),
+        ind2_idx_sample)
+    new_ind2_idx = numpy.union1d(
+        numpy.setdiff1d(ind2_idx, ind2_idx_sample),
+        ind1_idx_sample)
+    new_ind1 = numpy.zeros(len(ind1), dtype=ind1.dtype)
+    new_ind2 = numpy.zeros(len(ind2), dtype=ind2.dtype)
+    new_ind1[new_ind1_idx] = 1
+    new_ind2[new_ind2_idx] = 1
+    return new_ind1, new_ind2
+
+
+def mutShuffleIndexes(individual):
+    """
+    Exchange zero index with non-zero index
+    """
+    zero_idx = numpy.where(individual == 0)[0]
+    one_idx = numpy.where(individual == 1)[0]
+    individual[numpy.random.choice(zero_idx)] = 1
+    individual[numpy.random.choice(one_idx)] = 0
+    return individual,
+
+
+toolbox.register("mate", cxTwoPoint)
+toolbox.register("mutate", mutShuffleIndexes)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
 
@@ -99,36 +143,28 @@ def main_short():
 
 
 def main_long():
-    random.seed(64)
-
     # create an initial population of 300 individuals (where
     # each individual is a list of integers)
     pop = toolbox.population(n=pop_size)
 
-    # CXPB  is the probability with which two individuals
-    #       are crossed
-    #
-    # MUTPB is the probability for mutating an individual
-    CXPB, MUTPB = 0.5, 0.2
-
     print("Start of evolution")
-
     # Evaluate the entire population
     fitnesses = list(map(toolbox.evaluate, pop))
     for ind, fit in zip(pop, fitnesses):
         ind.fitness.values = fit
-
-    print("  Evaluated %i individuals" % len(pop))
+    print("  Evaluated %i individuals \n" % len(pop))
 
     # Variable keeping track of the number of generations
     g = 0
     start_time = time.time()
 
-    # Begin the evolution
     while True:
         # A new generation
         g = g + 1
         print("-- Generation {}, Time {} --".format(g, time.time()-start_time))
+
+        # for p in pop:
+        #     print(p)
 
         # Select the next generation individuals
         offspring = toolbox.select(pop, len(pop))
@@ -174,6 +210,7 @@ def main_long():
         print("  Max %s" % max(fits))
         print("  Avg %s" % mean)
         print("  Std %s" % std)
+        print(" Call counts %s\n" % call_counts)
 
         # select best ind in all generations
         # this may end up with a solution with a low mean but high variance
@@ -183,7 +220,6 @@ def main_long():
         #     best_ind_val = best_ind_cand_val
         #     best_ind = best_ind_cand
 
-        print("generation {}, call counts: {}, pop size: {}".format(g, call_counts, len(pop)))
         if time.time() - start_time > wall_time_limit:
             break
 
