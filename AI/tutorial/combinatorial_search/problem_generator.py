@@ -3,6 +3,26 @@ import os
 import numpy
 
 
+def gen_deck(k, d, pv):
+    assert k == 312 and d == 15 and 0 <= pv <= 3
+    # legend pirate
+    if pv == 0:
+        one_idx = numpy.array([14,21,40,12,43,7,23,15,307,109,266,269,265,49,253])
+    # trinity pirate
+    elif pv == 1:
+        one_idx = numpy.array([21,12,43,7,23,15,19,307,109,269,265,253,303,256,141])
+    # taunt warrior
+    elif pv == 2:
+        one_idx = numpy.array([48,36,32,43,24,45,288,11,5,46,225,129,156,228,277])
+    # c'Thun control
+    elif pv == 3:
+        one_idx = numpy.array([48,5,36,33,43,24,45,46,25,41,225,306,237,58,198])
+    deck = numpy.zeros(k)
+    deck[one_idx] = 1
+    assert numpy.sum(deck) == d
+    return deck
+
+
 if __name__ == '__main__':
     numpy.set_printoptions(linewidth=10000)
 
@@ -68,12 +88,18 @@ if __name__ == '__main__':
     elif kwargs.env == 'env_greedymove':
         from environment.env_greedymove import Environment
         numpy.random.seed(kwargs.pv)  # use problem version to seed xo generation
-        env = Environment(k=kwargs.k, d=kwargs.d)
+        x_o = gen_deck(kwargs.k, kwargs.d, kwargs.pv)
+        env = Environment(k=kwargs.k, d=kwargs.d, fixed_xo=x_o)
+        # we want the problem to have x_o as the generated deck,
+        # however, we don't want it to be fixed_xo because some
+        # algorithms requires fixed_xo = False
+        env.unset_fixed_xo()
         env.save(prob_dir)
         print('env_nn generated.')
         print('env_nn.xo', env.x_o)
         print('env_nn.xp', env.x_p)
         print('env_nn.if_set_fixed_xo', env.if_set_fixed_xo())
+        print('')
         assert not env.if_set_fixed_xo()
 
 

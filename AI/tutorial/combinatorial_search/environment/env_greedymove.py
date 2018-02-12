@@ -1,11 +1,10 @@
 """
 Optimization environment, a real deck recommendation evaluator f(x_p, x_o, A_p, A_o)
 Currently, this environment is assuming two players are playing warriors, 100 games, using
-GreedyOptimizeMove AI, 312 total available cards, and 30 deck size.
+GreedyOptimizeMove AI, 312 total available cards, and 30 deck size (15 distinct cards,
+each having 2 copies).
 """
 import environment.env_nn as env_nn
-import os
-import pickle
 import numpy
 import subprocess
 import os
@@ -14,7 +13,7 @@ import os
 class Environment(env_nn.Environment):
 
     def __init__(self, k, d, COEF_SEED=1234, fixed_xo=None):
-        assert k == 312 and d == 30
+        assert k == 312 and d == 15
         self.k = k
         self.d = d
         self.COEF_SEED = COEF_SEED
@@ -23,10 +22,10 @@ class Environment(env_nn.Environment):
         self.reset()
 
     def output(self, state):
-        """ output with much noise by calling java program 100 games """
+        """ output with variance by calling java program 300 games """
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         x_o, x_p = state[:self.k], state[self.k:-1]
-        out = self.call_java_program(x_o, x_p, 100)
+        out = self.call_java_program(x_o, x_p, 300)
         # print(player2_game_lost, player2_game_won, out)
         out = self.distill(out)
         return out
@@ -44,7 +43,8 @@ class Environment(env_nn.Environment):
                 "-jar",
                 os.path.join(cur_dir, "shadow.jar"),
                 str(number_of_games),
-                "greedymove", "greedymove",
+                "greedymove",
+                "greedymove",
                 "warrior"]
         player1_card_idx = ','.join(map(str, numpy.nonzero(x_o)[0].tolist()))
         player2_card_idx = ','.join(map(str, numpy.nonzero(x_p)[0].tolist()))
@@ -67,9 +67,6 @@ class Environment(env_nn.Environment):
         raise NotImplementedError
 
     def output_noiseless(self, state):
-        """ noiseless output = calling java program 300 times """
+        """ noiseless output = output by calling java program 300 times """
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
-        x_o, x_p = state[:self.k], state[self.k:-1]
-        out = self.call_java_program(x_o, x_p, 300)
-        out = self.distill(out)
-        return out
+        return self.output(state)
