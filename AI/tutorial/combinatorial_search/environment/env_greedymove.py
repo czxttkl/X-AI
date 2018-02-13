@@ -68,5 +68,4 @@ class Environment(env_nn.Environment):
 
     def output_noiseless(self, state):
         """ noiseless output = output by calling java program 300 times """
-        assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         return self.output(state)

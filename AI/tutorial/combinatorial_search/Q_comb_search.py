@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     # Raw parameters
     k = 312  # total available card size
-    d = 30  # deck size
+    d = 15  # deck size
     USE_PRIORITIZED_REPLAY = True
     n_hidden_ql = 400  # number of hidden units in Qlearning NN
     MEMORY_CAPACITY = 300000
@@ -84,12 +84,11 @@ if __name__ == '__main__':
     RANDOM_SEED = 208  # seed for random behavior except coefficient generation
     LOAD = False  # whether to load existing model
     MODEL_SAVE_ITERATION = 100
-    LEARN_WALL_TIME_LIMIT = 50000  # seconds of limit of wall time the algorithm can learn
-    env_name = 'env_nn'
-    env_dir = ''                   # directory to load the environment
-    fixed_xo = False               # whether to set x_o fixed in the environment
-    root_dir = ''                  # the root directory to save model, tensorflow, logger, etc.
-    # PLANNING = False             # whether to use planning
+    LEARN_WALL_TIME_LIMIT = 500000  # seconds of limit of wall time the algorithm can learn
+    env_name = 'env_greedymove'
+    env_dir = ''                    # directory to load the environment
+    fixed_xo = False                # whether to set x_o fixed in the environment
+    root_dir = ''                   # the root directory to save model, tensorflow, logger, etc.
 
     # Derived parameters
     k, d, USE_PRIORITIZED_REPLAY, TEST_PERIOD, RANDOM_SEED, LOAD, \

@@ -108,7 +108,7 @@ class QLearning:
         self.memory_lock = multiprocessing.Lock()     # lock for memory modification
 
     def get_env(self, env_name, env_dir, env_fixed_xo, k, d):
-        # n_actions: # of one-card modification
+        # n_actions: # of one-card modification + 1 for not changing any card
         # n_features: input dimension to qlearning network (x_o and x_p plus time step as a feature)
         if env_name == 'env_nn':
             from environment.env_nn import Environment
@@ -119,6 +119,13 @@ class QLearning:
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
         elif env_name == 'env_nn_noisy':
             from environment.env_nn_noisy import Environment
+            if env_dir:
+                env = Environment.load(env_dir)
+            else:
+                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+            n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
+        elif env_name == 'env_greedymove':
+            from environment.env_greedymove import Environment
             if env_dir:
                 env = Environment.load(env_dir)
             else:
