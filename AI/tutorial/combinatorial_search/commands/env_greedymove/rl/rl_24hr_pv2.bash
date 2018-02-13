@@ -12,8 +12,9 @@ source activate myenv
 work=/home/chen.zhe/combinatorial_search
 cd $work
 
-python -u experimenter.py --method="rl" --wall_time_limit=85400 --prob_env_dir="test_probs/prob_env_greedymove_pv2_envseed303" > slurm/rl_24hr_pv2_out
+python -u experimenter.py --method="rl" --wall_time_limit=85400 --rl_load=0  --prob_env_dir="test_probs/prob_env_greedymove_pv2_envseed303" > slurm/rl_24hr_pv2_out
 
 # replace pvx to pvy
 # replace rl_xx to rl_yy
 # check wall_time_limit
+# check rl_load

@@ -44,7 +44,7 @@ class QLearning:
             memory_capacity=300000,
             memory_capacity_start_learning=10000,
             batch_size=64,
-            e_greedy_increment=0.0002,
+            e_greedy_increment=0.0005,
             replace_target_iter=500,
             planning=False,
             random_seed=None,

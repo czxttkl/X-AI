@@ -54,17 +54,23 @@ class Environment(env_nn.Environment):
         result = subprocess.run(cmds, stdout=subprocess.PIPE).stdout.decode('utf-8')
         # print(result)
         player2_game_won, player2_game_lost = result.split('\n')[4].split(':')
-        player2_game_won, player2_game_lost = float(player2_game_won), float(player2_game_lost)
-        out = player2_game_won / (player2_game_lost + player2_game_won)
-        # print(player2_game_lost, player2_game_won, out)
-        assert 0. <= out
-        assert out <= 1.
-        return out
+        try:
+            player2_game_won, player2_game_lost = float(player2_game_won), float(player2_game_lost)
+            out = player2_game_won / (player2_game_lost + player2_game_won)
+            # print(player2_game_lost, player2_game_won, out)
+            assert 0. <= out
+            assert out <= 1.
+            return out
+        except:
+            print("Run java program causing problem, return 0.5 instead")
+            print(result)
+            return 0.5
 
     def monte_carlo(self,
                     MONTE_CARLO_ITERATIONS=20000,
                     WALL_TIME_LIMIT=9e30):
-        raise NotImplementedError
+        random_state = numpy.zeros(2 * self.k + 1)
+        return 0, random_state, 0, random_state, 0, 0
 
     def output_noiseless(self, state):
         """ noiseless output = output by calling java program 300 times """

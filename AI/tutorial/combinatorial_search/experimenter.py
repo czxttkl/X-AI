@@ -39,8 +39,7 @@ def get_model_env_name(model_dir):
 
 
 def rl_collect_samples(RL, EPISODE_SIZE, TEST_PERIOD):
-    RL.collect_samples(EPISODE_SIZE,
-                       TEST_PERIOD)
+    RL.collect_samples(EPISODE_SIZE, TEST_PERIOD)
 
 
 def rl_learn(RL):
@@ -52,7 +51,7 @@ def rl_opt(RL):
 
 
 def extract_rl_exp_result(opt, prob_env):
-    opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_test()
+    opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_te=st()
     opt_x_o = opt_state[:prob_env.k]
     opt_x_p = opt_state[prob_env.k:]
     start_x_o = start_state[:prob_env.k]
@@ -74,6 +73,8 @@ if __name__ == '__main__':
                       help="environment directory", type="string", default="test_probs/prob_env_nn_0")
     parser.add_option("--prtr_model_dir", dest="prtr_model_dir",
                       help="model directory", type="string", default="rl_prtr")
+    parser.add_option("--rl_load", dest="rl_load",
+                      help="whether to load rl model to continue learning", type="int", default=0)
     # method:
     # 1. rl_prtr (pretraining)
     # 2. rl (no-pretraining)
@@ -156,14 +157,13 @@ if __name__ == '__main__':
                 env_fixed_xo=None,    # will load from environment dir
                 n_hidden=400,
                 save_and_load_path=model_save_load_path,
-                load=False,
+                load=bool(kwargs.rl_load),
                 tensorboard_path=tensorboard_path,
                 logger_path=logger_path,
                 memory_capacity=300000,
-                memory_capacity_start_learning=10000,
+                memory_capacity_start_learning=1000,
                 learn_wall_time_limit=kwargs.wall_time_limit,
                 prioritized=True,
-                save_model_iter=1000,
                 trial_size=prob_env.d,
         )
         # opt loads the environment which has not fixed x_o.
@@ -173,7 +173,7 @@ if __name__ == '__main__':
         assert opt.get_env_if_set_fixed_xo()
 
         EPISODE_SIZE = int(9e30)  # run until hitting wall time limit
-        TEST_PERIOD = int(9e30)   # never test
+        TEST_PERIOD = 100
         p1 = Process(target=rl_collect_samples,
                      args=[opt, EPISODE_SIZE, TEST_PERIOD])
         p1.start()
@@ -251,8 +251,6 @@ if __name__ == '__main__':
         MUTPB = 0.2  # the probability for mutating an individual
 
         def ga_output(x_p):
-            if time.time() - start_time > kwargs.wall_time_limit:
-                return -100
             # barrier method to invalidate constrained violation
             # different than rbf, genetic algorithm is a maximizer
             if numpy.sum(x_p) != prob_env.d:
