@@ -445,7 +445,7 @@ class QLearning:
 
                 self.last_test_learn_iterations = self.learn_iterations
 
-    def exp_test(self):
+    def exp_test(self, debug=True):
         cur_state = self.env.reset()
         duration = time.time()
         start_state = cur_state.copy()
@@ -456,17 +456,24 @@ class QLearning:
             next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
             action, q_val = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=False)
-            cur_state, reward = self.env.step(action)
-            # noiseless end output
-            end_output = self.env.still(self.env.output_noiseless(cur_state))
-            print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
-                  format(i, end_output, q_val, reward, cur_state))
-            if end_output > max_output:
-                max_output = end_output
-                max_state = cur_state.copy()
+            if debug:
+                # reward is noisy output
+                cur_state, reward = self.env.step(action)
+                # noiseless, stilled end output
+                end_output = self.env.still(self.env.output_noiseless(cur_state))
+                print('TEST  :{}:output: {:.5f}, qval: {:.5f}, reward {:.5f}, at {}'.
+                      format(i, end_output, q_val, reward, cur_state))
+                if end_output > max_output:
+                    max_output = end_output
+                    max_state = cur_state.copy()
+            else:
+                cur_state = self.env.step_without_reward(action)
+                print('TEST  :{}:qval: {:.5f}, at {}'.format(i, q_val, cur_state))
 
         duration = time.time() - duration
         end_state = cur_state
+        if not debug:
+            end_output = self.env.still(self.env.output_noiseless(cur_state))
 
         if_set_fixed_xo = self.env.if_set_fixed_xo()
 
@@ -478,5 +485,8 @@ class QLearning:
 
     def get_env_if_set_fixed_xo(self):
         return self.env.if_set_fixed_xo()
+
+    def get_learn_iteration(self):
+        return self.learn_iterations
 
 

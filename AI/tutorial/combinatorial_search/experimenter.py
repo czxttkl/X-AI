@@ -46,19 +46,15 @@ def rl_learn(RL):
     RL.learn()
 
 
-def rl_opt(RL):
-    RL.exp_test()
-
-
 def extract_rl_exp_result(opt, prob_env):
-    opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_test()
+    _, _, opt_val, opt_state, duration, if_set_fixed_xo, start_state = opt.exp_test(debug=False)
     opt_x_o = opt_state[:prob_env.k]
-    opt_x_p = opt_state[prob_env.k:]
+    opt_x_p = opt_state[prob_env.k:-1]
     start_x_o = start_state[:prob_env.k]
-    start_x_p = start_state[prob_env.k:]
+    start_x_p = start_state[prob_env.k:-1]
     assert if_set_fixed_xo
     assert (numpy.array_equal(opt_x_o, prob_env.x_o) and numpy.array_equal(start_x_o, opt_x_o))
-    assert (len(opt_x_p) == prob_env.k + 1)
+    assert (len(opt_x_p) == prob_env.k)
     return opt_val, start_x_o, opt_x_p, start_x_p, duration
 
 
@@ -108,6 +104,7 @@ if __name__ == '__main__':
             prob_env.output_noiseless(opt_state)
         )
         wall_time_limit = kwargs.wall_time_limit
+        generation = call_counts   # for random search, generation means call counts
     elif kwargs.method == 'rl_prtr':
         model_env_name = get_model_env_name(kwargs.prtr_model_dir)
         assert model_env_name == prob_env_name
@@ -137,6 +134,8 @@ if __name__ == '__main__':
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         call_counts = opt.function_call_counts_training()
         wall_time_limit = opt.learn_wall_time_limit
+        # for RL, generation means learning iteration
+        generation = opt.get_learn_iteration()
     elif kwargs.method == 'rl':
         parent_path = os.path.abspath(os.path.join(
             kwargs.prob_env_dir,
@@ -187,6 +186,8 @@ if __name__ == '__main__':
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limi
         call_counts = opt.function_call_counts_training()
+        # for RL, generation means learning iteration
+        generation = opt.get_learn_iteration()
     elif kwargs.method == 'rbf':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -228,6 +229,7 @@ if __name__ == '__main__':
         )
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limit
+        generation = opt.itercount
     elif kwargs.method == 'ga':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
@@ -312,11 +314,12 @@ if __name__ == '__main__':
         opt_x_p = numpy.array(opt_x_p, dtype=numpy.float)
         start_x_o = prob_env.fixed_xo
         start_x_p = None   # meaningless in genetic algorithm
-        duration = kwargs.wall_time_limit
+        duration = time.time() - start_time
         wall_time_limit = kwargs.wall_time_limit
+        generation = gen
 
-    # also output opt_x_p non-zero idx (exclude the last component which is step)
-    opt_x_p_idx = numpy.nonzero(opt_x_p)[0][:-1]
+    # also output opt_x_p non-zero idx
+    opt_x_p_idx = numpy.nonzero(opt_x_p)[0]
     assert len(opt_x_p_idx) == prob_env.d    
 
     # output test results
@@ -325,12 +328,12 @@ if __name__ == '__main__':
     # write header
     if not os.path.exists(test_result_path):
         with open(test_result_path, 'w') as f:
-            line = "method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx \n"
+            line = "method, wall_time_limit, duration, generation, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx \n"
             f.write(line)
     # write data
     with open(test_result_path, 'a') as f:
-        line = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n".\
-            format(kwargs.method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx)
+        line = "{}, {}, {}, {}, {}, {}, {}, {}, {}, {}\n".\
+            format(kwargs.method, wall_time_limit, duration, generation, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx)
         f.write(line)
 
 

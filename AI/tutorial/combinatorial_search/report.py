@@ -11,11 +11,11 @@ opt_val_dict = defaultdict(list)
 function_call_dict = defaultdict(list)
 file_count = 0
 
-prob_prefix = "prob_env_nn_noisy_pv"
+env = "prob_env_nn_noisy_pv"
 
 parser = optparse.OptionParser(usage="usage: %prog [options]")
-parser.add_option("--prob_prefix", dest="prob_prefix",
-                  type="string", default=prob_prefix)
+parser.add_option("--env", dest="env",
+                  type="string", default=env)
 # you can order by:
 # 1. name: method name
 # 2. opt_val: opt value
@@ -25,7 +25,7 @@ parser.add_option("--order", dest="order",
 
 (kwargs, args) = parser.parse_args()
 
-for filename in glob.iglob('test_probs/{}*/test_result.csv'.format(prob_prefix), recursive=True):
+for filename in glob.iglob('test_probs/prob_{}_pv*/test_result.csv'.format(kwargs.env), recursive=True):
     file_count += 1
     with open(filename, 'r') as f:
         lines = f.readlines()[1:]
@@ -33,9 +33,9 @@ for filename in glob.iglob('test_probs/{}*/test_result.csv'.format(prob_prefix),
     for field in fields:
         # method + wall_time_limit
         method_key = '{:<7s}'.format(field[0]) + '{:>7s}'.format(field[1])
-        opt_val = field[4]
+        opt_val = field[5]
         duration = field[2]
-        function_calls = field[3]
+        function_calls = field[4]
         opt_val_dict[method_key].append(float(opt_val))
         duration_dict[method_key].append(float(duration))
         function_call_dict[method_key].append(int(function_calls))

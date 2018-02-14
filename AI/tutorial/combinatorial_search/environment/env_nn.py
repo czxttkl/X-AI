@@ -181,14 +181,19 @@ class Environment:
 
     def step(self, action):
         """ step an action on self.cur_state """
+        cur_state_copy = self.step_without_reward(action)
+        new_out = self.output(self.cur_state)
+        reward = new_out
+        return cur_state_copy, reward
+
+    def step_without_reward(self, action):
+        """ step an action on self.cur_state """
         # action format(idx_to_remove, idx_to_add)
         idx_to_remove, idx_to_add = action[0], action[1]
         self.cur_state[idx_to_remove] = 0
         self.cur_state[idx_to_add] = 1
         self.cur_state[-1] += 1    # increase the step
-        new_out = self.output(self.cur_state)
-        reward = new_out
-        return self.cur_state.copy(), reward
+        return self.cur_state.copy()
 
     def all_possible_next_states(self, state_and_step):
         assert len(state_and_step.shape) == 1 and state_and_step.shape[0] == 2 * self.k + 1
