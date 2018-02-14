@@ -51,7 +51,7 @@ def rl_opt(RL):
 
 
 def extract_rl_exp_result(opt, prob_env):
-    opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_te=st()
+    opt_val, opt_state, _, _, duration, if_set_fixed_xo, start_state = opt.exp_test()
     opt_x_o = opt_state[:prob_env.k]
     opt_x_p = opt_state[prob_env.k:]
     start_x_o = start_state[:prob_env.k]
@@ -185,7 +185,7 @@ if __name__ == '__main__':
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         # for rl method, duration should be training time
         duration = kwargs.wall_time_limit
-        wall_time_limit = kwargs.wall_time_limit
+        wall_time_limit = kwargs.wall_time_limi
         call_counts = opt.function_call_counts_training()
     elif kwargs.method == 'rbf':
         # problem environment has not fixed x_o.
@@ -315,18 +315,22 @@ if __name__ == '__main__':
         duration = kwargs.wall_time_limit
         wall_time_limit = kwargs.wall_time_limit
 
+    # also output opt_x_p non-zero idx (exclude the last component which is step)
+    opt_x_p_idx = numpy.nonzero(opt_x_p)[0][:-1]
+    assert len(opt_x_p_idx) == prob_env.d    
+
     # output test results
     numpy.set_printoptions(linewidth=10000)
     test_result_path = os.path.join(kwargs.prob_env_dir, 'test_result.csv')
     # write header
     if not os.path.exists(test_result_path):
         with open(test_result_path, 'w') as f:
-            line = "method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p \n"
+            line = "method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx \n"
             f.write(line)
     # write data
     with open(test_result_path, 'a') as f:
-        line = "{}, {}, {}, {}, {}, {}, {}\n".\
-            format(kwargs.method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p)
+        line = "{}, {}, {}, {}, {}, {}, {}, {}, {}\n".\
+            format(kwargs.method, wall_time_limit, duration, call_counts, opt_val, start_x_o, opt_x_p, start_x_p, opt_x_p_idx)
         f.write(line)
 
 
