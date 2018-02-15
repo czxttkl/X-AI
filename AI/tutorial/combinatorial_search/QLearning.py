@@ -313,7 +313,6 @@ class QLearning:
     def learn(self):
         while True:
             if self.wall_time > self.learn_wall_time_limit:
-                self.save_model()
                 break
 
             if self.memory_size() < self.memory_capacity_start_learning:
@@ -325,12 +324,6 @@ class QLearning:
             if self.learn_iterations > self.sample_iterations > 0:
                 time.sleep(0.2)
                 continue
-            #
-            # if self.learn_step_counter % self.replace_target_iter == 0:
-            #     self._replace_target_params()
-
-            if time.time() - self.last_save_time > 15 * 60:
-                self.save_model()
 
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
@@ -384,6 +377,7 @@ class QLearning:
         """ collect samples in a process """
         for i_episode in range(self.sample_iterations, EPISODE_SIZE):
             if self.wall_time > self.learn_wall_time_limit:
+                self.save_model()
                 break
 
             # don't sample too fast
@@ -396,7 +390,12 @@ class QLearning:
             for i_epsisode_step in range(self.trial_size):
                 # prevent wall time over limit during sampling
                 if self.wall_time > self.learn_wall_time_limit:
+                    self.save_model()
                     break
+
+                # save every 6 min
+                if time.time() - self.last_save_time > 6 * 60:
+                    self.save_model()
 
                 next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
                 action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
