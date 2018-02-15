@@ -1,12 +1,13 @@
 """
 Optimization environment, a real deck recommendation evaluator f(x_p, x_o, A_p, A_o)
-Currently, this environment is assuming two players are playing warriors, 300 games, using
-GreedyOptimizeMove AI, 312 total available cards, and 30 deck size (15 distinct cards,
+Currently, this environment is assuming two players are playing warriors, 100 games, using
+GameStateValue AI, 312 total available cards, and 30 deck size (15 distinct cards,
 each having 2 copies).
 """
 import environment.env_nn as env_nn
 import numpy
 import subprocess
+import traceback
 import os
 
 
@@ -22,10 +23,10 @@ class Environment(env_nn.Environment):
         self.reset()
 
     def output(self, state):
-        """ output with variance by calling java program 300 games """
+        """ output with variance by calling java program 100 games """
         assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
         x_o, x_p = state[:self.k], state[self.k:-1]
-        out = self.call_java_program(x_o, x_p, 300)
+        out = self.call_java_program(x_o, x_p, 100)
         # print(player2_game_lost, player2_game_won, out)
         out = self.distill(out)
         return out
@@ -43,8 +44,8 @@ class Environment(env_nn.Environment):
                 "-jar",
                 os.path.join(cur_dir, "shadow.jar"),
                 str(number_of_games),
-                "greedymove",
-                "greedymove",
+                "gamestate",
+                "gamestate",
                 "warrior"]
         player1_card_idx = ','.join(map(str, numpy.nonzero(x_o)[0].tolist()))
         player2_card_idx = ','.join(map(str, numpy.nonzero(x_p)[0].tolist()))
@@ -73,5 +74,12 @@ class Environment(env_nn.Environment):
         return 0, random_state, 0, random_state, 0, 0
 
     def output_noiseless(self, state):
-        """ noiseless output = output by calling java program 300 times """
-        return self.output(state)
+        """ output with less variance by calling java program 500 games """
+        print("calling output noiseless, is it necessary?")
+        traceback.print_stack()
+        assert len(state.shape) == 1 and state.shape[0] == 2 * self.k + 1
+        x_o, x_p = state[:self.k], state[self.k:-1]
+        out = self.call_java_program(x_o, x_p, 500)
+        # print(player2_game_lost, player2_game_won, out)
+        out = self.distill(out)
+        return out
