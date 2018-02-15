@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     parser = optparse.OptionParser(usage="usage: %prog [options]")
     parser.add_option("--wall_time_limit", dest="wall_time_limit",
-                      help="wall time limit", type="int", default=0)
+                      help="wall time limit", type="float", default=0)
     parser.add_option("--prob_env_dir", dest="prob_env_dir",
                       help="environment directory", type="string", default="test_probs/prob_env_nn_0")
     parser.add_option("--prtr_model_dir", dest="prtr_model_dir",

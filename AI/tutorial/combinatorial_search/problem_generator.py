@@ -3,56 +3,29 @@ import os
 import numpy
 
 
-def gen_deck(k, d, pv):
-    assert k == 312 and d == 15 and 0 <= pv <= 11
-    # the first 4 decks are expert curated from icy-veins website
+def gen_deck_env_greedymove(k, d, pv):
+    assert k == 312 and d == 15 and 0 <= pv <= 9
     # legend pirate
     if pv == 0:
-        one_idx = numpy.array([7,12,14,15,21,23,40,43,49,109,253,265,266,269,307])
-    # trinity pirate
+        one_idx = numpy.array([15, 25, 32, 44, 59, 64, 122, 127, 150, 198, 224, 249, 256, 288, 297])
     elif pv == 1:
-        one_idx = numpy.array([7,12,15,19,21,23,43,109,141,253,256,265,269,303,307])
-    # taunt warrior
+        one_idx = numpy.array([15, 37, 59, 64, 84, 122, 127, 150, 165, 198, 220, 224, 249, 256, 297])
     elif pv == 2:
-        one_idx = numpy.array([5,11,24,32,36,43,45,46,48,129,156,225,228,277,288])
-    # c'Thun control
+        one_idx = numpy.array([2, 9, 32, 55, 122, 129, 150, 153, 184, 207, 267, 268, 282, 293, 302])
     elif pv == 3:
-        one_idx = numpy.array([5,24,25,33,36,41,43,45,46,48,58,198,225,237,306])
-
-    # GA generated from legend pirate
+        one_idx = numpy.array([2, 9, 32, 37, 49, 96, 100, 122, 129, 150, 153, 184, 267, 282, 293])
     elif pv == 4:
-        one_idx = numpy.array([6,15,32,44,55,64,122,127,150,165,224,249,256,288,297])
-    # GA generated from trinity pirate
+        one_idx = numpy.array([1, 2, 9, 19, 32, 37, 100, 122, 129, 153, 170, 247, 267, 282, 293])
     elif pv == 5:
-        one_idx = numpy.array([15,59,64,122,127,150,165,198,220,224,229,249,256,288,297])
-    # GA generated from taunt warrior
+        one_idx = numpy.array([15, 39, 43, 51, 59, 64, 122, 127, 156, 198, 220, 249, 262, 288, 297])
     elif pv == 6:
-        one_idx = numpy.array([8,35,39,41,42,58,98,125,165,199,229,260,267,279,301])
-    # GA generated c'Thun control
+        one_idx = numpy.array([2, 9, 26, 32, 55, 58, 122, 129, 150, 153, 184, 267, 282, 293, 302])
     elif pv == 7:
-        one_idx = numpy.array([15,32,40,59,64,122,127,150,165,198,220,224,249,288,297])
-
-    # GA generated against pv 4
+        one_idx = numpy.array([1, 2, 37, 100, 122, 129, 149, 150, 153, 184, 264, 267, 282, 293, 310])
     elif pv == 8:
-        one_idx = numpy.array([32,45,55,64,122,127,150,198,220,224,249,256,270,288,297])
-    # GA generated against pv 5
+        one_idx = numpy.array([15, 45, 59, 64, 122, 127, 150, 198, 220, 224, 229, 236, 249, 256, 297])
     elif pv == 9:
-        one_idx = numpy.array([15,59,64,71,77,122,127,150,151,198,224,249,256,288,297])
-    # GA generated against pv 6
-    elif pv == 10:
-        one_idx = numpy.array([71,77,79,106,108,130,140,151,199,261,268,271,277,294,304])
-    # GA generated against pv 7
-    elif pv == 11:
-        one_idx = numpy.array([15,25,32,44,59,64,122,127,150,198,224,249,256,288,297])
-
-    elif pv == 12:
-        15, 32, 40, 55, 64, 122, 146, 150, 198, 220, 224, 249, 256, 288, 297
-    elif pv == 13:
-        15, 32, 43, 59, 122, 150, 161, 165, 198, 224, 249, 256, 288, 294, 297
-    elif pv == 14:
-        15, 32, 51, 59, 64, 122, 127, 150, 165, 198, 220, 224, 256, 288, 297
-    elif pv == 15:
-        15, 37, 59, 64, 84, 122, 127, 150, 165, 198, 220, 224, 249, 256, 297
+        one_idx = numpy.array([2, 9, 32, 55, 86, 100, 122, 129, 152, 153, 184, 267, 282, 293, 302])
 
     deck = numpy.zeros(k)
     deck[one_idx] = 1
@@ -125,7 +98,7 @@ if __name__ == '__main__':
     elif kwargs.env == 'env_greedymove':
         from environment.env_greedymove import Environment
         numpy.random.seed(kwargs.pv)  # use problem version to seed xo generation
-        x_o = gen_deck(kwargs.k, kwargs.d, kwargs.pv)
+        x_o = gen_deck_env_greedymove(kwargs.k, kwargs.d, kwargs.pv)
         env = Environment(k=kwargs.k, d=kwargs.d, fixed_xo=x_o)
         # we want the problem to have x_o as the generated deck,
         # however, we don't want it to be fixed_xo because some
