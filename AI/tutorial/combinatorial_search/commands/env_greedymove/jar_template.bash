@@ -19,3 +19,8 @@ java -jar shadow.jar 300 greedymove greedymove warrior "14,21,40,12,43,7,23,15,3
 # c'Thun control
 "48,5,36,33,43,24,45,46,25,41,225,306,237,58,198"
 
+# use prob_generate pv 8 vs pv 9
+java -jar shadow.jar 300 gamestate gamestate warrior "15,45,59,64,122,127,150,198,220,224,229,236,249,256,297" "2,9,32,55,86,100,122,129,152,153,184,267,282,293,302"
+
+java -jar shadow.jar 100 greedymove greedymove warrior "15,45,59,64,122,127,150,198,220,224,229,236,249,256,297" "2,9,32,55,86,100,122,129,152,153,184,267,282,293,302"
+

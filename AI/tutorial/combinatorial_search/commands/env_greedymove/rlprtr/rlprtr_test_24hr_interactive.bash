@@ -9,7 +9,5 @@ python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env
 && python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv7_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t85400/optimizer_model_fixedxoFalse/qlearning" \
 && python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv8_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t85400/optimizer_model_fixedxoFalse/qlearning" \
 && python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv9_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t85400/optimizer_model_fixedxoFalse/qlearning" \
-&& python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv10_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t85400/optimizer_model_fixedxoFalse/qlearning" \
-&& python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv11_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t85400/optimizer_model_fixedxoFalse/qlearning" \
 
 

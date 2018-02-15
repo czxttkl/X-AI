@@ -5,13 +5,17 @@ import glob
 from collections import defaultdict
 import numpy
 import optparse
+import pprint
+
 
 duration_dict = defaultdict(list)
 opt_val_dict = defaultdict(list)
 function_call_dict = defaultdict(list)
+generation_dict = defaultdict(list)
 file_count = 0
 
-env = "prob_env_nn_noisy_pv"
+# env = "env_greedymove"
+env = "env_nn_noisy"
 
 parser = optparse.OptionParser(usage="usage: %prog [options]")
 parser.add_option("--env", dest="env",
@@ -36,20 +40,25 @@ for filename in glob.iglob('test_probs/prob_{}_pv*/test_result.csv'.format(kwarg
         opt_val = field[5]
         duration = field[2]
         function_calls = field[4]
+        generation = field[3]
         opt_val_dict[method_key].append(float(opt_val))
         duration_dict[method_key].append(float(duration))
         function_call_dict[method_key].append(int(function_calls))
-
-print(opt_val_dict)
-print(duration_dict)
-print(function_call_dict)
+        generation_dict[method_key].append(int(generation))
+print('opt_val_dict:')
+pprint.pprint(opt_val_dict)
+print('duration dict:')
+pprint.pprint(duration_dict)
+print("function call dict:")
+pprint.pprint(function_call_dict)
 print("")
 
 print("Average over {} files".format(file_count))
 print('{:15s}'.format('method'),
       '    {:7s}'.format('opt_value'),
       ' {:7s}'.format('func calls'),
-      '   {:7s}'.format('duration'))
+      '   {:7s}'.format('duration'),
+      '   {:7s}'.format('generation'))
 
 if kwargs.order == 'name':
     method_key_sorted = sorted(opt_val_dict.keys())
@@ -62,7 +71,8 @@ for key in method_key_sorted:
     print('{:>15s}:'.format(key),
           '   {:.6f}:'.format(numpy.mean(opt_val_dict[key])),
           '   {:>7.0f}:'.format(numpy.mean(function_call_dict[key])),
-          '   {:.6f}'.format(numpy.mean(duration_dict[key])))
+          '   {:.6f}'.format(numpy.mean(duration_dict[key])),
+          '   {:.1f}'.format(numpy.mean(generation_dict[key])))
 
 
 
