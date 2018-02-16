@@ -33,6 +33,20 @@ def gen_deck_env_greedymove(k, d, pv):
     return deck
 
 
+def gen_deck_env_gamestate(k, d, pv):
+    assert k == 312 and d == 15 and 0 <= pv <= 9
+    # from gen deck env_greedymove pv 9
+    if pv == 0:
+        one_idx = numpy.array([2, 9, 32, 55, 86, 100, 122, 129, 152, 153, 184, 267, 282, 293, 302])
+    if pv == 1:
+        one_idx = numpy.array([8, 10, 35, 39, 42, 48, 98, 125, 150, 199, 224, 252, 260, 302, 309])
+
+    deck = numpy.zeros(k)
+    deck[one_idx] = 1
+    assert numpy.sum(deck) == d
+    return deck
+
+
 if __name__ == '__main__':
     numpy.set_printoptions(linewidth=10000)
 
@@ -105,13 +119,28 @@ if __name__ == '__main__':
         # algorithms requires fixed_xo = False
         env.unset_fixed_xo()
         env.save(prob_dir)
-        print('env_nn generated.')
-        print('env_nn.xo', env.x_o)
-        print('env_nn.xp', env.x_p)
-        print('env_nn.if_set_fixed_xo', env.if_set_fixed_xo())
+        print('env_greedymove generated.')
+        print('env_greedymove.xo', env.x_o)
+        print('env_greedymove.xp', env.x_p)
+        print('env_greedymove.if_set_fixed_xo', env.if_set_fixed_xo())
         print('')
         assert not env.if_set_fixed_xo()
-
+    elif kwargs.env == 'env_gamestate':
+        from environment.env_gamestate import Environment
+        numpy.random.seed(kwargs.pv)  # use problem version to seed xo generation
+        x_o = gen_deck_env_gamestate(kwargs.k, kwargs.d, kwargs.pv)
+        env = Environment(k=kwargs.k, d=kwargs.d, fixed_xo=x_o)
+        # we want the problem to have x_o as the generated deck,
+        # however, we don't want it to be fixed_xo because some
+        # algorithms requires fixed_xo = False
+        env.unset_fixed_xo()
+        env.save(prob_dir)
+        print('env_gamestate generated.')
+        print('env_gamestate.xo', env.x_o)
+        print('env_gamestate.xp', env.x_p)
+        print('env_gamestate.if_set_fixed_xo', env.if_set_fixed_xo())
+        print('')
+        assert not env.if_set_fixed_xo()
 
 
 

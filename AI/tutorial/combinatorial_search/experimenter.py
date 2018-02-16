@@ -30,6 +30,9 @@ def get_prob_env_name_class(env_dir):
     elif env_name == 'env_greedymove':
         from environment.env_greedymove import Environment
         env_cls = Environment
+    elif env_name == 'env_gamestate':
+        from environment.env_gamestate import Environment
+        env_cls = Environment
     return env_name, env_cls
 
 
