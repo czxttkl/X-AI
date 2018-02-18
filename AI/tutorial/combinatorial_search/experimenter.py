@@ -251,7 +251,7 @@ if __name__ == '__main__':
         call_counts = 0
         start_time = time.time()
         pop_size = 10
-        hof_size = 10
+        hof_size = 1
         CXPB = 0.2  # the probability with which two individuals are crossed
         MUTPB = 0.2  # the probability for mutating an individual
 
