@@ -35,16 +35,23 @@ for filename in glob.iglob('test_probs/prob_{}_pv*/test_result.csv'.format(kwarg
         lines = f.readlines()[1:]
     fields = map(lambda line: line.split(','), lines)
     for field in fields:
-        # method + wall_time_limit
-        method_key = '{:<7s}'.format(field[0]) + '{:>7s}'.format(field[1])
+        method = field[0]
+        wall_time_limit = field[1]
+        generation = field[3]
+        if method == 'rl_prtr':
+            # method + wall_time_limit + generation
+            method_key = '{:<20s}'.format(method + '{:>6s}'.format(wall_time_limit) + '{:>5s}'.format(generation))
+        else:
+            # method + wall_time_limit
+            method_key = '{:<10s}'.format(field[0]) + '{:<10s}'.format(field[1])
         opt_val = field[5]
         duration = field[2]
         function_calls = field[4]
-        generation = field[3]
         opt_val_dict[method_key].append(float(opt_val))
         duration_dict[method_key].append(float(duration))
         function_call_dict[method_key].append(int(function_calls))
         generation_dict[method_key].append(int(generation))
+
 print('opt_val_dict:')
 pprint.pprint(opt_val_dict)
 print('duration dict:')
@@ -54,7 +61,7 @@ pprint.pprint(function_call_dict)
 print("")
 
 print("Average over {} files".format(file_count))
-print('{:15s}'.format('method'),
+print('{:20s}'.format('method'),
       '    {:7s}'.format('opt_value'),
       ' {:7s}'.format('func calls'),
       '   {:7s}'.format('duration'),
@@ -68,7 +75,7 @@ elif kwargs.order == 'fc':
     method_key_sorted = sorted(function_call_dict.keys(), key=lambda x: function_call_dict[x])
 
 for key in method_key_sorted:
-    print('{:>15s}:'.format(key),
+    print('{:>20s}:'.format(key),
           '   {:.6f}:'.format(numpy.mean(opt_val_dict[key])),
           '   {:>7.0f}:'.format(numpy.mean(function_call_dict[key])),
           '   {:.6f}'.format(numpy.mean(duration_dict[key])),
