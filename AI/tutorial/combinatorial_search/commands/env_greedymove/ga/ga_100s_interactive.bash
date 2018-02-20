@@ -7,6 +7,4 @@ python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="te
 && python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" \
 && python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv7_envseed303" \
 && python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv8_envseed303" \
-&& python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv9_envseed303" \
-&& python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv10_envseed303" \
-&& python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv11_envseed303" \
+&& python3.6 experimenter.py --method="ga" --wall_time_limit=100 --prob_env_dir="test_probs/prob_env_greedymove_pv9_envseed303"

@@ -6,6 +6,7 @@ from collections import defaultdict
 import numpy
 import optparse
 import pprint
+from scipy import stats
 
 
 duration_dict = defaultdict(list)
@@ -67,6 +68,20 @@ print('{:20s}'.format('method'),
       '   {:7s}'.format('duration'),
       '   {:7s}'.format('generation'))
 
+# Paired T-Test
+# reference:
+# 1. https://stackoverflow.com/questions/14176280/test-for-statistically-significant-difference-between-two-arrays
+# 2. https://stats.stackexchange.com/questions/320469/how-to-test-if-xi-is-significantly-greater-than-yi
+print("two-sided paired t-tests")
+for key1 in opt_val_dict.keys():
+    for key2 in opt_val_dict.keys():
+        if key1 == key2:
+            continue
+        _, pval = stats.ttest_rel(opt_val_dict[key1], opt_val_dict[key2])
+        print('{} vs. {}, p-value: {}'.format(key1, key2, pval))
+
+print()
+
 if kwargs.order == 'name':
     method_key_sorted = sorted(opt_val_dict.keys())
 elif kwargs.order == 'opt_val':
@@ -80,6 +95,7 @@ for key in method_key_sorted:
           '   {:>7.0f}:'.format(numpy.mean(function_call_dict[key])),
           '   {:.6f}'.format(numpy.mean(duration_dict[key])),
           '   {:.1f}'.format(numpy.mean(generation_dict[key])))
+
 
 
 
