@@ -40,6 +40,18 @@ def gen_deck_env_gamestate(k, d, pv):
         one_idx = numpy.array([2, 9, 32, 55, 86, 100, 122, 129, 152, 153, 184, 267, 282, 293, 302])
     if pv == 1:
         one_idx = numpy.array([8, 10, 35, 39, 42, 48, 98, 125, 150, 199, 224, 252, 260, 302, 309])
+    # random naive
+    if pv == 2:
+        one_idx = numpy.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
+    if pv == 3:
+        one_idx = numpy.array([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24])
+    # best result from pv1
+    if pv == 4:
+        one_idx = numpy.array([28, 56, 65, 77, 85, 115, 120, 150, 153, 198, 204, 212, 249, 285, 302])
+    # rlprtr result from pv2
+    if pv == 5:
+        one_idx = numpy.array([2, 14, 53, 63, 66, 160, 164, 188, 204, 224, 241, 258, 266, 300, 303])
+
 
     deck = numpy.zeros(k)
     deck[one_idx] = 1

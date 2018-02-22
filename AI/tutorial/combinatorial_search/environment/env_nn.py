@@ -232,11 +232,15 @@ class Environment:
         state_and_step[-1] += 1  # increase the step
         return state_and_step
 
-    def reset(self):
-        random_xo = numpy.zeros(self.k)
+    def reset(self, xo=None):
         if self.if_set_fixed_xo():
+            assert xo is None
             random_xo = self.fixed_xo
+        elif xo is not None:
+            assert len(xo) == self.k and numpy.sum(xo) == self.d
+            random_xo = xo
         else:
+            random_xo = numpy.zeros(self.k)
             one_idx = numpy.random.choice(self.k, self.d, replace=False)
             random_xo[one_idx] = 1
 
