@@ -8,4 +8,10 @@ python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=0 --env_
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=7 --env_seed=303 \
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=8 --env_seed=303 \
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=9 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=10 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=11 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=12 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=13 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=14 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=15 --env_seed=303 \
 

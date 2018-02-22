@@ -7,6 +7,7 @@ import numpy
 import optparse
 import pprint
 from scipy import stats
+numpy.set_printoptions(linewidth=10000, precision=3)
 
 
 duration_dict = defaultdict(list)
@@ -77,8 +78,10 @@ for key1 in opt_val_dict.keys():
     for key2 in opt_val_dict.keys():
         if key1 == key2:
             continue
-        _, pval = stats.ttest_rel(opt_val_dict[key1], opt_val_dict[key2])
-        print('{} vs. {}, p-value: {}'.format(key1, key2, pval))
+        diffs = numpy.array(opt_val_dict[key1]) - numpy.array(opt_val_dict[key2])
+        zeros = numpy.zeros(len(diffs))
+        _, pval = stats.ttest_rel(diffs, zeros)
+        print('{} vs. {}, p-value: {:.5f}, diffs: {}'.format(key1, key2, pval, diffs))
 
 print()
 

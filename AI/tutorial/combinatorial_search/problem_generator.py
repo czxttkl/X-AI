@@ -4,7 +4,7 @@ import numpy
 
 
 def gen_deck_env_greedymove(k, d, pv):
-    assert k == 312 and d == 15 and 0 <= pv <= 9
+    assert k == 312 and d == 15 and 0 <= pv <= 19
     # legend pirate
     if pv == 0:
         one_idx = numpy.array([15, 25, 32, 44, 59, 64, 122, 127, 150, 198, 224, 249, 256, 288, 297])
@@ -26,6 +26,18 @@ def gen_deck_env_greedymove(k, d, pv):
         one_idx = numpy.array([15, 45, 59, 64, 122, 127, 150, 198, 220, 224, 229, 236, 249, 256, 297])
     elif pv == 9:
         one_idx = numpy.array([2, 9, 32, 55, 86, 100, 122, 129, 152, 153, 184, 267, 282, 293, 302])
+    elif pv == 10:
+        one_idx = numpy.array([41, 90, 99, 129, 140, 151, 163, 175, 188, 217, 249, 253, 275, 279, 291])
+    elif pv == 11:
+        one_idx = numpy.array([2, 6, 8, 35, 41, 43, 45, 53, 90, 101, 134, 154, 252, 274, 295])
+    elif pv == 12:
+        one_idx = numpy.array([30, 41, 90, 95, 129, 151, 163, 175, 188, 217, 249, 268, 275, 279, 290])
+    elif pv == 13:
+        one_idx = numpy.array([32, 41, 87, 90, 99, 129, 140, 151, 163, 188, 194, 209, 249, 275, 279])
+    elif pv == 14:
+        one_idx = numpy.array([2, 6, 8, 33, 41, 46, 80, 90, 134, 154, 182, 215, 226, 253, 290])
+    elif pv == 15:
+        one_idx = numpy.array([8, 35, 38, 39, 41, 42, 92, 98, 148, 195, 199, 229, 260, 267, 301])
 
     deck = numpy.zeros(k)
     deck[one_idx] = 1
