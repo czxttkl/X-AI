@@ -38,6 +38,8 @@ def gen_deck_env_greedymove(k, d, pv):
         one_idx = numpy.array([2, 6, 8, 33, 41, 46, 80, 90, 134, 154, 182, 215, 226, 253, 290])
     elif pv == 15:
         one_idx = numpy.array([8, 35, 38, 39, 41, 42, 92, 98, 148, 195, 199, 229, 260, 267, 301])
+    elif pv == 16:
+        one_idx = numpy.array([6, 15, 26, 32, 51, 53, 64, 92, 122, 127, 150, 224, 288, 297, 301])
 
     deck = numpy.zeros(k)
     deck[one_idx] = 1

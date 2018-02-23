@@ -343,9 +343,9 @@ class QLearning:
                 continue
 
             # don't learn too fast
-            if self.learn_iterations > 2 * self.sample_iterations > 0:
-                time.sleep(0.2)
-                continue
+            # if self.learn_iterations > 2 * self.sample_iterations > 0:
+            #     time.sleep(0.2)
+            #     continue
 
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
@@ -407,16 +407,16 @@ class QLearning:
             reset_state = self.env.reset()
             return reset_state
         # rules for env_gamestate:
-        # 1. 25% randomly reset
-        # 2. 25% return powerful xp
-        # 3. 50% return powerful xo
+        # 1. 10% randomly reset
+        # 2. 20% return powerful xp
+        # 3. 70% return powerful xo
         r = numpy.random.rand()
-        if 0.25 <= r <= 0.75 and self.xo_heap:
+        if 0. <= r <= 0.7 and self.xo_heap:
             print("sample reset pick xo_heap. queue size: {}, heap size: {}. r: {}"
                   .format(len(self.xp_queue), len(self.xo_heap), r))
             reset_xo = heapq.heappop(self.xo_heap)[1]
             reset_state = self.env.reset(xo=reset_xo)
-        elif self.xp_queue:
+        elif 0.7 < r <= 0.9 and self.xp_queue:
             print("sample reset pick xp_queue. queue size: {}, heap size: {}. r: {}"
                   .format(len(self.xp_queue), len(self.xo_heap), r))
             reset_xo = self.xp_queue.pop()[1]
@@ -428,6 +428,7 @@ class QLearning:
         return reset_state
 
     def update_reset_pool(self, win_rate):
+        print("enter update reset", win_rate, self.epsilon, self.env.cur_state[-1], self.trial_size)
         # only apply to env_gamestate or env_greedymove
         # only when exploration has been for a while
         # only work for non fixed xo environment
@@ -461,14 +462,14 @@ class QLearning:
             sample_wall_time = time.time()
             cur_state = self.reset_env()
 
-            for i_epsisode_step in range(self.trial_size):
+            for i_episode_step in range(self.trial_size):
                 self.save_model(save_now=False, save_reset_pool=False)
 
                 next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
                 action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
                                                epsilon_greedy=True)
                 cur_state_, reward = self.env.step(action)
-                terminal = True if i_epsisode_step == self.trial_size - 1 else False
+                terminal = True if i_episode_step == self.trial_size - 1 else False
                 self.store_transition(cur_state, action, reward, cur_state_, terminal)
                 cur_state = cur_state_
 
@@ -480,7 +481,7 @@ class QLearning:
             end_output = self.env.still(reward)
             self.update_reset_pool(end_output)
             mem_total_p = -1 if not self.prioritized else self.memory.memory.tree.total_p
-            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:mem_p:{}'.
+            print('SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:mem_p:{:.2f}'.
                   format(self.sample_iterations, end_output, self.cur_epsilon(),
                          self.memory_size(), self.memory_virtual_size(),
                          sample_wall_time, self.sample_wall_time, os.getpid(), self.wall_time, mem_total_p))
