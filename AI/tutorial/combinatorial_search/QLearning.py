@@ -407,8 +407,8 @@ class QLearning:
             reset_state = self.env.reset()
             return reset_state
         # rules for env_gamestate:
-        # 1. 10% randomly reset
-        # 2. 20% return powerful xp
+        # 1. 15% randomly reset
+        # 2. 15% return powerful xp
         # 3. 70% return powerful xo
         r = numpy.random.rand()
         if 0. <= r <= 0.7 and self.xo_heap:
@@ -416,15 +416,17 @@ class QLearning:
                   .format(len(self.xp_queue), len(self.xo_heap), r))
             reset_xo = heapq.heappop(self.xo_heap)[1]
             reset_state = self.env.reset(xo=reset_xo)
-        elif 0.7 < r <= 0.9 and self.xp_queue:
-            print("sample reset pick xp_queue. queue size: {}, heap size: {}. r: {}"
-                  .format(len(self.xp_queue), len(self.xo_heap), r))
-            reset_xo = self.xp_queue.pop()[1]
-            reset_state = self.env.reset(xo=reset_xo)
         else:
-            print("sample reset pick random. queue size: {}, heap size: {}. r: {}"
-                  .format(len(self.xp_queue), len(self.xo_heap), r))
-            reset_state = self.env.reset()
+            r = numpy.random.rand()
+            if 0. <= r <= 0.5 and self.xp_queue:
+                print("sample reset pick xp_queue. queue size: {}, heap size: {}. r: {}"
+                      .format(len(self.xp_queue), len(self.xo_heap), r))
+                reset_xo = self.xp_queue.pop()[1]
+                reset_state = self.env.reset(xo=reset_xo)
+            else:
+                print("sample reset pick random. queue size: {}, heap size: {}. r: {}"
+                      .format(len(self.xp_queue), len(self.xo_heap), r))
+                reset_state = self.env.reset()
         return reset_state
 
     def update_reset_pool(self, win_rate):

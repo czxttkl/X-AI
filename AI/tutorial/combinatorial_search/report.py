@@ -81,7 +81,7 @@ for key1 in opt_val_dict.keys():
         diffs = numpy.array(opt_val_dict[key1]) - numpy.array(opt_val_dict[key2])
         zeros = numpy.zeros(len(diffs))
         _, pval = stats.ttest_rel(diffs, zeros)
-        print('{} vs. {}, p-value: {:.5f}, diffs: {}'.format(key1, key2, pval, diffs))
+        print('{} vs. {}, p-value: {:.5f}, diffs: {:.3f}, {}'.format(key1, key2, pval, numpy.mean(diffs), diffs))
 
 print()
 
