@@ -16,6 +16,8 @@ import tensorflow as tf
 from logger import Logger
 from prioritized_memory import Memory
 from tfboard import TensorboardWriter
+import heapq
+from collections import deque
 
 
 class QLearning:
@@ -102,6 +104,9 @@ class QLearning:
             self.last_wall_time = 0.
             self.last_save_time = time.time()
             self.last_test_learn_iterations = 0
+            
+            self.xp_queue = deque(maxlen=1000) 
+            self.xo_heap = []
         else:
             self.load_model()
 
@@ -144,7 +149,7 @@ class QLearning:
     def path_check(self, load):
         save_and_load_path_dir = os.path.dirname(self.save_and_load_path)
         if load:
-            assert os.path.exists(save_and_load_path_dir), "model path not exist"
+            assert os.path.exists(save_and_load_path_dir), "model path not exist:" + save_and_load_path_dir
         else:
             os.makedirs(save_and_load_path_dir, exist_ok=True)
             # remove old existing models if any
@@ -152,7 +157,10 @@ class QLearning:
             for file in files:
                 os.remove(file)
 
-    def save_model(self):
+    def save_model(self, save_now=False, save_reset_pool=False):
+        # save every 6 min
+        if not save_now and time.time() - self.last_save_time < 6 * 60:
+            return
         # save tensorflow
         with self.graph.as_default():
             saver = tf.train.Saver()
@@ -178,6 +186,10 @@ class QLearning:
                          self.learn_wall_time, self.sample_wall_time,
                          self.cpu_time, self.wall_time,
                          self.last_test_learn_iterations), f, protocol=-1)
+        # save reset pool
+        if save_reset_pool:
+            with open(self.save_and_load_path + '_resetpool.pickle', 'wb') as f:
+                pickle.dump((self.xp_queue, self.xo_heap), f, protocol=-1)
         self.last_save_time = time.time()
         print('save model to', path)
 
@@ -226,6 +238,9 @@ class QLearning:
             self.last_cpu_time, \
             self.last_wall_time, \
             self.last_test_learn_iterations = pickle.load(f)
+        # load reset pool
+        with open(self.save_and_load_path + '_resetpool.pickle', 'rb') as f:
+            self.xp_queue, self.xo_heap = pickle.load(f)       
 
         numpy.random.seed(self.random_seed)
         tf.set_random_seed(self.random_seed)
@@ -328,9 +343,9 @@ class QLearning:
                 continue
 
             # don't learn too fast
-            if self.learn_iterations > self.sample_iterations > 0:
-                time.sleep(0.2)
-                continue
+            # if self.learn_iterations > 2 * self.sample_iterations > 0:
+            #     time.sleep(0.2)
+            #     continue
 
             learn_time = time.time()
             qsa_feature, qsa_next_features, rewards, terminal_weights, is_weights, exp_ids \
@@ -383,30 +398,75 @@ class QLearning:
     def function_call_counts_training(self):
         """ number of function calls during training, which equals to memory virtual size """
         return self.memory.virtual_size
+    
+    def reset_env(self):
+        """ to increase sample efficiency, we reset from powerful decks """
+        # only apply to env_gamestate or env_greedymove
+        # only when exploration has been for a while
+        # only work for non fixed xo environment
+        if self.env_name not in ['env_gamestate', 'env_greedymove'] or self.epsilon < 0.1 or self.env.if_set_fixed_xo():
+            reset_state = self.env.reset()
+            return reset_state
+        # rules for env_gamestate:
+        # 1. 15% randomly reset
+        # 2. 15% return powerful xp
+        # 3. 70% return powerful xo
+        r = numpy.random.rand()
+        if 0. <= r <= 0.7 and self.xo_heap:
+            print("sample reset pick xo_heap. queue size: {}, heap size: {}. r: {}"
+                  .format(len(self.xp_queue), len(self.xo_heap), r))
+            reset_xo = heapq.heappop(self.xo_heap)[1]
+            reset_state = self.env.reset(xo=reset_xo)
+        else:
+            r = numpy.random.rand()
+            if 0. <= r <= 0.5 and self.xp_queue:
+                print("sample reset pick xp_queue. queue size: {}, heap size: {}. r: {}"
+                      .format(len(self.xp_queue), len(self.xo_heap), r))
+                reset_xo = self.xp_queue.pop()[1]
+                reset_state = self.env.reset(xo=reset_xo)
+            else:
+                print("sample reset pick random. queue size: {}, heap size: {}. r: {}"
+                      .format(len(self.xp_queue), len(self.xo_heap), r))
+                reset_state = self.env.reset()
+        return reset_state
+
+    def update_reset_pool(self, win_rate):
+        print("enter update reset", win_rate, self.epsilon, self.env.cur_state[-1], self.trial_size)
+        # only apply to env_gamestate or env_greedymove
+        # only when exploration has been for a while
+        # only work for non fixed xo environment
+        if self.env_name not in ['env_gamestate', 'env_greedymove'] or self.epsilon < 0.1 or self.env.if_set_fixed_xo():
+            return
+        # only update reset pool at the end of one episode
+        assert self.env.cur_state[-1] == self.trial_size
+        # powerful x_p
+        if win_rate > 0.5:
+            self.xp_queue.append((win_rate, self.env.x_p))
+            print("update queue. queue size: {}, heap size: {}"
+                  .format(len(self.xp_queue), len(self.xo_heap)))
+        # powerful x_o
+        else:
+            heapq.heappush(self.xo_heap, (win_rate, self.env.x_o))
+            print("update heap. current most powerful xo win rate: {}, queue size: {}, heap size: {}"
+                  .format(self.xo_heap[0][0], len(self.xp_queue), len(self.xo_heap)))
 
     def collect_samples(self, EPISODE_SIZE, TEST_PERIOD):
         """ collect samples in a process """
         for i_episode in range(self.sample_iterations, EPISODE_SIZE):
+            self.save_model(save_now=True, save_reset_pool=True)
+
             if self.wall_time > self.learn_wall_time_limit:
-                self.save_model()
                 break
 
             # don't sample too fast
-            while 0 < self.learn_iterations < self.sample_iterations - 3:
-                time.sleep(0.2)
+            # while 0 < self.learn_iterations < self.sample_iterations - 3:
+            #     time.sleep(0.2)
 
             sample_wall_time = time.time()
-            cur_state = self.env.reset()
+            cur_state = self.reset_env()
 
             for i_episode_step in range(self.trial_size):
-                # prevent wall time over limit during sampling
-                if self.wall_time > self.learn_wall_time_limit:
-                    self.save_model()
-                    break
-
-                # save every 6 min
-                if time.time() - self.last_save_time > 6 * 60:
-                    self.save_model()
+                self.save_model(save_now=False, save_reset_pool=False)
 
                 next_possible_states, next_possible_actions = self.env.all_possible_next_state_action(cur_state)
                 action, _ = self.choose_action(cur_state, next_possible_states, next_possible_actions,
@@ -422,6 +482,7 @@ class QLearning:
 
             # end_state distilled output = reward (might be noisy)
             end_output = self.env.still(reward)
+            self.update_reset_pool(end_output)
             mem_total_p = -1 if not self.prioritized else self.memory.memory.tree.total_p
             print(
                 'SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:mem_p:{:.2f}'.
@@ -504,3 +565,5 @@ class QLearning:
 
     def get_learn_iteration(self):
         return self.learn_iterations
+
+
