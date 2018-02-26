@@ -174,20 +174,23 @@ if __name__ == '__main__':
         opt.set_env_fixed_xo(prob_env.x_o)
         assert opt.get_env_if_set_fixed_xo()
 
-        EPISODE_SIZE = int(9e30)  # run until hitting wall time limit
-        TEST_PERIOD = 100
-        p1 = Process(target=rl_collect_samples,
-                     args=[opt, EPISODE_SIZE, TEST_PERIOD])
-        p1.start()
-        p2 = Process(target=rl_learn,
-                     args=[opt])
-        p2.start()
-        p1.join()
-        p2.join()
+        # don't learn if it is loaded
+        if opt.get_wall_time() < kwargs.wall_time_limit:
+            EPISODE_SIZE = int(9e30)  # run until hitting wall time limit
+            TEST_PERIOD = 100
+            p1 = Process(target=rl_collect_samples,
+                         args=[opt, EPISODE_SIZE, TEST_PERIOD])
+            p1.start()
+            p2 = Process(target=rl_learn,
+                         args=[opt])
+            p2.start()
+            p1.join()
+            p2.join()
+
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
         # for rl method, duration should be training time
         duration = kwargs.wall_time_limit
-        wall_time_limit = kwargs.wall_time_limi
+        wall_time_limit = kwargs.wall_time_limit
         call_counts = opt.function_call_counts_training()
         # for RL, generation means learning iteration
         generation = opt.get_learn_iteration()

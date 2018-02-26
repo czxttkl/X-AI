@@ -504,3 +504,6 @@ class QLearning:
 
     def get_learn_iteration(self):
         return self.learn_iterations
+
+    def get_wall_time(self):
+        return self.wall_time
