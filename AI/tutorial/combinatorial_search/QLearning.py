@@ -144,7 +144,7 @@ class QLearning:
     def path_check(self, load):
         save_and_load_path_dir = os.path.dirname(self.save_and_load_path)
         if load:
-            assert os.path.exists(save_and_load_path_dir), "model path not exist"
+            assert os.path.exists(save_and_load_path_dir), "model path not exist:" + save_and_load_path_dir
         else:
             os.makedirs(save_and_load_path_dir, exist_ok=True)
             # remove old existing models if any

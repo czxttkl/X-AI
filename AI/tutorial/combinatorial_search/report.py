@@ -16,8 +16,8 @@ function_call_dict = defaultdict(list)
 generation_dict = defaultdict(list)
 file_count = 0
 
-# env = "env_greedymove"
-env = "env_nn_noisy"
+env = "env_greedymove"
+# env = "env_nn_noisy"
 
 parser = optparse.OptionParser(usage="usage: %prog [options]")
 parser.add_option("--env", dest="env",
@@ -88,8 +88,17 @@ for key1 in opt_val_dict.keys():
             continue
         diffs = numpy.array(opt_val_dict[key1]) - numpy.array(opt_val_dict[key2])
         zeros = numpy.zeros(len(diffs))
-        _, pval = stats.ttest_rel(diffs, zeros)
-        print('{} vs. {}, p-value: {:.5f}, diffs: {:.3f}, {}'.format(key1, key2, pval, numpy.mean(diffs), diffs))
+        tval, pval = stats.ttest_rel(diffs, zeros)
+        print('{} vs. {}, p-value: {:.5f}, t-vale: {:3f}, diffs: {:.3f}, {}'
+              .format(key1, key2, pval, tval, numpy.mean(diffs), diffs))
+        rank1 = numpy.greater(numpy.array(opt_val_dict[key1]), numpy.array(opt_val_dict[key2])).astype(int)
+        rank2 = numpy.greater(numpy.array(opt_val_dict[key2]), numpy.array(opt_val_dict[key1])).astype(int)
+        # rank_diffs = rank1 - rank2
+        # tval, pval = stats.ttest_rel(rank1, rank2)
+        # # one side t test
+        # pval = pval / 2
+        # print('{} vs. {}, p-value: {:.5f}, t: {:.3f}, diffs: {:.3f}, {}'.
+        #       format(key1, key2, pval, tval, numpy.mean(rank_diffs), rank_diffs))
 
 print()
 
