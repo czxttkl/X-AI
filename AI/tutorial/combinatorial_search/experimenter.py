@@ -157,7 +157,7 @@ if __name__ == '__main__':
                 env_name=prob_env_name,
                 env_dir=kwargs.prob_env_dir,
                 env_fixed_xo=None,    # will load from environment dir
-                n_hidden=400,
+                n_hidden=1000,
                 save_and_load_path=model_save_load_path,
                 load=bool(kwargs.rl_load),
                 tensorboard_path=tensorboard_path,

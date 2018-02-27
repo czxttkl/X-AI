@@ -76,7 +76,7 @@ if __name__ == '__main__':
     k = 312  # total available card size
     d = 15  # deck size
     USE_PRIORITIZED_REPLAY = True
-    n_hidden_ql = 1000  # number of hidden units in Qlearning NN
+    n_hidden_ql = 1000       # number of hidden units in Qlearning NN
     MEMORY_CAPACITY = 300000
     MEMORY_CAPACITY_START_LEARNING = 1000
     EPISODE_SIZE = 10000001  # the size of training episodes
