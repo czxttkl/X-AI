@@ -25,11 +25,10 @@ class ResetManager:
         # 3. (1-x)% return powerful xo
         r = numpy.random.rand()
         if self.xo_heap:
-            x = self.xo_heap[0][0]
+            x, y, reset_xo = self.xo_heap[0]
             if r >= x:
-                print("sample reset pick xo_heap. queue size: {}, heap size: {}. least win rate: {:.3f}, r: {:.3f}"
-                      .format(len(self.xp_queue), len(self.xo_heap), x, r))
-                reset_xo = self.xo_heap[0][2]
+                print("sample reset pick xo_heap. queue size: {}, heap size: {}. least win rate: ({:.3f}, {}), r: {:.3f}"
+                      .format(len(self.xp_queue), len(self.xo_heap), x, y, r))
                 reset_state = env.reset(xo=reset_xo)
                 self.mode = 'pick_xo'
                 return reset_state
@@ -57,21 +56,25 @@ class ResetManager:
         # only update reset pool at the end of one episode
         assert env.cur_state[-1] == trial_size
 
+        if self.mode == 'pick_xp':
+            # pop last xp
+            self.xp_queue.pop()
+
         # powerful x_p
-        if win_rate > 0.5:
-            if self.mode == 'pick_xp':
-                # pop last xp
-                self.xp_queue.pop()
+        if win_rate > 0.7:
             self.xp_queue.append((win_rate, env.x_p))
             print("update queue. queue size: {}, heap size: {}".format(len(self.xp_queue), len(self.xo_heap)))
+
         # powerful x_o
+        if self.mode == 'pick_xo':
+            x, y, xo = heapq.heappop(self.xo_heap)
+            x = (x * y + win_rate) / (y + 1)  # new average win rate
+            y += 1
         else:
-            if self.mode == 'pick_xo':
-                x, y, xo = heapq.heappop(self.xo_heap)
-                x = (x * y + win_rate) / (y + 1)  # new average win rate
-                y += 1
-            else:
-                x, y = win_rate, 1
-            heapq.heappush(self.xo_heap, (x, y, env.x_o))
-            print("update heap. current most powerful xo win rate: {:.3f}, queue size: {}, heap size: {}"
-                  .format(self.xo_heap[0][0], len(self.xp_queue), len(self.xo_heap)))
+            x, y = win_rate, 1
+        heapq.heappush(self.xo_heap, (x, y, env.x_o))
+        print("update heap. current most powerful xo win rate: ({:.3f}, {}), queue size: {}, heap size: {}"
+              .format(x, y, len(self.xp_queue), len(self.xo_heap)))
+
+        if len(self.xo_heap) > 1000:
+            self.xo_heap = heapq.nsmallest(500, self.xo_heap)

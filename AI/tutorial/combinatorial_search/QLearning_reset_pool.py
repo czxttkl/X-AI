@@ -45,7 +45,7 @@ class QLearning:
             memory_capacity=300000,
             memory_capacity_start_learning=10000,
             batch_size=64,
-            e_greedy_increment=0.0002,
+            e_greedy_increment=0.0005,
             replace_target_iter=500,
             planning=False,
             random_seed=None,
@@ -434,7 +434,7 @@ class QLearning:
             self.reset_mgr.update(self.env_name, self.env, end_output, self.epsilon, self.trial_size)
             mem_total_p = -1 if not self.prioritized else self.memory.memory.tree.total_p
             print(
-                'SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:mem_p:{:.2f}'.
+                'SAMPLE:{}:finished output:{:.5f}:cur_epsilon:{:.5f}:mem_size:{}:virtual:{}:wall_t:{:.2f}:total:{:.2f}:pid:{}:wall_t:{:.2f}:mem_p:{:.2f}\n'.
                 format(self.sample_iterations, end_output, self.cur_epsilon(),
                        self.memory_size(), self.memory_virtual_size(),
                        sample_wall_time, self.sample_wall_time, os.getpid(), self.wall_time, mem_total_p))
