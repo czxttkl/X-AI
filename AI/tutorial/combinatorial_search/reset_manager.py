@@ -53,6 +53,7 @@ class ResetManager:
         # only work for non fixed xo environment
         if env_name not in ['env_gamestate', 'env_greedymove'] or epsilon < 0.1 or env.if_set_fixed_xo():
             return
+
         # only update reset pool at the end of one episode
         assert env.cur_state[-1] == trial_size
 
@@ -68,13 +69,14 @@ class ResetManager:
         # powerful x_o
         if self.mode == 'pick_xo':
             x, y, xo = heapq.heappop(self.xo_heap)
+            print("update pick xo", x, y)
             x = (x * y + win_rate) / (y + 1)  # new average win rate
             y += 1
         else:
             x, y = win_rate, 1
         heapq.heappush(self.xo_heap, (x, y, env.x_o))
         print("update heap. current most powerful xo win rate: ({:.3f}, {}), queue size: {}, heap size: {}"
-              .format(x, y, len(self.xp_queue), len(self.xo_heap)))
+              .format(self.xo_heap[0][0], self.xo_heap[0][1], len(self.xp_queue), len(self.xo_heap)))
 
         if len(self.xo_heap) > 1000:
             self.xo_heap = heapq.nsmallest(500, self.xo_heap)
