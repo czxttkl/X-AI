@@ -24,6 +24,26 @@ Generate pre-training RL model
 python3.6 Q_comb_search.py --env_name="env_nn_noisy" --k=20 --d=6 --test_period=100 --load=0 --env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303" --learn_wall_time_limit=500 --root_dir="prtr_models"
 ```
 
+#### Deck Recommendation Using MetaStone + GreedyMove AI
+
+
+### File Structure
+`QLearning.py`
+Implement Q-Learning with MLP-based function approximator. It has two main functions: `collect_samples` keeps trying different x_o vs. x_p and store experiences (s, a, r, s', a') into a prioritized experience replay; `learn` keeps using the stored experiences to update MLP paramters.
+
+`Q_comb_search.py`
+A helper to kick off QLearning training. It allows the tuning of various hyperparamters.
+
+`experimenter.py`
+A helper to evaluate different algorithms on test problem instances.
+
+`logger.py`
+A logger helper to log test statistics on files.
+
+`prioritized_exp`
+A folder which contains all needed functions for prioritized experience replay
+
+
 ### Requirement
 
 Python 3.6
