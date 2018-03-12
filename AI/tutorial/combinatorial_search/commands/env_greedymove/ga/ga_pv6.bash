@@ -12,28 +12,17 @@ source activate myenv
 work=/home/chen.zhe/combinatorial_search
 cd $work
 
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1380 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
-python -u experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303"
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" && \
+python -u experimenter.py --method="ga" --wall_time_limit=1800 --prob_env_dir="test_probs/prob_env_greedymove_pv6_envseed303" 
 
 # replace pvx to pvy
 # check wall_time_limit
