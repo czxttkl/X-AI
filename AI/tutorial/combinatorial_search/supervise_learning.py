@@ -3,29 +3,36 @@ import numpy
 import pickle
 import optparse
 import os
+from sklearn.neural_network import MLPRegressor
 numpy.set_printoptions(linewidth=10000, precision=5)
 
 
 class SuperviseLearning:
 
-    def __init__(self, k, d, env_name, wall_time_limit, load):
+    def __init__(self, k, d, env_name, wall_time_limit, load, path=None):
         self.k = k
         self.d = d
         self.env_name = env_name
-        self.wall_time_limit = wall_time_limit
-        self.path = 'prtr_models/sl_{}_k{}_d{}_t{}'.format(env_name, k, d, wall_time_limit)
+        self.wall_time_limit = int(wall_time_limit)
+
+        path_prefix = 'prtr_models/sl_{}_k{}_d{}_t{}'.format(self.env_name, self.k, self.d, self.wall_time_limit)
+        if path:
+            assert path.startswith(path_prefix)
+            self.path = path
+        else:
+            self.path = path_prefix
         os.makedirs(self.path, exist_ok=True)
 
-        if env_name == 'env_nn':
+        if self.env_name == 'env_nn':
             from environment.env_nn import Environment
-        elif env_name == 'env_nn_noisy':
+        elif self.env_name == 'env_nn_noisy':
             from environment.env_nn_noisy import Environment
-        elif env_name == 'env_greedymove':
+        elif self.env_name == 'env_greedymove':
             from environment.env_greedymove import Environment
-        elif env_name == 'env_gamestate':
+        elif self.env_name == 'env_gamestate':
             from environment.env_gamestate import Environment
 
-        self.env = Environment(k=k, d=d)
+        self.env = Environment(k=self.k, d=self.d)
         assert not self.env.if_set_fixed_xo()
 
         if load:
@@ -59,9 +66,48 @@ class SuperviseLearning:
                 self.save_data()
                 last_save_time = time.time()
 
-    def train(self, train_path):
-        """ train a neural network model. This function gets called in ad-hoc """
-        pass
+    def train_and_test(self, prob_env, num_trials):
+        """
+        Train a neural network model. Then, test on a test problem.
+        This function gets called in ad-hoc or in experimenter.py
+        """
+        duration = time.time()
+        mlp = MLPRegressor(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000)
+        size = len(self.x)
+        x, y = numpy.array(self.x[:-size//10]), numpy.array(self.y[:-size//10])
+        x_test, y_test = numpy.array(self.x[-size//10:]), numpy.array(self.y[-size//10:])
+        mlp.fit(x, y)
+        duration = time.time() - duration
+
+        mse = ((y - mlp.predict(x)) ** 2).mean()
+        mse_test = ((y_test - mlp.predict(x_test)) ** 2).mean()
+
+        print("Training set R^2 score: %f, MSE: %f, time: %f, size: %d" % (mlp.score(x, y), mse, duration, len(y)))
+        print("Test set R^2 score: %f, MSE: %f, size: %d" % (mlp.score(x_test, y_test), mse_test, len(y_test)))
+
+        x_o = numpy.copy(prob_env.x_o)
+
+        max_pred_win_rate = 0
+        max_state = None
+
+        duration = time.time()
+        for i in range(num_trials):
+            random_xp = numpy.zeros(prob_env.k + 1)  # state + step
+            one_idx = numpy.random.choice(prob_env.k, prob_env.d, replace=False)
+            random_xp[one_idx] = 1
+
+            random_state = numpy.hstack((x_o, random_xp))
+            random_state_output = mlp.predict(random_state[:-1].reshape((1, -1)))
+
+            if random_state_output > max_pred_win_rate:
+                max_pred_win_rate = random_state_output
+                max_state = random_state
+        duration = time.time() - duration
+        print("Trial: {}, duration: {}, max predict win rate: {}".format(num_trials, duration, max_pred_win_rate))
+
+        max_real_win_rate = prob_env.still(prob_env.output(max_state))
+        return max_real_win_rate, duration, max_state
+
 
 if __name__ == '__main__':
     parser = optparse.OptionParser(usage="usage: %prog [options]")

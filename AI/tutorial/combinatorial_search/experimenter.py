@@ -72,9 +72,11 @@ if __name__ == '__main__':
     parser.add_option("--prob_env_dir", dest="prob_env_dir",
                       help="environment directory", type="string", default="test_probs/prob_env_nn_0")
     parser.add_option("--prtr_model_dir", dest="prtr_model_dir",
-                      help="model directory", type="string", default="rl_prtr")
+                      help="model directory of rlprtr or sl", type="string", default="rl_prtr")
     parser.add_option("--rl_load", dest="rl_load",
                       help="whether to load rl model to continue learning", type="int", default=0)
+    parser.add_option("--sl_num_trial", dest="sl_num_trial",
+                      help="number of trials in supervise learning test", type="int", default=0)
     # method:
     # 1. rl_prtr (pretraining)
     # 2. rl (no-pretraining)
@@ -324,13 +326,26 @@ if __name__ == '__main__':
         duration = time.time() - start_time
         wall_time_limit = kwargs.wall_time_limit
         generation = gen
-    elif kwargs.method == 'mc':
+    elif kwargs.method == 'sl':
         # a monte carlo method + a supervised learning model
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
         assert not prob_env.if_set_fixed_xo()
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
+        sl_model = SuperviseLearning(k=prob_env.k,
+                                     d=prob_env.d,
+                                     env_name=prob_env_name,
+                                     wall_time_limit=kwargs.wall_time_limit,
+                                     load=True,
+                                     path=kwargs.prtr_model_dir)
+        opt_val, duration, opt_state = sl_model.train_and_test(prob_env, kwargs.sl_num_trial)
+        wall_time_limit = sl_model.time_passed    # data collection time
+        generation = len(sl_model.y)              # number of data
+        call_counts = kwargs.sl_num_trial
+        opt_x_p = opt_state[prob_env.k:-1]
+        start_x_o = prob_env.x_o
+        start_x_p = None    # meaningless in supervise learning model
 
     # also output opt_x_p non-zero idx
     opt_x_p_idx = numpy.nonzero(opt_x_p)[0]
