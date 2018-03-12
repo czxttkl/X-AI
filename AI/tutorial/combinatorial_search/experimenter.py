@@ -5,6 +5,7 @@ import optparse
 import numpy
 from random_search import RandomSearch
 from QLearning import QLearning
+from supervise_learning import SuperviseLearning
 import time
 from multiprocessing import Process, freeze_support
 from multiprocessing.managers import BaseManager
@@ -323,6 +324,13 @@ if __name__ == '__main__':
         duration = time.time() - start_time
         wall_time_limit = kwargs.wall_time_limit
         generation = gen
+    elif kwargs.method == 'mc':
+        # a monte carlo method + a supervised learning model
+        # problem environment has not fixed x_o.
+        # however, we want to fix x_o for rbf method
+        assert not prob_env.if_set_fixed_xo()
+        prob_env.set_fixed_xo(prob_env.x_o)
+        assert prob_env.if_set_fixed_xo()
 
     # also output opt_x_p non-zero idx
     opt_x_p_idx = numpy.nonzero(opt_x_p)[0]
