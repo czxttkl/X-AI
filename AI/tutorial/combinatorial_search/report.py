@@ -46,15 +46,19 @@ for filename in glob.iglob('test_probs/prob_{}_pv*/test_result.csv'.format(kwarg
         method = field[0]
         wall_time_limit = field[1]
         generation = field[3]
-        if method == 'rl_prtr':
-            # method + wall_time_limit + generation
-            method_key = '{:<20s}'.format(method + '{:>6s}'.format(wall_time_limit) + '{:>5s}'.format(generation))
-        else:
-            # method + wall_time_limit
-            method_key = '{:<10s}'.format(field[0]) + '{:<10s}'.format(field[1])
         opt_val = field[5]
         duration = field[2]
         function_calls = field[4]
+
+        if method == 'rl_prtr':
+            # method + wall_time_limit + generation
+            method_key = '{:<20s}'.format(method + '{:>6s}'.format(wall_time_limit) + '{:>5s}'.format(generation))
+        if method == 'sl':
+            # method + generation (# of training data) + function calls (# of samples)
+            method_key = '{:<20s}'.format(method + '{:>10s}'.format(generation) + '{:>5s}'.format(function_calls))
+        else:
+            # method + wall_time_limit
+            method_key = '{:<10s}'.format(method) + '{:<10s}'.format(wall_time_limit)
 
         opt_val_pv_dict[method_key].append(float(opt_val))
         duration_pv_dict[method_key].append(float(duration))
