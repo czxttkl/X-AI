@@ -1,3 +1,7 @@
+"""
+Supervise learning model for MC simulation
+"""
+
 import time
 import numpy
 import pickle
