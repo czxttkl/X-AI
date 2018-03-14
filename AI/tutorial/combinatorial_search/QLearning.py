@@ -309,9 +309,8 @@ class QLearning:
 
     @property
     def cpu_time(self):
-        return psutil.Process().cpu_times().user + \
-               psutil.Process().cpu_times().system + \
-               self.last_cpu_time
+        cpu_time = psutil.Process().cpu_times()
+        return cpu_time.user + cpu_time.system + cpu_time.children_system + cpu_time.children_user + self.last_cpu_time
 
     @property
     def wall_time(self):

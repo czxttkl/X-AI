@@ -3,6 +3,7 @@ import numpy
 import pickle
 import optparse
 import os
+import psutil
 from sklearn.neural_network import MLPRegressor
 numpy.set_printoptions(linewidth=10000, precision=5)
 
@@ -41,6 +42,10 @@ class SuperviseLearning:
         else:
             self.x, self.y = [], []
             self.time_passed = 0
+
+    def get_cpu_time(self):
+        cpu_time = psutil.Process().cpu_times()
+        return cpu_time.user + cpu_time.system + cpu_time.children_system + cpu_time.children_user
 
     def save_data(self):
         with open(os.path.join(self.path, 'data.pickle'), 'wb') as f:
@@ -91,6 +96,7 @@ class SuperviseLearning:
         max_state = None
 
         duration = time.time()
+        cpu_time = self.get_cpu_time()
         for i in range(num_trials):
             random_xp = numpy.zeros(prob_env.k + 1)  # state + step
             one_idx = numpy.random.choice(prob_env.k, prob_env.d, replace=False)
@@ -103,9 +109,11 @@ class SuperviseLearning:
                 max_pred_win_rate = random_state_output
                 max_state = random_state
         duration = time.time() - duration
-        print("Trial: {}, duration: {}, max predict win rate: {}".format(num_trials, duration, max_pred_win_rate))
-
+        cpu_time = self.get_cpu_time() - cpu_time
         max_real_win_rate = prob_env.still(prob_env.output(max_state))
+        print("Trial: {}, duration: {}, cpu time: {}, max predict win rate: {}, real win rate: {}"
+              .format(num_trials, duration, cpu_time, max_pred_win_rate, max_real_win_rate))
+
         return max_real_win_rate, duration, max_state
 
 
