@@ -1,3 +1,8 @@
+"""
+Supervise learning model for MC simulation.
+This file is only used for CPU time test purpose
+"""
+
 import os
 import numpy
 import time
