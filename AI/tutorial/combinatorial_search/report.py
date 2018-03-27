@@ -53,7 +53,7 @@ for filename in glob.iglob('test_probs/prob_{}_pv*/test_result.csv'.format(kwarg
         if method == 'rl_prtr':
             # method + wall_time_limit + generation
             method_key = '{:<20s}'.format(method + '{:>6s}'.format(wall_time_limit) + '{:>5s}'.format(generation))
-        if method == 'sl':
+        elif method == 'sl':
             # method + generation (# of training data) + function calls (# of samples)
             method_key = '{:<20s}'.format(method + '{:>10s}'.format(generation) + '{:>10s}'.format(function_calls))
         else:
