@@ -1,8 +1,8 @@
-
-
 A Collectible Card Game (CCG) Deck Recommender just for fun. The project is expected to complete in May, 2018.
 
+The paper is available here:
 
+All deck recommendation codes are available under `combinatorial_search` directory.
 
 ### Usage
 
@@ -16,7 +16,6 @@ Test different methods
 python3.6 experimenter.py --method="rl" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303"
 python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_noisy_k20_d6_t500/optimizer_model_fixedxoFalse/qlearning"
 python3.6 experimenter.py --method="random" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303"
-python3.6 experimenter.py --method="rbf" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303"
 python3.6 experimenter.py --method="ga" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_noisy_pv0_envseed303"
 ```
 Generate pre-training RL model
@@ -25,9 +24,13 @@ python3.6 Q_comb_search.py --env_name="env_nn_noisy" --k=20 --d=6 --test_period=
 ```
 
 #### Deck Recommendation Using MetaStone + GreedyMove AI
+Generate problems
+`combinatorial_search/commands/env_greedymove/prob_generate.bash`
 
+Test different methods
+See different directories in `combinatorial_search/commands/env_greedymove/`
 
-### File Structure
+### File Structure in `combinatorial_search` directory
 `QLearning.py`
 Implement Q-Learning with MLP-based function approximator. It has two main functions: `collect_samples` keeps trying different x_o vs. x_p and store experiences (s, a, r, s', a') into a prioritized experience replay; `learn` keeps using the stored experiences to update MLP paramters.
 
