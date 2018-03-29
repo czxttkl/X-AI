@@ -12,4 +12,4 @@ AI/tutorial/actor-critic/_vizdoom.ini
 
 *ipynb_checkpoints
 
-AI/tutorial/combinatorial_search/test_probs/*
+# AI/tutorial/combinatorial_search/test_probs/*
