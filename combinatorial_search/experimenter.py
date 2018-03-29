@@ -197,48 +197,6 @@ if __name__ == '__main__':
         call_counts = opt.function_call_counts_training()
         # for RL, generation means learning iteration
         generation = opt.get_learn_iteration()
-    elif kwargs.method == 'rbf':
-        # problem environment has not fixed x_o.
-        # however, we want to fix x_o for rbf method
-        assert not prob_env.if_set_fixed_xo()
-        prob_env.set_fixed_xo(prob_env.x_o)
-        assert prob_env.if_set_fixed_xo()
-
-        call_counts = 0
-
-        def rbf_output(x_p):
-            # barrier method to invalidate constrained violation
-            if numpy.sum(x_p) != prob_env.d:
-                out = numpy.abs(numpy.sum(x_p) - prob_env.d)
-            else:
-                # since rbf-opt is a minimizer, we need to make the output negative
-                out = - prob_env.output(numpy.hstack((prob_env.x_o, x_p, 0)))  # the last one is step placeholder
-                global call_counts
-                call_counts += 1
-            print("x: {}, out: {}".format(x_p, out))
-            return out
-
-        rbf_bb = rbfopt.RbfoptUserBlackBox(prob_env.k,  # dimension
-                                           numpy.array([0] * prob_env.k),  # lower bound
-                                           numpy.array([1] * prob_env.k),  # upper bound
-                                           numpy.array(['I'] * prob_env.k),  # type: integer
-                                           rbf_output)
-        # since evaluating f(x) would require parallelism for the deck recommendation problem,
-        # we don't increase num_cpus here
-        settings = rbfopt.RbfoptSettings(max_evaluations=1e30, max_iterations=1e30,
-                                         max_clock_time=kwargs.wall_time_limit, num_cpus=1)
-        opt = rbfopt.RbfoptAlgorithm(settings, rbf_bb)
-        # minimize
-        _, opt_x_p, _, _, _ = opt.optimize()
-        start_x_o = prob_env.fixed_xo
-        start_x_p = None    # meaningless in rbf method
-        # noiseless opt_val
-        opt_val = prob_env.still(
-            prob_env.output_noiseless(numpy.hstack((start_x_o, opt_x_p, 0)))
-        )
-        duration = kwargs.wall_time_limit
-        wall_time_limit = kwargs.wall_time_limit
-        generation = opt.itercount
     elif kwargs.method == 'ga':
         # problem environment has not fixed x_o.
         # however, we want to fix x_o for rbf method
