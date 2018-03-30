@@ -1,0 +1,2244 @@
+-- Generation 2, Size 10, Time 87.09587097167969, Call Counts 18 --
+  Min 0.11000000000000001
+  Max 0.6933333333333334
+-- Generation 3, Size 10, Time 118.61186814308167, Call Counts 24 --
+  Min 0.35
+  Max 0.73
+-- Generation 4, Size 10, Time 161.79910397529602, Call Counts 32 --
+  Min 0.53
+  Max 0.7833333333333333
+-- Generation 5, Size 10, Time 194.88893938064575, Call Counts 38 --
+  Min 0.68
+  Max 0.8133333333333332
+-- Generation 6, Size 10, Time 218.65121912956238, Call Counts 43 --
+  Min 0.7
+  Max 0.85
+-- Generation 7, Size 10, Time 244.57505559921265, Call Counts 48 --
+  Min 0.66
+  Max 0.8633333333333333
+-- Generation 10, Size 10, Time 265.4997944831848, Call Counts 52 --
+  Min 0.6366666666666667
+  Max 0.8633333333333333
+-- Generation 12, Size 10, Time 309.14447236061096, Call Counts 61 --
+  Min 0.6233333333333333
+  Max 0.9066666666666666
+-- Generation 13, Size 10, Time 328.84352707862854, Call Counts 65 --
+  Min 0.8633333333333333
+  Max 0.9
+-- Generation 14, Size 10, Time 349.0304081439972, Call Counts 69 --
+  Min 0.7666666666666667
+  Max 0.9266666666666665
+-- Generation 15, Size 10, Time 368.55179810523987, Call Counts 73 --
+  Min 0.5666666666666667
+  Max 0.9200000000000002
+-- Generation 17, Size 10, Time 413.51701736450195, Call Counts 82 --
+  Min 0.8366666666666667
+  Max 0.93
+-- Generation 19, Size 10, Time 434.2784287929535, Call Counts 86 --
+  Min 0.8833333333333332
+  Max 0.9433333333333334
+-- Generation 20, Size 10, Time 463.2349901199341, Call Counts 92 --
+  Min 0.8
+  Max 0.9433333333333334
+-- Generation 21, Size 10, Time 487.36377120018005, Call Counts 97 --
+  Min 0.66
+  Max 0.9433333333333334
+-- Generation 22, Size 10, Time 515.862607717514, Call Counts 103 --
+  Min 0.77
+  Max 0.9633333333333333
+-- Generation 23, Size 10, Time 534.4083452224731, Call Counts 107 --
+  Min 0.8733333333333333
+  Max 0.9433333333333334
+-- Generation 25, Size 10, Time 561.781950712204, Call Counts 113 --
+  Min 0.8100000000000002
+  Max 0.9433333333333334
+-- Generation 27, Size 10, Time 581.7250809669495, Call Counts 117 --
+  Min 0.8666666666666668
+  Max 0.9433333333333334
+-- Generation 28, Size 10, Time 605.0704061985016, Call Counts 122 --
+  Min 0.7633333333333333
+  Max 0.9433333333333334
+-- Generation 29, Size 10, Time 624.2678954601288, Call Counts 126 --
+  Min 0.86
+  Max 0.9433333333333334
+-- Generation 31, Size 10, Time 657.7975749969482, Call Counts 133 --
+  Min 0.8966666666666667
+  Max 0.9433333333333334
+-- Generation 32, Size 10, Time 676.9461195468903, Call Counts 137 --
+  Min 0.7466666666666667
+  Max 0.9433333333333334
+-- Generation 33, Size 10, Time 695.7924907207489, Call Counts 141 --
+  Min 0.7533333333333333
+  Max 0.9433333333333334
+-- Generation 34, Size 10, Time 718.9557907581329, Call Counts 146 --
+  Min 0.8333333333333334
+  Max 0.9433333333333334
+-- Generation 36, Size 10, Time 734.9053766727448, Call Counts 149 --
+  Min 0.8
+  Max 0.9433333333333334
+-- Generation 37, Size 10, Time 758.8931550979614, Call Counts 154 --
+  Min 0.89
+  Max 0.9433333333333334
+-- Generation 39, Size 10, Time 774.6966044902802, Call Counts 157 --
+  Min 0.78
+  Max 0.9433333333333334
+-- Generation 41, Size 10, Time 793.5342211723328, Call Counts 161 --
+  Min 0.9066666666666666
+  Max 0.9433333333333334
+-- Generation 43, Size 10, Time 812.0291771888733, Call Counts 165 --
+  Min 0.9099999999999999
+  Max 0.9433333333333334
+-- Generation 45, Size 10, Time 850.266054391861, Call Counts 173 --
+  Min 0.73
+  Max 0.9433333333333334
+-- Generation 46, Size 10, Time 879.2860362529755, Call Counts 179 --
+  Min 0.89
+  Max 0.9433333333333334
+-- Generation 47, Size 10, Time 897.2693381309509, Call Counts 183 --
+  Min 0.8966666666666667
+  Max 0.9433333333333334
+-- Generation 48, Size 10, Time 915.5627641677856, Call Counts 187 --
+  Min 0.7966666666666666
+  Max 0.9433333333333334
+-- Generation 49, Size 10, Time 934.5827498435974, Call Counts 191 --
+  Min 0.73
+  Max 0.9433333333333334
+-- Generation 50, Size 10, Time 953.6327548027039, Call Counts 195 --
+  Min 0.72
+  Max 0.9633333333333333
+-- Generation 52, Size 10, Time 991.3767309188843, Call Counts 203 --
+  Min 0.9
+  Max 0.9633333333333333
+-- Generation 54, Size 10, Time 1009.7166264057159, Call Counts 207 --
+  Min 0.8666666666666668
+  Max 0.9633333333333333
+-- Generation 56, Size 10, Time 1028.162760734558, Call Counts 211 --
+  Min 0.8866666666666667
+  Max 0.9633333333333333
+-- Generation 58, Size 10, Time 1070.6958343982697, Call Counts 220 --
+  Min 0.9233333333333335
+  Max 0.9666666666666666
+-- Generation 60, Size 10, Time 1110.870344877243, Call Counts 229 --
+  Min 0.8666666666666668
+  Max 0.9666666666666666
+-- Generation 62, Size 10, Time 1141.4578273296356, Call Counts 236 --
+  Min 0.7833333333333333
+  Max 0.9766666666666668
+-- Generation 64, Size 10, Time 1173.1530587673187, Call Counts 243 --
+  Min 0.9433333333333334
+  Max 0.9766666666666668
+-- Generation 66, Size 10, Time 1191.9348666667938, Call Counts 247 --
+  Min 0.9399999999999998
+  Max 0.9766666666666668
+-- Generation 67, Size 10, Time 1212.1377210617065, Call Counts 251 --
+  Min 0.8033333333333333
+  Max 0.9766666666666668
+-- Generation 68, Size 10, Time 1243.4662218093872, Call Counts 258 --
+  Min 0.79
+  Max 0.9766666666666668
+-- Generation 71, Size 10, Time 1284.7290742397308, Call Counts 267 --
+  Min 0.85
+  Max 0.9766666666666668
+-- Generation 73, Size 10, Time 1316.9135677814484, Call Counts 274 --
+  Min 0.9266666666666665
+  Max 0.9766666666666668
+-- Generation 74, Size 10, Time 1336.375560283661, Call Counts 278 --
+  Min 0.9133333333333333
+  Max 0.9766666666666668
+-- Generation 75, Size 10, Time 1359.6888041496277, Call Counts 283 --
+  Min 0.8633333333333333
+  Max 0.9766666666666668
+-- Generation 77, Size 10, Time 1402.6405658721924, Call Counts 293 --
+  Min 0.8333333333333334
+  Max 0.9766666666666668
+-- Generation 80, Size 10, Time 1434.9790875911713, Call Counts 300 --
+  Min 0.8699999999999999
+  Max 0.9766666666666668
+-- Generation 81, Size 10, Time 1454.5747451782227, Call Counts 304 --
+  Min 0.9466666666666667
+  Max 0.9766666666666668
+-- Generation 82, Size 10, Time 1478.0020847320557, Call Counts 309 --
+  Min 0.8966666666666667
+  Max 0.9766666666666668
+-- Generation 83, Size 10, Time 1501.246336698532, Call Counts 314 --
+  Min 0.9
+  Max 0.9766666666666668
+-- Generation 85, Size 10, Time 1524.470213651657, Call Counts 319 --
+  Min 0.85
+  Max 0.9766666666666668
+-- Generation 86, Size 10, Time 1545.684446811676, Call Counts 323 --
+  Min 0.8400000000000001
+  Max 0.9766666666666668
+-- Generation 88, Size 10, Time 1564.1150517463684, Call Counts 327 --
+  Min 0.7366666666666667
+  Max 0.9766666666666668
+-- Generation 89, Size 10, Time 1582.5369908809662, Call Counts 331 --
+  Min 0.9266666666666665
+  Max 0.9766666666666668
+-- Generation 91, Size 10, Time 1600.9410111904144, Call Counts 335 --
+  Min 0.79
+  Max 0.9766666666666668
+-- Generation 92, Size 10, Time 1633.109177350998, Call Counts 342 --
+  Min 0.8866666666666667
+  Max 0.9766666666666668
+-- Generation 93, Size 10, Time 1656.6139850616455, Call Counts 347 --
+  Min 0.9266666666666665
+  Max 0.9766666666666668
+-- Generation 95, Size 10, Time 1671.7940306663513, Call Counts 350 --
+  Min 0.8533333333333333
+  Max 0.9766666666666668
+-- Generation 96, Size 10, Time 1690.5695798397064, Call Counts 354 --
+  Min 0.9333333333333333
+  Max 0.9766666666666668
+-- Generation 97, Size 10, Time 1707.2872462272644, Call Counts 357 --
+  Min 0.9200000000000002
+  Max 0.9766666666666668
+-- Generation 100, Size 10, Time 1726.5710334777832, Call Counts 361 --
+  Min 0.9333333333333333
+  Max 0.9766666666666668
+-- Generation 103, Size 10, Time 1743.5362327098846, Call Counts 365 --
+  Min 0.95
+  Max 0.9766666666666668
+-- Generation 104, Size 10, Time 1772.809839963913, Call Counts 371 --
+  Min 0.93
+  Max 0.9766666666666668
+-- Generation 105, Size 10, Time 1805.2297475337982, Call Counts 378 --
+  Min 0.74
+  Max 0.9766666666666668
+-- Generation 2, Size 10, Time 62.11718201637268, Call Counts 13 --
+  Min 0.1
+  Max 0.6233333333333333
+-- Generation 3, Size 10, Time 85.14062666893005, Call Counts 17 --
+  Min 0.2733333333333333
+  Max 0.6233333333333333
+-- Generation 4, Size 10, Time 110.99905800819397, Call Counts 22 --
+  Min 0.5066666666666667
+  Max 0.7066666666666667
+-- Generation 5, Size 10, Time 126.49749946594238, Call Counts 25 --
+  Min 0.5566666666666666
+  Max 0.7066666666666667
+-- Generation 6, Size 10, Time 158.06843519210815, Call Counts 31 --
+  Min 0.4766666666666667
+  Max 0.7266666666666667
+-- Generation 7, Size 10, Time 174.5741572380066, Call Counts 34 --
+  Min 0.5
+  Max 0.7266666666666667
+-- Generation 8, Size 10, Time 195.93612933158875, Call Counts 38 --
+  Min 0.57
+  Max 0.7266666666666667
+-- Generation 9, Size 10, Time 220.79180669784546, Call Counts 43 --
+  Min 0.4066666666666666
+  Max 0.76
+-- Generation 10, Size 10, Time 247.9146122932434, Call Counts 48 --
+  Min 0.42000000000000004
+  Max 0.76
+-- Generation 11, Size 10, Time 275.62296438217163, Call Counts 53 --
+  Min 0.6166666666666667
+  Max 0.76
+-- Generation 12, Size 10, Time 292.1056227684021, Call Counts 56 --
+  Min 0.5966666666666667
+  Max 0.76
+-- Generation 13, Size 10, Time 308.7146339416504, Call Counts 59 --
+  Min 0.52
+  Max 0.76
+-- Generation 14, Size 10, Time 336.74796986579895, Call Counts 64 --
+  Min 0.6433333333333333
+  Max 0.7933333333333333
+-- Generation 15, Size 10, Time 358.08867144584656, Call Counts 68 --
+  Min 0.6466666666666666
+  Max 0.8566666666666667
+-- Generation 16, Size 10, Time 379.3892226219177, Call Counts 72 --
+  Min 0.6233333333333333
+  Max 0.7933333333333333
+-- Generation 18, Size 10, Time 395.94029116630554, Call Counts 75 --
+  Min 0.67
+  Max 0.7933333333333333
+-- Generation 19, Size 10, Time 416.66522884368896, Call Counts 79 --
+  Min 0.6466666666666666
+  Max 0.7933333333333333
+-- Generation 20, Size 10, Time 454.56522035598755, Call Counts 86 --
+  Min 0.62
+  Max 0.7933333333333333
+-- Generation 21, Size 10, Time 477.25182151794434, Call Counts 91 --
+  Min 0.6333333333333333
+  Max 0.7933333333333333
+-- Generation 22, Size 10, Time 502.57653188705444, Call Counts 96 --
+  Min 0.5233333333333333
+  Max 0.7933333333333333
+-- Generation 24, Size 10, Time 553.590398311615, Call Counts 106 --
+  Min 0.73
+  Max 0.8400000000000001
+-- Generation 25, Size 10, Time 574.3360326290131, Call Counts 110 --
+  Min 0.64
+  Max 0.8466666666666667
+-- Generation 26, Size 10, Time 601.988883972168, Call Counts 116 --
+  Min 0.68
+  Max 0.93
+-- Generation 27, Size 10, Time 618.804105758667, Call Counts 119 --
+  Min 0.8166666666666667
+  Max 0.93
+-- Generation 28, Size 10, Time 640.2698678970337, Call Counts 123 --
+  Min 0.65
+  Max 0.93
+-- Generation 29, Size 10, Time 666.6585624217987, Call Counts 128 --
+  Min 0.85
+  Max 0.9333333333333333
+-- Generation 30, Size 10, Time 684.7003235816956, Call Counts 131 --
+  Min 0.8666666666666668
+  Max 0.9333333333333333
+-- Generation 31, Size 10, Time 710.8112499713898, Call Counts 136 --
+  Min 0.7466666666666667
+  Max 0.9366666666666668
+-- Generation 33, Size 10, Time 742.4497926235199, Call Counts 142 --
+  Min 0.8533333333333333
+  Max 0.9366666666666668
+-- Generation 34, Size 10, Time 775.7551941871643, Call Counts 148 --
+  Min 0.8366666666666667
+  Max 0.9466666666666667
+-- Generation 36, Size 10, Time 795.038824558258, Call Counts 152 --
+  Min 0.7433333333333333
+  Max 0.9633333333333333
+-- Generation 37, Size 10, Time 831.7745206356049, Call Counts 159 --
+  Min 0.8866666666666667
+  Max 0.9733333333333334
+-- Generation 39, Size 10, Time 862.0228896141052, Call Counts 165 --
+  Min 0.8566666666666667
+  Max 0.9733333333333334
+-- Generation 41, Size 10, Time 899.8801515102386, Call Counts 173 --
+  Min 0.9466666666666667
+  Max 0.9766666666666668
+-- Generation 43, Size 10, Time 921.1866035461426, Call Counts 177 --
+  Min 0.9
+  Max 0.9766666666666668
+-- Generation 44, Size 10, Time 947.0529952049255, Call Counts 182 --
+  Min 0.9266666666666665
+  Max 0.9766666666666668
+-- Generation 45, Size 10, Time 968.4289853572845, Call Counts 186 --
+  Min 0.96
+  Max 0.9766666666666668
+-- Generation 46, Size 10, Time 983.9607493877411, Call Counts 189 --
+  Min 0.9366666666666668
+  Max 0.99
+-- Generation 47, Size 10, Time 1004.9789917469025, Call Counts 193 --
+  Min 0.9433333333333334
+  Max 0.9933333333333334
+-- Generation 48, Size 10, Time 1020.0476930141449, Call Counts 196 --
+  Min 0.9533333333333334
+  Max 0.9933333333333334
+-- Generation 49, Size 10, Time 1050.316227197647, Call Counts 202 --
+  Min 0.8666666666666668
+  Max 0.9933333333333334
+-- Generation 50, Size 10, Time 1071.7806642055511, Call Counts 206 --
+  Min 0.9200000000000002
+  Max 0.9933333333333334
+-- Generation 51, Size 10, Time 1092.2850980758667, Call Counts 210 --
+  Min 0.9233333333333335
+  Max 0.9933333333333334
+-- Generation 54, Size 10, Time 1122.7443587779999, Call Counts 216 --
+  Min 0.9399999999999998
+  Max 0.9933333333333334
+-- Generation 55, Size 10, Time 1163.0566596984863, Call Counts 224 --
+  Min 0.9200000000000002
+  Max 0.9933333333333334
+-- Generation 56, Size 10, Time 1178.9780280590057, Call Counts 227 --
+  Min 0.9133333333333333
+  Max 0.9933333333333334
+-- Generation 57, Size 10, Time 1199.0753779411316, Call Counts 231 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 58, Size 10, Time 1224.4426579475403, Call Counts 236 --
+  Min 0.9099999999999999
+  Max 1.0
+-- Generation 60, Size 10, Time 1248.6321880817413, Call Counts 241 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 61, Size 10, Time 1271.9078006744385, Call Counts 246 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 62, Size 10, Time 1290.5221121311188, Call Counts 250 --
+  Min 0.9099999999999999
+  Max 1.0
+-- Generation 64, Size 10, Time 1319.928388595581, Call Counts 256 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 65, Size 10, Time 1359.4816219806671, Call Counts 264 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 66, Size 10, Time 1374.785700082779, Call Counts 267 --
+  Min 0.9200000000000002
+  Max 1.0
+-- Generation 67, Size 10, Time 1413.3997423648834, Call Counts 275 --
+  Min 0.9533333333333334
+  Max 1.0
+-- Generation 68, Size 10, Time 1437.099616765976, Call Counts 280 --
+  Min 0.8699999999999999
+  Max 1.0
+-- Generation 69, Size 10, Time 1461.506807088852, Call Counts 285 --
+  Min 0.8166666666666667
+  Max 1.0
+-- Generation 71, Size 10, Time 1480.3111698627472, Call Counts 289 --
+  Min 0.99
+  Max 1.0
+-- Generation 72, Size 10, Time 1505.545743227005, Call Counts 294 --
+  Min 0.9333333333333333
+  Max 1.0
+-- Generation 74, Size 10, Time 1523.7286920547485, Call Counts 298 --
+  Min 0.9399999999999998
+  Max 1.0
+-- Generation 75, Size 10, Time 1543.3450810909271, Call Counts 302 --
+  Min 0.96
+  Max 1.0
+-- Generation 77, Size 10, Time 1582.0196771621704, Call Counts 310 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 79, Size 10, Time 1599.821896314621, Call Counts 314 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 81, Size 10, Time 1635.3677451610565, Call Counts 322 --
+  Min 0.9333333333333333
+  Max 1.0
+-- Generation 82, Size 10, Time 1655.3389463424683, Call Counts 326 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 83, Size 10, Time 1690.5387494564056, Call Counts 333 --
+  Min 0.8699999999999999
+  Max 1.0
+-- Generation 84, Size 10, Time 1710.465892791748, Call Counts 337 --
+  Min 0.8966666666666667
+  Max 1.0
+-- Generation 86, Size 10, Time 1740.4320497512817, Call Counts 344 --
+  Min 0.96
+  Max 1.0
+-- Generation 88, Size 10, Time 1765.9734406471252, Call Counts 349 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 90, Size 10, Time 1799.0972299575806, Call Counts 356 --
+  Min 0.9399999999999998
+  Max 1.0
+-- Generation 91, Size 10, Time 1814.4718647003174, Call Counts 359 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 3, Size 10, Time 72.63875031471252, Call Counts 16 --
+  Min 0.10333333333333332
+  Max 0.7333333333333333
+-- Generation 6, Size 10, Time 98.80281281471252, Call Counts 21 --
+  Min 0.53
+  Max 0.7
+-- Generation 7, Size 10, Time 114.82059693336487, Call Counts 24 --
+  Min 0.4166666666666667
+  Max 0.7
+-- Generation 8, Size 10, Time 142.0666480064392, Call Counts 30 --
+  Min 0.6
+  Max 0.79
+-- Generation 10, Size 10, Time 164.05157709121704, Call Counts 35 --
+  Min 0.5866666666666667
+  Max 0.8333333333333334
+-- Generation 11, Size 10, Time 198.8472864627838, Call Counts 42 --
+  Min 0.6133333333333333
+  Max 0.8100000000000002
+-- Generation 12, Size 10, Time 214.5607511997223, Call Counts 45 --
+  Min 0.5766666666666667
+  Max 0.8266666666666665
+-- Generation 14, Size 10, Time 235.01071691513062, Call Counts 49 --
+  Min 0.7466666666666667
+  Max 0.8366666666666667
+-- Generation 15, Size 10, Time 265.91504287719727, Call Counts 55 --
+  Min 0.6433333333333333
+  Max 0.8366666666666667
+-- Generation 16, Size 10, Time 281.43557810783386, Call Counts 58 --
+  Min 0.73
+  Max 0.8366666666666667
+-- Generation 18, Size 10, Time 315.3926417827606, Call Counts 65 --
+  Min 0.7566666666666667
+  Max 0.8366666666666667
+-- Generation 19, Size 10, Time 334.3688600063324, Call Counts 69 --
+  Min 0.6766666666666666
+  Max 0.8366666666666667
+-- Generation 23, Size 10, Time 362.056608915329, Call Counts 75 --
+  Min 0.7933333333333333
+  Max 0.8400000000000001
+-- Generation 25, Size 10, Time 403.4596538543701, Call Counts 84 --
+  Min 0.7066666666666667
+  Max 0.8400000000000001
+-- Generation 27, Size 10, Time 428.8897314071655, Call Counts 89 --
+  Min 0.6466666666666666
+  Max 0.8366666666666667
+-- Generation 29, Size 10, Time 451.92915892601013, Call Counts 94 --
+  Min 0.7466666666666667
+  Max 0.8366666666666667
+-- Generation 30, Size 10, Time 482.92290449142456, Call Counts 100 --
+  Min 0.71
+  Max 0.8366666666666667
+-- Generation 31, Size 10, Time 507.33380794525146, Call Counts 105 --
+  Min 0.74
+  Max 0.8366666666666667
+-- Generation 32, Size 10, Time 538.4189722537994, Call Counts 111 --
+  Min 0.7266666666666667
+  Max 0.8366666666666667
+-- Generation 33, Size 10, Time 557.8049094676971, Call Counts 115 --
+  Min 0.65
+  Max 0.8666666666666668
+-- Generation 35, Size 10, Time 588.0275948047638, Call Counts 121 --
+  Min 0.76
+  Max 0.89
+-- Generation 36, Size 10, Time 604.7018883228302, Call Counts 125 --
+  Min 0.8366666666666667
+  Max 0.89
+-- Generation 37, Size 10, Time 627.7945532798767, Call Counts 130 --
+  Min 0.76
+  Max 0.8966666666666667
+-- Generation 39, Size 10, Time 671.0706980228424, Call Counts 139 --
+  Min 0.86
+  Max 0.9333333333333333
+-- Generation 40, Size 10, Time 690.2496862411499, Call Counts 143 --
+  Min 0.8333333333333334
+  Max 0.9333333333333333
+-- Generation 43, Size 10, Time 714.8546712398529, Call Counts 148 --
+  Min 0.8
+  Max 0.9333333333333333
+-- Generation 46, Size 10, Time 739.4497976303101, Call Counts 153 --
+  Min 0.8866666666666667
+  Max 0.9333333333333333
+-- Generation 48, Size 10, Time 759.2049245834351, Call Counts 157 --
+  Min 0.6666666666666666
+  Max 0.9333333333333333
+-- Generation 49, Size 10, Time 776.8016793727875, Call Counts 161 --
+  Min 0.7933333333333333
+  Max 0.9333333333333333
+-- Generation 50, Size 10, Time 796.5214233398438, Call Counts 165 --
+  Min 0.7066666666666667
+  Max 0.9366666666666668
+-- Generation 51, Size 10, Time 821.2813732624054, Call Counts 170 --
+  Min 0.8633333333333333
+  Max 0.9366666666666668
+-- Generation 52, Size 10, Time 843.1196594238281, Call Counts 175 --
+  Min 0.8
+  Max 0.95
+-- Generation 53, Size 10, Time 861.4187514781952, Call Counts 179 --
+  Min 0.7233333333333334
+  Max 0.9566666666666667
+-- Generation 54, Size 10, Time 876.5293407440186, Call Counts 182 --
+  Min 0.8766666666666667
+  Max 0.9566666666666667
+-- Generation 56, Size 10, Time 914.3594744205475, Call Counts 190 --
+  Min 0.9233333333333335
+  Max 0.9566666666666667
+-- Generation 57, Size 10, Time 936.0019104480743, Call Counts 195 --
+  Min 0.8
+  Max 0.9566666666666667
+-- Generation 58, Size 10, Time 963.349597454071, Call Counts 201 --
+  Min 0.9099999999999999
+  Max 0.9566666666666667
+-- Generation 59, Size 10, Time 986.1099853515625, Call Counts 206 --
+  Min 0.8100000000000002
+  Max 0.9566666666666667
+-- Generation 60, Size 10, Time 1004.127060174942, Call Counts 210 --
+  Min 0.8400000000000001
+  Max 0.9666666666666666
+-- Generation 62, Size 10, Time 1046.697602033615, Call Counts 219 --
+  Min 0.8966666666666667
+  Max 0.97
+-- Generation 65, Size 10, Time 1077.5606937408447, Call Counts 226 --
+  Min 0.9
+  Max 0.9766666666666668
+-- Generation 67, Size 10, Time 1100.9637818336487, Call Counts 231 --
+  Min 0.7566666666666667
+  Max 0.9766666666666668
+-- Generation 68, Size 10, Time 1122.8816254138947, Call Counts 236 --
+  Min 0.9233333333333335
+  Max 0.9766666666666668
+-- Generation 69, Size 10, Time 1141.7497749328613, Call Counts 240 --
+  Min 0.8566666666666667
+  Max 0.99
+-- Generation 70, Size 10, Time 1169.9932901859283, Call Counts 246 --
+  Min 0.8666666666666668
+  Max 0.99
+-- Generation 71, Size 10, Time 1188.8953475952148, Call Counts 250 --
+  Min 0.9233333333333335
+  Max 0.99
+-- Generation 72, Size 10, Time 1212.6068623065948, Call Counts 255 --
+  Min 0.96
+  Max 0.99
+-- Generation 74, Size 10, Time 1239.8943877220154, Call Counts 261 --
+  Min 0.9800000000000001
+  Max 0.99
+-- Generation 76, Size 10, Time 1262.6225979328156, Call Counts 266 --
+  Min 0.8800000000000001
+  Max 0.99
+-- Generation 77, Size 10, Time 1294.5686497688293, Call Counts 273 --
+  Min 0.8866666666666667
+  Max 0.99
+-- Generation 79, Size 10, Time 1321.738133430481, Call Counts 279 --
+  Min 0.9566666666666667
+  Max 0.99
+-- Generation 80, Size 10, Time 1340.5039973258972, Call Counts 283 --
+  Min 0.8333333333333334
+  Max 0.99
+-- Generation 82, Size 10, Time 1372.1697301864624, Call Counts 290 --
+  Min 0.9800000000000001
+  Max 0.9933333333333334
+-- Generation 84, Size 10, Time 1394.3951513767242, Call Counts 295 --
+  Min 0.9666666666666666
+  Max 0.9933333333333334
+-- Generation 85, Size 10, Time 1425.3640117645264, Call Counts 302 --
+  Min 0.93
+  Max 0.9933333333333334
+-- Generation 86, Size 10, Time 1454.212739944458, Call Counts 308 --
+  Min 0.9733333333333334
+  Max 0.9933333333333334
+-- Generation 88, Size 10, Time 1478.085419178009, Call Counts 313 --
+  Min 0.8066666666666666
+  Max 0.9933333333333334
+-- Generation 90, Size 10, Time 1501.603878736496, Call Counts 318 --
+  Min 0.97
+  Max 0.9933333333333334
+-- Generation 91, Size 10, Time 1520.3910157680511, Call Counts 322 --
+  Min 0.9766666666666668
+  Max 0.9933333333333334
+-- Generation 93, Size 10, Time 1548.5362961292267, Call Counts 328 --
+  Min 0.8
+  Max 0.9933333333333334
+-- Generation 95, Size 10, Time 1576.8869240283966, Call Counts 334 --
+  Min 0.9399999999999998
+  Max 0.9933333333333334
+-- Generation 97, Size 10, Time 1611.7494158744812, Call Counts 342 --
+  Min 0.9133333333333333
+  Max 0.9933333333333334
+-- Generation 99, Size 10, Time 1629.779198884964, Call Counts 346 --
+  Min 0.9
+  Max 0.9933333333333334
+-- Generation 101, Size 10, Time 1660.7868485450745, Call Counts 353 --
+  Min 0.97
+  Max 0.9933333333333334
+-- Generation 102, Size 10, Time 1676.1015403270721, Call Counts 356 --
+  Min 0.9333333333333333
+  Max 0.9933333333333334
+-- Generation 104, Size 10, Time 1727.582641839981, Call Counts 367 --
+  Min 0.9099999999999999
+  Max 0.9966666666666667
+-- Generation 106, Size 10, Time 1747.4084656238556, Call Counts 371 --
+  Min 0.9166666666666666
+  Max 0.9966666666666667
+-- Generation 108, Size 10, Time 1770.6863932609558, Call Counts 376 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 110, Size 10, Time 1792.5831537246704, Call Counts 381 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 111, Size 10, Time 1810.7433800697327, Call Counts 385 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 3, Size 10, Time 86.12071800231934, Call Counts 18 --
+  Min 0.19333333333333333
+  Max 0.5666666666666667
+-- Generation 4, Size 10, Time 105.9145131111145, Call Counts 22 --
+  Min 0.30333333333333334
+  Max 0.5733333333333334
+-- Generation 5, Size 10, Time 141.24816274642944, Call Counts 29 --
+  Min 0.37666666666666665
+  Max 0.6966666666666667
+-- Generation 7, Size 10, Time 183.8953366279602, Call Counts 37 --
+  Min 0.3433333333333333
+  Max 0.8066666666666666
+-- Generation 8, Size 10, Time 218.4631962776184, Call Counts 44 --
+  Min 0.63
+  Max 0.8433333333333334
+-- Generation 9, Size 10, Time 234.81043434143066, Call Counts 47 --
+  Min 0.6733333333333333
+  Max 0.8066666666666666
+-- Generation 10, Size 10, Time 249.9212145805359, Call Counts 50 --
+  Min 0.75
+  Max 0.8433333333333334
+-- Generation 11, Size 10, Time 276.2718017101288, Call Counts 56 --
+  Min 0.7633333333333333
+  Max 0.9200000000000002
+-- Generation 12, Size 10, Time 297.0507113933563, Call Counts 60 --
+  Min 0.6933333333333334
+  Max 0.9200000000000002
+-- Generation 13, Size 10, Time 319.9013068675995, Call Counts 65 --
+  Min 0.8133333333333332
+  Max 0.9333333333333333
+-- Generation 16, Size 10, Time 344.5351119041443, Call Counts 70 --
+  Min 0.8966666666666667
+  Max 0.9333333333333333
+-- Generation 18, Size 10, Time 378.6562612056732, Call Counts 77 --
+  Min 0.7766666666666666
+  Max 0.9466666666666667
+-- Generation 19, Size 10, Time 398.250452041626, Call Counts 81 --
+  Min 0.77
+  Max 0.97
+-- Generation 20, Size 10, Time 417.91816234588623, Call Counts 85 --
+  Min 0.9099999999999999
+  Max 0.9733333333333334
+-- Generation 21, Size 10, Time 438.4830310344696, Call Counts 89 --
+  Min 0.8966666666666667
+  Max 0.9733333333333334
+-- Generation 22, Size 10, Time 460.5659909248352, Call Counts 93 --
+  Min 0.9266666666666665
+  Max 0.9733333333333334
+-- Generation 23, Size 10, Time 480.07533597946167, Call Counts 97 --
+  Min 0.89
+  Max 0.9733333333333334
+-- Generation 25, Size 10, Time 519.9399325847626, Call Counts 105 --
+  Min 0.9633333333333333
+  Max 0.99
+-- Generation 26, Size 10, Time 535.5211844444275, Call Counts 108 --
+  Min 0.89
+  Max 0.99
+-- Generation 28, Size 10, Time 556.8879108428955, Call Counts 112 --
+  Min 0.96
+  Max 0.99
+-- Generation 29, Size 10, Time 587.434042930603, Call Counts 119 --
+  Min 0.9399999999999998
+  Max 0.99
+-- Generation 30, Size 10, Time 607.6847660541534, Call Counts 123 --
+  Min 0.9333333333333333
+  Max 0.99
+-- Generation 31, Size 10, Time 627.1995253562927, Call Counts 127 --
+  Min 0.9566666666666667
+  Max 0.9933333333333334
+-- Generation 33, Size 10, Time 665.4261298179626, Call Counts 135 --
+  Min 0.8866666666666667
+  Max 0.9933333333333334
+-- Generation 35, Size 10, Time 696.5033040046692, Call Counts 141 --
+  Min 0.8733333333333333
+  Max 0.9966666666666667
+-- Generation 36, Size 10, Time 716.6022017002106, Call Counts 145 --
+  Min 0.9566666666666667
+  Max 0.9966666666666667
+-- Generation 38, Size 10, Time 735.4587843418121, Call Counts 149 --
+  Min 0.97
+  Max 0.9966666666666667
+-- Generation 39, Size 10, Time 750.9264361858368, Call Counts 152 --
+  Min 0.9766666666666668
+  Max 0.9966666666666667
+-- Generation 40, Size 10, Time 780.2518155574799, Call Counts 158 --
+  Min 0.8966666666666667
+  Max 0.9966666666666667
+-- Generation 41, Size 10, Time 798.8608400821686, Call Counts 162 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 42, Size 10, Time 822.5643839836121, Call Counts 167 --
+  Min 0.9333333333333333
+  Max 0.9966666666666667
+-- Generation 46, Size 10, Time 854.1891345977783, Call Counts 174 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 47, Size 10, Time 878.1807904243469, Call Counts 179 --
+  Min 0.9733333333333334
+  Max 0.9966666666666667
+-- Generation 49, Size 10, Time 908.4454393386841, Call Counts 185 --
+  Min 0.9033333333333333
+  Max 0.9966666666666667
+-- Generation 51, Size 10, Time 941.5208554267883, Call Counts 192 --
+  Min 0.9766666666666668
+  Max 0.9966666666666667
+-- Generation 52, Size 10, Time 961.3394033908844, Call Counts 196 --
+  Min 0.85
+  Max 0.9966666666666667
+-- Generation 54, Size 10, Time 983.7996871471405, Call Counts 201 --
+  Min 0.9433333333333334
+  Max 0.9966666666666667
+-- Generation 55, Size 10, Time 1003.4012610912323, Call Counts 205 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 57, Size 10, Time 1027.7887456417084, Call Counts 210 --
+  Min 0.9833333333333332
+  Max 0.9966666666666667
+-- Generation 59, Size 10, Time 1059.9053568840027, Call Counts 217 --
+  Min 0.9333333333333333
+  Max 0.9966666666666667
+-- Generation 61, Size 10, Time 1088.9405274391174, Call Counts 223 --
+  Min 0.9533333333333334
+  Max 0.9966666666666667
+-- Generation 62, Size 10, Time 1104.059522151947, Call Counts 226 --
+  Min 0.9766666666666668
+  Max 0.9966666666666667
+-- Generation 63, Size 10, Time 1137.2095274925232, Call Counts 233 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 64, Size 10, Time 1156.753295660019, Call Counts 237 --
+  Min 0.9266666666666665
+  Max 0.9966666666666667
+-- Generation 65, Size 10, Time 1175.8979239463806, Call Counts 241 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 66, Size 10, Time 1209.4014875888824, Call Counts 248 --
+  Min 0.97
+  Max 0.9966666666666667
+-- Generation 67, Size 10, Time 1232.4261372089386, Call Counts 253 --
+  Min 0.8966666666666667
+  Max 0.9966666666666667
+-- Generation 68, Size 10, Time 1251.9607191085815, Call Counts 257 --
+  Min 0.9033333333333333
+  Max 0.9966666666666667
+-- Generation 70, Size 10, Time 1284.6554162502289, Call Counts 264 --
+  Min 0.9733333333333334
+  Max 0.9966666666666667
+-- Generation 72, Size 10, Time 1307.8071057796478, Call Counts 269 --
+  Min 0.9833333333333332
+  Max 0.9966666666666667
+-- Generation 74, Size 10, Time 1339.5157401561737, Call Counts 276 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 76, Size 10, Time 1357.127875328064, Call Counts 280 --
+  Min 0.9766666666666668
+  Max 0.9966666666666667
+-- Generation 77, Size 10, Time 1393.4777600765228, Call Counts 287 --
+  Min 0.9733333333333334
+  Max 0.9966666666666667
+-- Generation 79, Size 10, Time 1425.1103255748749, Call Counts 294 --
+  Min 0.9466666666666667
+  Max 0.9966666666666667
+-- Generation 80, Size 10, Time 1444.0517115592957, Call Counts 298 --
+  Min 0.9666666666666666
+  Max 0.9966666666666667
+-- Generation 81, Size 10, Time 1463.3215522766113, Call Counts 302 --
+  Min 0.9466666666666667
+  Max 0.9966666666666667
+-- Generation 82, Size 10, Time 1481.448902130127, Call Counts 306 --
+  Min 0.82
+  Max 0.9966666666666667
+-- Generation 84, Size 10, Time 1504.9155271053314, Call Counts 311 --
+  Min 0.97
+  Max 0.9966666666666667
+-- Generation 86, Size 10, Time 1537.6632301807404, Call Counts 318 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 87, Size 10, Time 1564.2620542049408, Call Counts 323 --
+  Min 0.9066666666666666
+  Max 0.9966666666666667
+-- Generation 88, Size 10, Time 1582.0244030952454, Call Counts 327 --
+  Min 0.97
+  Max 0.9966666666666667
+-- Generation 89, Size 10, Time 1598.8840246200562, Call Counts 330 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 91, Size 10, Time 1627.1429755687714, Call Counts 336 --
+  Min 0.9466666666666667
+  Max 0.9966666666666667
+-- Generation 93, Size 10, Time 1645.878291130066, Call Counts 340 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 95, Size 10, Time 1680.5284123420715, Call Counts 347 --
+  Min 0.97
+  Max 0.9966666666666667
+-- Generation 96, Size 10, Time 1709.2614901065826, Call Counts 353 --
+  Min 0.9366666666666668
+  Max 0.9966666666666667
+-- Generation 97, Size 10, Time 1734.6227114200592, Call Counts 358 --
+  Min 0.9466666666666667
+  Max 0.9966666666666667
+-- Generation 98, Size 10, Time 1757.8680109977722, Call Counts 363 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 99, Size 10, Time 1777.3051578998566, Call Counts 367 --
+  Min 0.9733333333333334
+  Max 0.9966666666666667
+-- Generation 101, Size 10, Time 1799.0982253551483, Call Counts 372 --
+  Min 0.9866666666666667
+  Max 0.9966666666666667
+-- Generation 2, Size 10, Time 63.32903480529785, Call Counts 14 --
+  Min 0.053333333333333344
+  Max 0.6
+-- Generation 4, Size 10, Time 104.89562582969666, Call Counts 22 --
+  Min 0.4066666666666666
+  Max 0.69
+-- Generation 6, Size 10, Time 156.1476674079895, Call Counts 31 --
+  Min 0.5966666666666667
+  Max 0.69
+-- Generation 7, Size 10, Time 186.97246265411377, Call Counts 37 --
+  Min 0.56
+  Max 0.69
+-- Generation 8, Size 10, Time 209.18093156814575, Call Counts 41 --
+  Min 0.5166666666666667
+  Max 0.6966666666666667
+-- Generation 10, Size 10, Time 230.53180527687073, Call Counts 45 --
+  Min 0.5766666666666667
+  Max 0.6966666666666667
+-- Generation 11, Size 10, Time 246.49596071243286, Call Counts 48 --
+  Min 0.6733333333333333
+  Max 0.77
+-- Generation 12, Size 10, Time 271.6468598842621, Call Counts 53 --
+  Min 0.65
+  Max 0.8166666666666667
+-- Generation 13, Size 10, Time 287.5932831764221, Call Counts 56 --
+  Min 0.69
+  Max 0.8166666666666667
+-- Generation 14, Size 10, Time 303.1356985569, Call Counts 59 --
+  Min 0.7133333333333334
+  Max 0.8166666666666667
+-- Generation 15, Size 10, Time 319.54599022865295, Call Counts 62 --
+  Min 0.6966666666666667
+  Max 0.8166666666666667
+-- Generation 16, Size 10, Time 340.55131316185, Call Counts 66 --
+  Min 0.6133333333333333
+  Max 0.8233333333333335
+-- Generation 17, Size 10, Time 382.0801467895508, Call Counts 74 --
+  Min 0.62
+  Max 0.8233333333333335
+-- Generation 18, Size 10, Time 410.7143747806549, Call Counts 80 --
+  Min 0.6466666666666666
+  Max 0.8233333333333335
+-- Generation 20, Size 10, Time 444.7960591316223, Call Counts 87 --
+  Min 0.6666666666666666
+  Max 0.8233333333333335
+-- Generation 21, Size 10, Time 470.4220652580261, Call Counts 92 --
+  Min 0.75
+  Max 0.8233333333333335
+-- Generation 22, Size 10, Time 506.45379114151, Call Counts 99 --
+  Min 0.6466666666666666
+  Max 0.8233333333333335
+-- Generation 24, Size 10, Time 525.3981516361237, Call Counts 103 --
+  Min 0.8066666666666666
+  Max 0.8233333333333335
+-- Generation 26, Size 10, Time 558.0631206035614, Call Counts 109 --
+  Min 0.7866666666666666
+  Max 0.8299999999999998
+-- Generation 27, Size 10, Time 589.2710387706757, Call Counts 115 --
+  Min 0.7433333333333333
+  Max 0.8533333333333333
+-- Generation 28, Size 10, Time 619.5042409896851, Call Counts 121 --
+  Min 0.67
+  Max 0.8733333333333333
+-- Generation 30, Size 10, Time 646.4318981170654, Call Counts 126 --
+  Min 0.8299999999999998
+  Max 0.9800000000000001
+-- Generation 33, Size 10, Time 676.177104473114, Call Counts 132 --
+  Min 0.97
+  Max 1.0
+-- Generation 34, Size 10, Time 701.8155155181885, Call Counts 137 --
+  Min 0.96
+  Max 1.0
+-- Generation 36, Size 10, Time 721.0376696586609, Call Counts 141 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 38, Size 10, Time 737.8807294368744, Call Counts 144 --
+  Min 0.9566666666666667
+  Max 1.0
+-- Generation 39, Size 10, Time 761.7510855197906, Call Counts 149 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 40, Size 10, Time 781.257021188736, Call Counts 153 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 42, Size 10, Time 835.8115575313568, Call Counts 164 --
+  Min 0.96
+  Max 1.0
+-- Generation 43, Size 10, Time 854.7515950202942, Call Counts 168 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 44, Size 10, Time 873.0533716678619, Call Counts 172 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 46, Size 10, Time 893.7056586742401, Call Counts 176 --
+  Min 0.8433333333333334
+  Max 1.0
+-- Generation 47, Size 10, Time 914.0883150100708, Call Counts 180 --
+  Min 0.9266666666666665
+  Max 1.0
+-- Generation 48, Size 10, Time 939.6525530815125, Call Counts 185 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 49, Size 10, Time 964.334597826004, Call Counts 190 --
+  Min 0.9266666666666665
+  Max 1.0
+-- Generation 51, Size 10, Time 1002.3155553340912, Call Counts 198 --
+  Min 0.99
+  Max 1.0
+-- Generation 52, Size 10, Time 1021.675176858902, Call Counts 202 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 53, Size 10, Time 1055.8313438892365, Call Counts 209 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 55, Size 10, Time 1087.3911204338074, Call Counts 215 --
+  Min 0.9333333333333333
+  Max 1.0
+-- Generation 57, Size 10, Time 1105.2374782562256, Call Counts 219 --
+  Min 0.9399999999999998
+  Max 1.0
+-- Generation 59, Size 10, Time 1137.1030700206757, Call Counts 225 --
+  Min 0.9133333333333333
+  Max 1.0
+-- Generation 61, Size 10, Time 1181.3333353996277, Call Counts 234 --
+  Min 0.9566666666666667
+  Max 1.0
+-- Generation 63, Size 10, Time 1219.9851379394531, Call Counts 242 --
+  Min 0.97
+  Max 1.0
+-- Generation 64, Size 10, Time 1247.0105502605438, Call Counts 248 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 65, Size 10, Time 1267.4875872135162, Call Counts 252 --
+  Min 0.9566666666666667
+  Max 1.0
+-- Generation 67, Size 10, Time 1300.0858886241913, Call Counts 259 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 68, Size 10, Time 1324.2331337928772, Call Counts 264 --
+  Min 0.97
+  Max 1.0
+-- Generation 69, Size 10, Time 1350.3510551452637, Call Counts 269 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 70, Size 10, Time 1374.423883676529, Call Counts 274 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 71, Size 10, Time 1397.7142868041992, Call Counts 279 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 73, Size 10, Time 1412.7931089401245, Call Counts 282 --
+  Min 0.96
+  Max 1.0
+-- Generation 75, Size 10, Time 1432.4996032714844, Call Counts 286 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 76, Size 10, Time 1451.9095442295074, Call Counts 290 --
+  Min 0.9233333333333335
+  Max 1.0
+-- Generation 78, Size 10, Time 1481.8783609867096, Call Counts 296 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 80, Size 10, Time 1513.2478919029236, Call Counts 302 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 81, Size 10, Time 1548.7603459358215, Call Counts 309 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 83, Size 10, Time 1573.661906003952, Call Counts 314 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 85, Size 10, Time 1592.372782945633, Call Counts 318 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 86, Size 10, Time 1610.6648080348969, Call Counts 322 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 87, Size 10, Time 1628.635434627533, Call Counts 326 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 89, Size 10, Time 1648.0252494812012, Call Counts 330 --
+  Min 0.9866666666666667
+  Max 1.0
+-- Generation 90, Size 10, Time 1671.794893026352, Call Counts 335 --
+  Min 0.97
+  Max 1.0
+-- Generation 91, Size 10, Time 1693.1001722812653, Call Counts 339 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 93, Size 10, Time 1727.8794860839844, Call Counts 346 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 95, Size 10, Time 1749.0264744758606, Call Counts 350 --
+  Min 0.9066666666666666
+  Max 1.0
+-- Generation 96, Size 10, Time 1780.100886106491, Call Counts 356 --
+  Min 0.93
+  Max 1.0
+-- Generation 97, Size 10, Time 1799.7634196281433, Call Counts 360 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 2, Size 10, Time 67.36152076721191, Call Counts 14 --
+  Min 0.12
+  Max 0.6066666666666667
+-- Generation 3, Size 10, Time 92.2256555557251, Call Counts 19 --
+  Min 0.19333333333333333
+  Max 0.6066666666666667
+-- Generation 4, Size 10, Time 119.91357779502869, Call Counts 24 --
+  Min 0.4333333333333334
+  Max 0.5866666666666667
+-- Generation 5, Size 10, Time 153.41996598243713, Call Counts 30 --
+  Min 0.5766666666666667
+  Max 0.62
+-- Generation 6, Size 10, Time 175.09544682502747, Call Counts 34 --
+  Min 0.56
+  Max 0.64
+-- Generation 7, Size 10, Time 206.77153515815735, Call Counts 40 --
+  Min 0.5366666666666666
+  Max 0.64
+-- Generation 8, Size 10, Time 238.79729962348938, Call Counts 46 --
+  Min 0.47333333333333333
+  Max 0.64
+-- Generation 9, Size 10, Time 265.90531301498413, Call Counts 51 --
+  Min 0.4600000000000001
+  Max 0.64
+-- Generation 10, Size 10, Time 302.70384645462036, Call Counts 58 --
+  Min 0.36
+  Max 0.68
+-- Generation 12, Size 10, Time 318.73208141326904, Call Counts 61 --
+  Min 0.4666666666666667
+  Max 0.7866666666666666
+-- Generation 13, Size 10, Time 351.5574150085449, Call Counts 67 --
+  Min 0.6066666666666667
+  Max 0.8133333333333332
+-- Generation 15, Size 10, Time 385.27669405937195, Call Counts 73 --
+  Min 0.5933333333333334
+  Max 0.8333333333333334
+-- Generation 16, Size 10, Time 408.906977891922, Call Counts 77 --
+  Min 0.5366666666666666
+  Max 0.8333333333333334
+-- Generation 17, Size 10, Time 434.1645932197571, Call Counts 82 --
+  Min 0.76
+  Max 0.8800000000000001
+-- Generation 19, Size 10, Time 462.2546708583832, Call Counts 87 --
+  Min 0.73
+  Max 0.8800000000000001
+-- Generation 20, Size 10, Time 504.0486137866974, Call Counts 95 --
+  Min 0.58
+  Max 0.9433333333333334
+-- Generation 23, Size 10, Time 525.0180177688599, Call Counts 99 --
+  Min 0.95
+  Max 0.9833333333333332
+-- Generation 24, Size 10, Time 545.6603796482086, Call Counts 103 --
+  Min 0.8866666666666667
+  Max 0.9833333333333332
+-- Generation 25, Size 10, Time 572.5769901275635, Call Counts 108 --
+  Min 0.9233333333333335
+  Max 0.9866666666666667
+-- Generation 26, Size 10, Time 589.7505848407745, Call Counts 111 --
+  Min 0.8733333333333333
+  Max 0.9866666666666667
+-- Generation 27, Size 10, Time 607.1054298877716, Call Counts 114 --
+  Min 0.67
+  Max 0.9866666666666667
+-- Generation 28, Size 10, Time 647.8931589126587, Call Counts 121 --
+  Min 0.93
+  Max 0.9866666666666667
+-- Generation 30, Size 10, Time 688.0299847126007, Call Counts 128 --
+  Min 0.9366666666666668
+  Max 0.9866666666666667
+-- Generation 31, Size 10, Time 711.078654050827, Call Counts 132 --
+  Min 0.8333333333333334
+  Max 0.9866666666666667
+-- Generation 32, Size 10, Time 731.8020706176758, Call Counts 136 --
+  Min 0.8733333333333333
+  Max 0.9866666666666667
+-- Generation 33, Size 10, Time 753.494633436203, Call Counts 140 --
+  Min 0.7666666666666667
+  Max 0.9866666666666667
+-- Generation 35, Size 10, Time 791.352710723877, Call Counts 147 --
+  Min 0.8833333333333332
+  Max 0.9866666666666667
+-- Generation 37, Size 10, Time 817.9448518753052, Call Counts 152 --
+  Min 0.9566666666666667
+  Max 0.9866666666666667
+-- Generation 39, Size 10, Time 857.8964393138885, Call Counts 159 --
+  Min 0.9133333333333333
+  Max 0.9866666666666667
+-- Generation 41, Size 10, Time 895.4410269260406, Call Counts 166 --
+  Min 0.9266666666666665
+  Max 0.9866666666666667
+-- Generation 43, Size 10, Time 925.461683511734, Call Counts 172 --
+  Min 0.78
+  Max 0.9866666666666667
+-- Generation 44, Size 10, Time 952.7814021110535, Call Counts 177 --
+  Min 0.9433333333333334
+  Max 0.9866666666666667
+-- Generation 45, Size 10, Time 974.4174320697784, Call Counts 181 --
+  Min 0.9333333333333333
+  Max 0.9866666666666667
+-- Generation 46, Size 10, Time 1002.6070425510406, Call Counts 186 --
+  Min 0.95
+  Max 0.9866666666666667
+-- Generation 48, Size 10, Time 1030.102727174759, Call Counts 191 --
+  Min 0.9533333333333334
+  Max 0.9866666666666667
+-- Generation 49, Size 10, Time 1051.1569683551788, Call Counts 195 --
+  Min 0.8733333333333333
+  Max 0.9866666666666667
+-- Generation 50, Size 10, Time 1068.103064775467, Call Counts 198 --
+  Min 0.9533333333333334
+  Max 0.9866666666666667
+-- Generation 51, Size 10, Time 1094.4164516925812, Call Counts 203 --
+  Min 0.85
+  Max 0.9866666666666667
+-- Generation 52, Size 10, Time 1116.9127480983734, Call Counts 207 --
+  Min 0.9566666666666667
+  Max 0.9866666666666667
+-- Generation 54, Size 10, Time 1150.0306661128998, Call Counts 213 --
+  Min 0.9200000000000002
+  Max 0.9866666666666667
+-- Generation 56, Size 10, Time 1166.3197402954102, Call Counts 216 --
+  Min 0.8966666666666667
+  Max 0.9866666666666667
+-- Generation 58, Size 10, Time 1199.0092306137085, Call Counts 222 --
+  Min 0.9066666666666666
+  Max 0.9866666666666667
+-- Generation 59, Size 10, Time 1228.420331954956, Call Counts 227 --
+  Min 0.9533333333333334
+  Max 0.9933333333333334
+-- Generation 60, Size 10, Time 1245.6542420387268, Call Counts 230 --
+  Min 0.9433333333333334
+  Max 0.9933333333333334
+-- Generation 61, Size 10, Time 1286.8260974884033, Call Counts 237 --
+  Min 0.8400000000000001
+  Max 0.9933333333333334
+-- Generation 62, Size 10, Time 1304.4390149116516, Call Counts 240 --
+  Min 0.9399999999999998
+  Max 0.9933333333333334
+-- Generation 63, Size 10, Time 1330.4236736297607, Call Counts 245 --
+  Min 0.9066666666666666
+  Max 0.9933333333333334
+-- Generation 65, Size 10, Time 1362.532014131546, Call Counts 251 --
+  Min 0.8266666666666665
+  Max 0.9933333333333334
+-- Generation 66, Size 10, Time 1394.5366220474243, Call Counts 257 --
+  Min 0.8966666666666667
+  Max 0.9966666666666667
+-- Generation 67, Size 10, Time 1411.8623433113098, Call Counts 260 --
+  Min 0.8366666666666667
+  Max 0.9966666666666667
+-- Generation 68, Size 10, Time 1429.4451034069061, Call Counts 263 --
+  Min 0.9666666666666666
+  Max 0.9966666666666667
+-- Generation 69, Size 10, Time 1446.1074328422546, Call Counts 266 --
+  Min 0.9466666666666667
+  Max 0.9933333333333334
+-- Generation 70, Size 10, Time 1462.4989204406738, Call Counts 269 --
+  Min 0.8566666666666667
+  Max 0.9933333333333334
+-- Generation 71, Size 10, Time 1491.0745780467987, Call Counts 274 --
+  Min 0.8466666666666667
+  Max 0.9933333333333334
+-- Generation 73, Size 10, Time 1517.616357088089, Call Counts 279 --
+  Min 0.9399999999999998
+  Max 0.9933333333333334
+-- Generation 74, Size 10, Time 1534.7901287078857, Call Counts 282 --
+  Min 0.8966666666666667
+  Max 0.9933333333333334
+-- Generation 75, Size 10, Time 1552.8682730197906, Call Counts 285 --
+  Min 0.8633333333333333
+  Max 0.9933333333333334
+-- Generation 76, Size 10, Time 1592.6541709899902, Call Counts 292 --
+  Min 0.8800000000000001
+  Max 0.9933333333333334
+-- Generation 77, Size 10, Time 1621.2419266700745, Call Counts 297 --
+  Min 0.97
+  Max 0.9933333333333334
+-- Generation 78, Size 10, Time 1650.0012810230255, Call Counts 302 --
+  Min 0.8533333333333333
+  Max 0.9933333333333334
+-- Generation 79, Size 10, Time 1670.5382554531097, Call Counts 306 --
+  Min 0.89
+  Max 0.9933333333333334
+-- Generation 80, Size 10, Time 1688.8950004577637, Call Counts 309 --
+  Min 0.7733333333333333
+  Max 0.9933333333333334
+-- Generation 81, Size 10, Time 1716.7781612873077, Call Counts 314 --
+  Min 0.9566666666666667
+  Max 0.9933333333333334
+-- Generation 82, Size 10, Time 1749.9228405952454, Call Counts 320 --
+  Min 0.93
+  Max 0.9933333333333334
+-- Generation 83, Size 10, Time 1767.275340795517, Call Counts 323 --
+  Min 0.9433333333333334
+  Max 0.9933333333333334
+-- Generation 84, Size 10, Time 1790.4007439613342, Call Counts 327 --
+  Min 0.9566666666666667
+  Max 0.9933333333333334
+-- Generation 2, Size 10, Time 83.68365359306335, Call Counts 18 --
+  Min 0.053333333333333344
+  Max 0.63
+-- Generation 5, Size 10, Time 107.51098704338074, Call Counts 23 --
+  Min 0.5966666666666667
+  Max 0.69
+-- Generation 8, Size 10, Time 151.55383682250977, Call Counts 31 --
+  Min 0.6566666666666666
+  Max 0.7666666666666667
+-- Generation 9, Size 10, Time 176.4842448234558, Call Counts 36 --
+  Min 0.69
+  Max 0.8133333333333332
+-- Generation 10, Size 10, Time 197.0873064994812, Call Counts 40 --
+  Min 0.6033333333333334
+  Max 0.8299999999999998
+-- Generation 12, Size 10, Time 212.86424827575684, Call Counts 43 --
+  Min 0.8100000000000002
+  Max 0.8433333333333334
+-- Generation 13, Size 10, Time 232.67688155174255, Call Counts 47 --
+  Min 0.69
+  Max 0.8433333333333334
+-- Generation 15, Size 10, Time 265.96529841423035, Call Counts 54 --
+  Min 0.74
+  Max 0.8666666666666668
+-- Generation 16, Size 10, Time 298.2671220302582, Call Counts 61 --
+  Min 0.6066666666666667
+  Max 0.9099999999999999
+-- Generation 18, Size 10, Time 336.6084289550781, Call Counts 69 --
+  Min 0.62
+  Max 0.9200000000000002
+-- Generation 19, Size 10, Time 356.4933261871338, Call Counts 73 --
+  Min 0.82
+  Max 0.9200000000000002
+-- Generation 21, Size 10, Time 388.3574616909027, Call Counts 80 --
+  Min 0.8633333333333333
+  Max 0.9666666666666666
+-- Generation 22, Size 10, Time 413.762690782547, Call Counts 85 --
+  Min 0.7866666666666666
+  Max 0.9433333333333334
+-- Generation 24, Size 10, Time 448.1736707687378, Call Counts 92 --
+  Min 0.8233333333333335
+  Max 0.9433333333333334
+-- Generation 25, Size 10, Time 468.88824105262756, Call Counts 96 --
+  Min 0.89
+  Max 0.9433333333333334
+-- Generation 26, Size 10, Time 499.066504240036, Call Counts 102 --
+  Min 0.8366666666666667
+  Max 0.9433333333333334
+-- Generation 27, Size 10, Time 526.77539229393, Call Counts 108 --
+  Min 0.8800000000000001
+  Max 0.9433333333333334
+-- Generation 28, Size 10, Time 561.6125602722168, Call Counts 115 --
+  Min 0.86
+  Max 0.95
+-- Generation 29, Size 10, Time 577.0106844902039, Call Counts 118 --
+  Min 0.7533333333333333
+  Max 0.95
+-- Generation 30, Size 10, Time 600.0032894611359, Call Counts 123 --
+  Min 0.8366666666666667
+  Max 0.95
+-- Generation 32, Size 10, Time 633.4310166835785, Call Counts 130 --
+  Min 0.9033333333333333
+  Max 0.95
+-- Generation 34, Size 10, Time 667.7242968082428, Call Counts 137 --
+  Min 0.8100000000000002
+  Max 0.95
+-- Generation 37, Size 10, Time 690.8426485061646, Call Counts 142 --
+  Min 0.8866666666666667
+  Max 0.95
+-- Generation 38, Size 10, Time 724.5913944244385, Call Counts 149 --
+  Min 0.7766666666666666
+  Max 0.95
+-- Generation 39, Size 10, Time 742.01637840271, Call Counts 153 --
+  Min 0.8633333333333333
+  Max 0.95
+-- Generation 41, Size 10, Time 795.583792924881, Call Counts 164 --
+  Min 0.7966666666666666
+  Max 0.9733333333333334
+-- Generation 42, Size 10, Time 815.2906229496002, Call Counts 168 --
+  Min 0.8733333333333333
+  Max 0.9733333333333334
+-- Generation 45, Size 10, Time 848.4964544773102, Call Counts 175 --
+  Min 0.6833333333333333
+  Max 0.9733333333333334
+-- Generation 46, Size 10, Time 870.9987087249756, Call Counts 180 --
+  Min 0.8100000000000002
+  Max 0.9733333333333334
+-- Generation 48, Size 10, Time 910.4454696178436, Call Counts 188 --
+  Min 0.7
+  Max 0.9733333333333334
+-- Generation 51, Size 10, Time 958.9833636283875, Call Counts 198 --
+  Min 0.69
+  Max 0.9733333333333334
+-- Generation 53, Size 10, Time 994.6469714641571, Call Counts 206 --
+  Min 0.6466666666666666
+  Max 0.9733333333333334
+-- Generation 55, Size 10, Time 1010.184942483902, Call Counts 209 --
+  Min 0.8966666666666667
+  Max 0.9733333333333334
+-- Generation 56, Size 10, Time 1040.0422747135162, Call Counts 215 --
+  Min 0.9033333333333333
+  Max 0.9733333333333334
+-- Generation 57, Size 10, Time 1063.346220254898, Call Counts 220 --
+  Min 0.8466666666666667
+  Max 0.9733333333333334
+-- Generation 59, Size 10, Time 1087.2859852313995, Call Counts 225 --
+  Min 0.8566666666666667
+  Max 0.9733333333333334
+-- Generation 60, Size 10, Time 1107.8705055713654, Call Counts 229 --
+  Min 0.8366666666666667
+  Max 0.9733333333333334
+-- Generation 62, Size 10, Time 1127.90598487854, Call Counts 233 --
+  Min 0.9433333333333334
+  Max 0.9733333333333334
+-- Generation 64, Size 10, Time 1156.6981337070465, Call Counts 239 --
+  Min 0.7333333333333333
+  Max 0.9733333333333334
+-- Generation 65, Size 10, Time 1176.4754302501678, Call Counts 243 --
+  Min 0.8633333333333333
+  Max 0.9733333333333334
+-- Generation 66, Size 10, Time 1201.3882279396057, Call Counts 248 --
+  Min 0.86
+  Max 0.9733333333333334
+-- Generation 67, Size 10, Time 1223.82008767128, Call Counts 253 --
+  Min 0.8400000000000001
+  Max 0.9733333333333334
+-- Generation 68, Size 10, Time 1253.150866508484, Call Counts 259 --
+  Min 0.8966666666666667
+  Max 0.9733333333333334
+-- Generation 69, Size 10, Time 1282.0068910121918, Call Counts 265 --
+  Min 0.8266666666666665
+  Max 0.9733333333333334
+-- Generation 70, Size 10, Time 1309.3588495254517, Call Counts 270 --
+  Min 0.9033333333333333
+  Max 0.9733333333333334
+-- Generation 71, Size 10, Time 1339.3737325668335, Call Counts 276 --
+  Min 0.8033333333333333
+  Max 0.9733333333333334
+-- Generation 73, Size 10, Time 1358.2011556625366, Call Counts 280 --
+  Min 0.8366666666666667
+  Max 0.9733333333333334
+-- Generation 74, Size 10, Time 1380.9587740898132, Call Counts 285 --
+  Min 0.8766666666666667
+  Max 0.9733333333333334
+-- Generation 76, Size 10, Time 1410.0186812877655, Call Counts 291 --
+  Min 0.8966666666666667
+  Max 0.9733333333333334
+-- Generation 77, Size 10, Time 1437.968904018402, Call Counts 297 --
+  Min 0.8266666666666665
+  Max 0.9733333333333334
+-- Generation 79, Size 10, Time 1461.3429236412048, Call Counts 302 --
+  Min 0.8699999999999999
+  Max 0.9733333333333334
+-- Generation 81, Size 10, Time 1492.022626876831, Call Counts 309 --
+  Min 0.8800000000000001
+  Max 0.9733333333333334
+-- Generation 82, Size 10, Time 1507.2684996128082, Call Counts 312 --
+  Min 0.8766666666666667
+  Max 0.9733333333333334
+-- Generation 83, Size 10, Time 1534.645429611206, Call Counts 318 --
+  Min 0.8933333333333333
+  Max 0.9733333333333334
+-- Generation 84, Size 10, Time 1554.3252441883087, Call Counts 322 --
+  Min 0.8699999999999999
+  Max 0.9733333333333334
+-- Generation 86, Size 10, Time 1583.1634221076965, Call Counts 328 --
+  Min 0.89
+  Max 0.9733333333333334
+-- Generation 88, Size 10, Time 1605.8370914459229, Call Counts 333 --
+  Min 0.9233333333333335
+  Max 0.9733333333333334
+-- Generation 89, Size 10, Time 1630.7354032993317, Call Counts 338 --
+  Min 0.77
+  Max 0.9733333333333334
+-- Generation 90, Size 10, Time 1654.8632509708405, Call Counts 343 --
+  Min 0.7233333333333334
+  Max 0.9733333333333334
+-- Generation 91, Size 10, Time 1683.9426414966583, Call Counts 349 --
+  Min 0.7766666666666666
+  Max 0.9733333333333334
+-- Generation 92, Size 10, Time 1712.676906824112, Call Counts 355 --
+  Min 0.7366666666666667
+  Max 0.9733333333333334
+-- Generation 94, Size 10, Time 1745.548998594284, Call Counts 362 --
+  Min 0.8699999999999999
+  Max 0.9733333333333334
+-- Generation 98, Size 10, Time 1765.1807508468628, Call Counts 366 --
+  Min 0.9066666666666666
+  Max 0.9733333333333334
+-- Generation 100, Size 10, Time 1783.6890542507172, Call Counts 370 --
+  Min 0.8966666666666667
+  Max 0.9733333333333334
+-- Generation 101, Size 10, Time 1800.6481907367706, Call Counts 374 --
+  Min 0.7666666666666667
+  Max 0.9733333333333334
+-- Generation 2, Size 10, Time 68.43740224838257, Call Counts 14 --
+  Min 0.18
+  Max 0.58
+-- Generation 3, Size 10, Time 97.51391625404358, Call Counts 20 --
+  Min 0.18
+  Max 0.6733333333333333
+-- Generation 4, Size 10, Time 118.83894753456116, Call Counts 24 --
+  Min 0.35333333333333333
+  Max 0.7033333333333334
+-- Generation 5, Size 10, Time 143.17943048477173, Call Counts 29 --
+  Min 0.4600000000000001
+  Max 0.7033333333333334
+-- Generation 6, Size 10, Time 173.06071853637695, Call Counts 35 --
+  Min 0.5366666666666666
+  Max 0.7033333333333334
+-- Generation 7, Size 10, Time 195.69317817687988, Call Counts 40 --
+  Min 0.57
+  Max 0.7233333333333334
+-- Generation 8, Size 10, Time 214.9227123260498, Call Counts 44 --
+  Min 0.35
+  Max 0.7233333333333334
+-- Generation 9, Size 10, Time 231.91959285736084, Call Counts 47 --
+  Min 0.62
+  Max 0.7466666666666667
+-- Generation 11, Size 10, Time 259.04661536216736, Call Counts 52 --
+  Min 0.6166666666666667
+  Max 0.7466666666666667
+-- Generation 12, Size 10, Time 298.28466844558716, Call Counts 59 --
+  Min 0.5433333333333333
+  Max 0.7466666666666667
+-- Generation 14, Size 10, Time 325.02704310417175, Call Counts 64 --
+  Min 0.7166666666666667
+  Max 0.7666666666666667
+-- Generation 15, Size 10, Time 342.89090061187744, Call Counts 67 --
+  Min 0.6666666666666666
+  Max 0.7666666666666667
+-- Generation 16, Size 10, Time 388.7567207813263, Call Counts 75 --
+  Min 0.6966666666666667
+  Max 0.8166666666666667
+-- Generation 17, Size 10, Time 413.63587951660156, Call Counts 79 --
+  Min 0.68
+  Max 0.8299999999999998
+-- Generation 18, Size 10, Time 436.51293182373047, Call Counts 83 --
+  Min 0.67
+  Max 0.8299999999999998
+-- Generation 19, Size 10, Time 460.4813268184662, Call Counts 87 --
+  Min 0.7366666666666667
+  Max 0.8800000000000001
+-- Generation 21, Size 10, Time 500.8102548122406, Call Counts 94 --
+  Min 0.5033333333333333
+  Max 0.8833333333333332
+-- Generation 22, Size 10, Time 525.5570142269135, Call Counts 98 --
+  Min 0.7366666666666667
+  Max 0.8866666666666667
+-- Generation 23, Size 10, Time 554.52197432518, Call Counts 103 --
+  Min 0.8266666666666665
+  Max 0.9433333333333334
+-- Generation 24, Size 10, Time 578.4481730461121, Call Counts 107 --
+  Min 0.7
+  Max 0.9433333333333334
+-- Generation 25, Size 10, Time 595.2683303356171, Call Counts 110 --
+  Min 0.7933333333333333
+  Max 0.9433333333333334
+-- Generation 28, Size 10, Time 643.9203221797943, Call Counts 118 --
+  Min 0.7433333333333333
+  Max 0.9433333333333334
+-- Generation 29, Size 10, Time 668.4534025192261, Call Counts 122 --
+  Min 0.78
+  Max 0.9433333333333334
+-- Generation 30, Size 10, Time 690.7243919372559, Call Counts 126 --
+  Min 0.75
+  Max 0.9433333333333334
+-- Generation 32, Size 10, Time 730.5374495983124, Call Counts 133 --
+  Min 0.71
+  Max 0.9433333333333334
+-- Generation 33, Size 10, Time 769.6503038406372, Call Counts 140 --
+  Min 0.8933333333333333
+  Max 0.9433333333333334
+-- Generation 34, Size 10, Time 785.0300905704498, Call Counts 143 --
+  Min 0.8966666666666667
+  Max 0.9833333333333332
+-- Generation 35, Size 10, Time 807.6951420307159, Call Counts 147 --
+  Min 0.7866666666666666
+  Max 0.9833333333333332
+-- Generation 36, Size 10, Time 846.5707924365997, Call Counts 154 --
+  Min 0.8666666666666668
+  Max 0.9866666666666667
+-- Generation 37, Size 10, Time 875.0924816131592, Call Counts 159 --
+  Min 0.8166666666666667
+  Max 0.9866666666666667
+-- Generation 38, Size 10, Time 893.7042233943939, Call Counts 162 --
+  Min 0.8833333333333332
+  Max 0.9866666666666667
+-- Generation 39, Size 10, Time 910.612051486969, Call Counts 165 --
+  Min 0.9266666666666665
+  Max 0.9933333333333334
+-- Generation 40, Size 10, Time 940.3588035106659, Call Counts 170 --
+  Min 0.8266666666666665
+  Max 0.9933333333333334
+-- Generation 42, Size 10, Time 968.3071267604828, Call Counts 175 --
+  Min 0.9466666666666667
+  Max 0.9933333333333334
+-- Generation 43, Size 10, Time 991.3077645301819, Call Counts 179 --
+  Min 0.9800000000000001
+  Max 0.9933333333333334
+-- Generation 44, Size 10, Time 1020.3596165180206, Call Counts 184 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 45, Size 10, Time 1043.9879231452942, Call Counts 188 --
+  Min 0.9833333333333332
+  Max 0.9966666666666667
+-- Generation 46, Size 10, Time 1076.955567598343, Call Counts 194 --
+  Min 0.73
+  Max 0.9966666666666667
+-- Generation 47, Size 10, Time 1093.584102153778, Call Counts 197 --
+  Min 0.7633333333333333
+  Max 0.9933333333333334
+-- Generation 48, Size 10, Time 1117.1800317764282, Call Counts 201 --
+  Min 0.9200000000000002
+  Max 0.9966666666666667
+-- Generation 50, Size 10, Time 1165.7382652759552, Call Counts 210 --
+  Min 0.9066666666666666
+  Max 0.9966666666666667
+-- Generation 51, Size 10, Time 1193.8212399482727, Call Counts 215 --
+  Min 0.9333333333333333
+  Max 0.9966666666666667
+-- Generation 52, Size 10, Time 1224.7991950511932, Call Counts 220 --
+  Min 0.9133333333333333
+  Max 1.0
+-- Generation 54, Size 10, Time 1241.9261150360107, Call Counts 223 --
+  Min 0.9966666666666667
+  Max 1.0
+-- Generation 56, Size 10, Time 1259.2019627094269, Call Counts 226 --
+  Min 0.9933333333333334
+  Max 1.0
+-- Generation 57, Size 10, Time 1283.0831935405731, Call Counts 230 --
+  Min 0.9933333333333334
+  Max 1.0
+-- Generation 59, Size 10, Time 1310.1003255844116, Call Counts 235 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 60, Size 10, Time 1327.2533547878265, Call Counts 238 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 63, Size 10, Time 1342.8066520690918, Call Counts 241 --
+  Min 0.99
+  Max 1.0
+-- Generation 64, Size 10, Time 1372.0588574409485, Call Counts 246 --
+  Min 0.9266666666666665
+  Max 1.0
+-- Generation 65, Size 10, Time 1397.7007529735565, Call Counts 250 --
+  Min 0.8966666666666667
+  Max 1.0
+-- Generation 66, Size 10, Time 1426.2644357681274, Call Counts 255 --
+  Min 0.8633333333333333
+  Max 1.0
+-- Generation 67, Size 10, Time 1450.2361998558044, Call Counts 259 --
+  Min 0.9933333333333334
+  Max 1.0
+-- Generation 68, Size 10, Time 1482.5152640342712, Call Counts 265 --
+  Min 0.9866666666666667
+  Max 1.0
+-- Generation 70, Size 10, Time 1514.7937595844269, Call Counts 271 --
+  Min 0.9966666666666667
+  Max 1.0
+-- Generation 71, Size 10, Time 1532.0976738929749, Call Counts 274 --
+  Min 0.8699999999999999
+  Max 1.0
+-- Generation 73, Size 10, Time 1561.9285094738007, Call Counts 279 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 74, Size 10, Time 1579.0239038467407, Call Counts 282 --
+  Min 0.85
+  Max 1.0
+-- Generation 75, Size 10, Time 1602.0193197727203, Call Counts 286 --
+  Min 0.95
+  Max 1.0
+-- Generation 76, Size 10, Time 1624.0728025436401, Call Counts 290 --
+  Min 0.93
+  Max 1.0
+-- Generation 77, Size 10, Time 1641.9309737682343, Call Counts 293 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 79, Size 10, Time 1671.3283019065857, Call Counts 298 --
+  Min 0.9
+  Max 1.0
+-- Generation 80, Size 10, Time 1703.738341331482, Call Counts 304 --
+  Min 0.95
+  Max 1.0
+-- Generation 81, Size 10, Time 1721.1722257137299, Call Counts 307 --
+  Min 0.6733333333333333
+  Max 1.0
+-- Generation 82, Size 10, Time 1739.1797978878021, Call Counts 310 --
+  Min 0.9733333333333334
+  Max 1.0
+-- Generation 83, Size 10, Time 1755.1521923542023, Call Counts 313 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 85, Size 10, Time 1772.9411895275116, Call Counts 316 --
+  Min 0.9866666666666667
+  Max 1.0
+-- Generation 86, Size 10, Time 1794.109159231186, Call Counts 320 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 88, Size 10, Time 1822.8289663791656, Call Counts 325 --
+  Min 0.79
+  Max 1.0
+-- Generation 3, Size 10, Time 89.89067554473877, Call Counts 18 --
+  Min 0.17
+  Max 0.58
+-- Generation 4, Size 10, Time 111.21988224983215, Call Counts 22 --
+  Min 0.4066666666666666
+  Max 0.6433333333333333
+-- Generation 5, Size 10, Time 133.5389015674591, Call Counts 26 --
+  Min 0.5466666666666666
+  Max 0.6733333333333333
+-- Generation 7, Size 10, Time 149.7237548828125, Call Counts 29 --
+  Min 0.62
+  Max 0.6733333333333333
+-- Generation 9, Size 10, Time 171.95538663864136, Call Counts 33 --
+  Min 0.6666666666666666
+  Max 0.7233333333333334
+-- Generation 10, Size 10, Time 197.99179601669312, Call Counts 38 --
+  Min 0.5866666666666667
+  Max 0.7233333333333334
+-- Generation 11, Size 10, Time 235.9575641155243, Call Counts 45 --
+  Min 0.49000000000000005
+  Max 0.7233333333333334
+-- Generation 12, Size 10, Time 267.3030049800873, Call Counts 51 --
+  Min 0.5933333333333334
+  Max 0.8533333333333333
+-- Generation 14, Size 10, Time 315.29674339294434, Call Counts 60 --
+  Min 0.54
+  Max 0.86
+-- Generation 16, Size 10, Time 346.1888859272003, Call Counts 66 --
+  Min 0.7333333333333333
+  Max 0.9133333333333333
+-- Generation 18, Size 10, Time 384.3671131134033, Call Counts 73 --
+  Min 0.73
+  Max 0.9133333333333333
+-- Generation 19, Size 10, Time 410.9925580024719, Call Counts 78 --
+  Min 0.7666666666666667
+  Max 0.9133333333333333
+-- Generation 22, Size 10, Time 427.7682147026062, Call Counts 81 --
+  Min 0.76
+  Max 0.9200000000000002
+-- Generation 23, Size 10, Time 471.9338753223419, Call Counts 90 --
+  Min 0.8433333333333334
+  Max 0.9200000000000002
+-- Generation 24, Size 10, Time 501.7957901954651, Call Counts 96 --
+  Min 0.7433333333333333
+  Max 0.9200000000000002
+-- Generation 25, Size 10, Time 520.4750578403473, Call Counts 100 --
+  Min 0.82
+  Max 0.9399999999999998
+-- Generation 26, Size 10, Time 540.8696811199188, Call Counts 104 --
+  Min 0.9200000000000002
+  Max 0.9433333333333334
+-- Generation 27, Size 10, Time 578.6044163703918, Call Counts 111 --
+  Min 0.71
+  Max 0.9433333333333334
+-- Generation 28, Size 10, Time 621.0892629623413, Call Counts 119 --
+  Min 0.85
+  Max 0.95
+-- Generation 30, Size 10, Time 646.5558753013611, Call Counts 124 --
+  Min 0.82
+  Max 0.95
+-- Generation 31, Size 10, Time 661.6106510162354, Call Counts 127 --
+  Min 0.9099999999999999
+  Max 0.95
+-- Generation 33, Size 10, Time 702.5007679462433, Call Counts 135 --
+  Min 0.8533333333333333
+  Max 0.95
+-- Generation 34, Size 10, Time 723.8919773101807, Call Counts 139 --
+  Min 0.89
+  Max 0.95
+-- Generation 36, Size 10, Time 743.9522197246552, Call Counts 143 --
+  Min 0.7766666666666666
+  Max 0.96
+-- Generation 38, Size 10, Time 759.8543395996094, Call Counts 146 --
+  Min 0.8266666666666665
+  Max 0.96
+-- Generation 39, Size 10, Time 794.6816275119781, Call Counts 152 --
+  Min 0.8833333333333332
+  Max 0.9633333333333333
+-- Generation 41, Size 10, Time 829.257166147232, Call Counts 158 --
+  Min 0.95
+  Max 0.9733333333333334
+-- Generation 42, Size 10, Time 860.8330318927765, Call Counts 164 --
+  Min 0.7466666666666667
+  Max 0.9733333333333334
+-- Generation 44, Size 10, Time 883.3611421585083, Call Counts 168 --
+  Min 0.8400000000000001
+  Max 0.9766666666666668
+-- Generation 45, Size 10, Time 915.3146336078644, Call Counts 174 --
+  Min 0.89
+  Max 0.9866666666666667
+-- Generation 47, Size 10, Time 947.538200378418, Call Counts 180 --
+  Min 0.9633333333333333
+  Max 0.9866666666666667
+-- Generation 48, Size 10, Time 971.9432363510132, Call Counts 184 --
+  Min 0.9399999999999998
+  Max 0.9766666666666668
+-- Generation 50, Size 10, Time 1003.0907380580902, Call Counts 189 --
+  Min 0.9
+  Max 0.9800000000000001
+-- Generation 51, Size 10, Time 1033.1032299995422, Call Counts 194 --
+  Min 0.9533333333333334
+  Max 0.9800000000000001
+-- Generation 53, Size 10, Time 1069.6581540107727, Call Counts 200 --
+  Min 0.9033333333333333
+  Max 0.9833333333333332
+-- Generation 54, Size 10, Time 1102.8168342113495, Call Counts 206 --
+  Min 0.9399999999999998
+  Max 0.9833333333333332
+-- Generation 55, Size 10, Time 1120.6539220809937, Call Counts 209 --
+  Min 0.9433333333333334
+  Max 0.9833333333333332
+-- Generation 57, Size 10, Time 1148.9370505809784, Call Counts 214 --
+  Min 0.95
+  Max 0.9833333333333332
+-- Generation 59, Size 10, Time 1166.3906362056732, Call Counts 217 --
+  Min 0.9533333333333334
+  Max 0.9833333333333332
+-- Generation 60, Size 10, Time 1202.659107208252, Call Counts 223 --
+  Min 0.8533333333333333
+  Max 0.9833333333333332
+-- Generation 61, Size 10, Time 1238.3050436973572, Call Counts 229 --
+  Min 0.8066666666666666
+  Max 0.9833333333333332
+-- Generation 62, Size 10, Time 1265.6130230426788, Call Counts 234 --
+  Min 0.7366666666666667
+  Max 0.9833333333333332
+-- Generation 63, Size 10, Time 1287.783543586731, Call Counts 238 --
+  Min 0.8366666666666667
+  Max 0.9833333333333332
+-- Generation 64, Size 10, Time 1315.6173875331879, Call Counts 243 --
+  Min 0.9099999999999999
+  Max 0.9833333333333332
+-- Generation 66, Size 10, Time 1359.0931310653687, Call Counts 250 --
+  Min 0.9266666666666665
+  Max 0.99
+-- Generation 67, Size 10, Time 1388.679779291153, Call Counts 255 --
+  Min 0.8266666666666665
+  Max 0.99
+-- Generation 68, Size 10, Time 1404.909351348877, Call Counts 258 --
+  Min 0.9533333333333334
+  Max 0.99
+-- Generation 70, Size 10, Time 1446.4314291477203, Call Counts 265 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 71, Size 10, Time 1481.4310493469238, Call Counts 271 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 72, Size 10, Time 1497.7921981811523, Call Counts 274 --
+  Min 0.9366666666666668
+  Max 1.0
+-- Generation 74, Size 10, Time 1515.187978029251, Call Counts 277 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 75, Size 10, Time 1544.7596702575684, Call Counts 282 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 76, Size 10, Time 1560.4796812534332, Call Counts 285 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 77, Size 10, Time 1606.5261685848236, Call Counts 293 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 79, Size 10, Time 1651.6889390945435, Call Counts 301 --
+  Min 0.8233333333333335
+  Max 1.0
+-- Generation 80, Size 10, Time 1670.7493658065796, Call Counts 304 --
+  Min 0.7533333333333333
+  Max 1.0
+-- Generation 81, Size 10, Time 1695.0634906291962, Call Counts 308 --
+  Min 0.95
+  Max 1.0
+-- Generation 83, Size 10, Time 1724.9338126182556, Call Counts 313 --
+  Min 0.9166666666666666
+  Max 1.0
+-- Generation 85, Size 10, Time 1755.4373121261597, Call Counts 319 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 86, Size 10, Time 1771.339429616928, Call Counts 322 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 87, Size 10, Time 1788.292387008667, Call Counts 325 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 88, Size 10, Time 1806.811308145523, Call Counts 328 --
+  Min 0.93
+  Max 1.0
+-- Generation 2, Size 10, Time 67.75046157836914, Call Counts 15 --
+  Min 0.16333333333333333
+  Max 0.58
+-- Generation 4, Size 10, Time 91.77362704277039, Call Counts 20 --
+  Min 0.51
+  Max 0.7066666666666667
+-- Generation 5, Size 10, Time 113.57035088539124, Call Counts 24 --
+  Min 0.39
+  Max 0.7066666666666667
+-- Generation 8, Size 10, Time 132.67458701133728, Call Counts 28 --
+  Min 0.6
+  Max 0.7966666666666666
+-- Generation 10, Size 10, Time 160.54495930671692, Call Counts 34 --
+  Min 0.6266666666666667
+  Max 0.8
+-- Generation 12, Size 10, Time 208.84888792037964, Call Counts 44 --
+  Min 0.54
+  Max 0.8866666666666667
+-- Generation 14, Size 10, Time 234.97860527038574, Call Counts 50 --
+  Min 0.8033333333333333
+  Max 0.89
+-- Generation 17, Size 10, Time 259.8041422367096, Call Counts 56 --
+  Min 0.8699999999999999
+  Max 0.9133333333333333
+-- Generation 18, Size 10, Time 277.1025719642639, Call Counts 60 --
+  Min 0.7633333333333333
+  Max 0.9133333333333333
+-- Generation 19, Size 10, Time 298.8845262527466, Call Counts 65 --
+  Min 0.8066666666666666
+  Max 0.9733333333333334
+-- Generation 20, Size 10, Time 318.6802260875702, Call Counts 70 --
+  Min 0.6933333333333334
+  Max 0.9733333333333334
+-- Generation 21, Size 10, Time 346.3679664134979, Call Counts 76 --
+  Min 0.8166666666666667
+  Max 0.9800000000000001
+-- Generation 22, Size 10, Time 364.80596923828125, Call Counts 80 --
+  Min 0.9433333333333334
+  Max 0.9733333333333334
+-- Generation 24, Size 10, Time 383.7355773448944, Call Counts 84 --
+  Min 0.9566666666666667
+  Max 0.9733333333333334
+-- Generation 26, Size 10, Time 404.2742621898651, Call Counts 89 --
+  Min 0.9666666666666666
+  Max 0.9866666666666667
+-- Generation 27, Size 10, Time 431.16416120529175, Call Counts 95 --
+  Min 0.9633333333333333
+  Max 0.99
+-- Generation 28, Size 10, Time 452.77181673049927, Call Counts 100 --
+  Min 0.8966666666666667
+  Max 0.9933333333333334
+-- Generation 30, Size 10, Time 485.5058295726776, Call Counts 107 --
+  Min 0.8966666666666667
+  Max 0.9933333333333334
+-- Generation 32, Size 10, Time 513.8036124706268, Call Counts 113 --
+  Min 0.89
+  Max 0.9933333333333334
+-- Generation 34, Size 10, Time 532.557431936264, Call Counts 117 --
+  Min 0.97
+  Max 0.9933333333333334
+-- Generation 36, Size 10, Time 549.3996167182922, Call Counts 121 --
+  Min 0.9633333333333333
+  Max 0.9933333333333334
+-- Generation 37, Size 10, Time 568.1141548156738, Call Counts 125 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 38, Size 10, Time 598.5594835281372, Call Counts 132 --
+  Min 0.9066666666666666
+  Max 0.9966666666666667
+-- Generation 40, Size 10, Time 622.595894575119, Call Counts 137 --
+  Min 0.8966666666666667
+  Max 0.9966666666666667
+-- Generation 42, Size 10, Time 646.3144426345825, Call Counts 142 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 43, Size 10, Time 665.5424973964691, Call Counts 146 --
+  Min 0.9333333333333333
+  Max 0.9966666666666667
+-- Generation 44, Size 10, Time 689.775927066803, Call Counts 151 --
+  Min 0.9133333333333333
+  Max 0.9966666666666667
+-- Generation 45, Size 10, Time 713.281014919281, Call Counts 156 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 47, Size 10, Time 735.9144203662872, Call Counts 161 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 50, Size 10, Time 769.3239538669586, Call Counts 168 --
+  Min 0.9733333333333334
+  Max 0.9966666666666667
+-- Generation 52, Size 10, Time 800.5461099147797, Call Counts 175 --
+  Min 0.9266666666666665
+  Max 0.9966666666666667
+-- Generation 53, Size 10, Time 819.4639849662781, Call Counts 179 --
+  Min 0.8100000000000002
+  Max 0.9966666666666667
+-- Generation 55, Size 10, Time 841.1007876396179, Call Counts 184 --
+  Min 0.9833333333333332
+  Max 0.9966666666666667
+-- Generation 56, Size 10, Time 863.6130249500275, Call Counts 189 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 57, Size 10, Time 894.8529987335205, Call Counts 196 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 60, Size 10, Time 929.7972500324249, Call Counts 203 --
+  Min 0.7733333333333333
+  Max 0.9966666666666667
+-- Generation 61, Size 10, Time 958.2055320739746, Call Counts 209 --
+  Min 0.89
+  Max 0.9966666666666667
+-- Generation 62, Size 10, Time 976.6046848297119, Call Counts 213 --
+  Min 0.9800000000000001
+  Max 0.9966666666666667
+-- Generation 65, Size 10, Time 1012.9993076324463, Call Counts 221 --
+  Min 0.95
+  Max 0.9966666666666667
+-- Generation 67, Size 10, Time 1032.9695744514465, Call Counts 225 --
+  Min 0.9200000000000002
+  Max 0.9966666666666667
+-- Generation 69, Size 10, Time 1062.2853269577026, Call Counts 231 --
+  Min 0.9333333333333333
+  Max 0.9966666666666667
+-- Generation 70, Size 10, Time 1090.3611767292023, Call Counts 237 --
+  Min 0.9633333333333333
+  Max 0.9966666666666667
+-- Generation 71, Size 10, Time 1112.4919121265411, Call Counts 242 --
+  Min 0.9266666666666665
+  Max 0.9966666666666667
+-- Generation 73, Size 10, Time 1145.607048034668, Call Counts 249 --
+  Min 0.8800000000000001
+  Max 0.9966666666666667
+-- Generation 75, Size 10, Time 1195.2235634326935, Call Counts 260 --
+  Min 0.82
+  Max 1.0
+-- Generation 76, Size 10, Time 1222.2720499038696, Call Counts 266 --
+  Min 0.9466666666666667
+  Max 1.0
+-- Generation 77, Size 10, Time 1246.8497240543365, Call Counts 272 --
+  Min 0.8733333333333333
+  Max 1.0
+-- Generation 78, Size 10, Time 1269.5032849311829, Call Counts 277 --
+  Min 0.9200000000000002
+  Max 1.0
+-- Generation 80, Size 10, Time 1292.4850590229034, Call Counts 282 --
+  Min 0.96
+  Max 0.9933333333333334
+-- Generation 81, Size 10, Time 1322.5382361412048, Call Counts 288 --
+  Min 0.8266666666666665
+  Max 0.9933333333333334
+-- Generation 82, Size 10, Time 1339.1886477470398, Call Counts 292 --
+  Min 0.95
+  Max 0.9933333333333334
+-- Generation 84, Size 10, Time 1376.2333624362946, Call Counts 300 --
+  Min 0.8533333333333333
+  Max 0.9933333333333334
+-- Generation 86, Size 10, Time 1400.6475093364716, Call Counts 305 --
+  Min 0.8333333333333334
+  Max 0.9933333333333334
+-- Generation 87, Size 10, Time 1419.9538748264313, Call Counts 309 --
+  Min 0.9766666666666668
+  Max 0.9933333333333334
+-- Generation 90, Size 10, Time 1444.5625281333923, Call Counts 314 --
+  Min 0.9633333333333333
+  Max 0.9933333333333334
+-- Generation 91, Size 10, Time 1471.3417916297913, Call Counts 320 --
+  Min 0.8933333333333333
+  Max 0.9933333333333334
+-- Generation 93, Size 10, Time 1498.6564757823944, Call Counts 326 --
+  Min 0.9066666666666666
+  Max 0.9933333333333334
+-- Generation 95, Size 10, Time 1526.1530933380127, Call Counts 332 --
+  Min 0.8699999999999999
+  Max 0.9933333333333334
+-- Generation 96, Size 10, Time 1545.1000218391418, Call Counts 336 --
+  Min 0.89
+  Max 0.9933333333333334
+-- Generation 98, Size 10, Time 1588.9134831428528, Call Counts 345 --
+  Min 0.8966666666666667
+  Max 0.9933333333333334
+-- Generation 100, Size 10, Time 1611.9021446704865, Call Counts 350 --
+  Min 0.9266666666666665
+  Max 0.9966666666666667
+-- Generation 102, Size 10, Time 1631.6303107738495, Call Counts 354 --
+  Min 0.9566666666666667
+  Max 0.9966666666666667
+-- Generation 103, Size 10, Time 1648.7576751708984, Call Counts 358 --
+  Min 0.9099999999999999
+  Max 0.9966666666666667
+-- Generation 104, Size 10, Time 1673.2333931922913, Call Counts 363 --
+  Min 0.9866666666666667
+  Max 0.9966666666666667
+-- Generation 107, Size 10, Time 1697.0983848571777, Call Counts 368 --
+  Min 0.99
+  Max 1.0
+-- Generation 108, Size 10, Time 1716.9292902946472, Call Counts 372 --
+  Min 0.96
+  Max 1.0
+-- Generation 109, Size 10, Time 1736.020253419876, Call Counts 376 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 110, Size 10, Time 1773.3465523719788, Call Counts 384 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 111, Size 10, Time 1792.9140684604645, Call Counts 388 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 2, Size 10, Time 63.75049829483032, Call Counts 14 --
+  Min 0.023333333333333338
+  Max 0.5966666666666667
+-- Generation 4, Size 10, Time 99.89122557640076, Call Counts 21 --
+  Min 0.20666666666666664
+  Max 0.6033333333333334
+-- Generation 5, Size 10, Time 126.5672857761383, Call Counts 26 --
+  Min 0.35333333333333333
+  Max 0.6033333333333334
+-- Generation 6, Size 10, Time 141.572026014328, Call Counts 29 --
+  Min 0.56
+  Max 0.61
+-- Generation 8, Size 10, Time 156.67617392539978, Call Counts 32 --
+  Min 0.43666666666666665
+  Max 0.61
+-- Generation 9, Size 10, Time 172.79957509040833, Call Counts 35 --
+  Min 0.5366666666666666
+  Max 0.6666666666666666
+-- Generation 11, Size 10, Time 205.04013514518738, Call Counts 41 --
+  Min 0.46333333333333326
+  Max 0.7033333333333334
+-- Generation 12, Size 10, Time 220.08369064331055, Call Counts 44 --
+  Min 0.5066666666666667
+  Max 0.7033333333333334
+-- Generation 14, Size 10, Time 236.34716033935547, Call Counts 47 --
+  Min 0.63
+  Max 0.7033333333333334
+-- Generation 15, Size 10, Time 263.60092973709106, Call Counts 52 --
+  Min 0.49333333333333335
+  Max 0.75
+-- Generation 16, Size 10, Time 308.0551381111145, Call Counts 60 --
+  Min 0.67
+  Max 0.79
+-- Generation 17, Size 10, Time 339.9539246559143, Call Counts 66 --
+  Min 0.66
+  Max 0.8366666666666667
+-- Generation 18, Size 10, Time 372.19941234588623, Call Counts 72 --
+  Min 0.5833333333333334
+  Max 0.8366666666666667
+-- Generation 19, Size 10, Time 397.521018743515, Call Counts 77 --
+  Min 0.6566666666666666
+  Max 0.8366666666666667
+-- Generation 20, Size 10, Time 414.7762219905853, Call Counts 80 --
+  Min 0.6566666666666666
+  Max 0.8366666666666667
+-- Generation 21, Size 10, Time 435.40171694755554, Call Counts 84 --
+  Min 0.7233333333333334
+  Max 0.8366666666666667
+-- Generation 23, Size 10, Time 465.1956009864807, Call Counts 90 --
+  Min 0.6333333333333333
+  Max 0.8366666666666667
+-- Generation 24, Size 10, Time 488.14350628852844, Call Counts 94 --
+  Min 0.7733333333333333
+  Max 0.8366666666666667
+-- Generation 25, Size 10, Time 510.65471601486206, Call Counts 98 --
+  Min 0.7733333333333333
+  Max 0.8366666666666667
+-- Generation 27, Size 10, Time 537.9880223274231, Call Counts 103 --
+  Min 0.72
+  Max 0.8366666666666667
+-- Generation 28, Size 10, Time 568.708978176117, Call Counts 109 --
+  Min 0.5966666666666667
+  Max 0.8366666666666667
+-- Generation 29, Size 10, Time 584.6351051330566, Call Counts 112 --
+  Min 0.59
+  Max 0.86
+-- Generation 30, Size 10, Time 604.4650981426239, Call Counts 116 --
+  Min 0.6366666666666667
+  Max 0.89
+-- Generation 32, Size 10, Time 620.2435364723206, Call Counts 119 --
+  Min 0.7333333333333333
+  Max 0.89
+-- Generation 33, Size 10, Time 657.316351890564, Call Counts 126 --
+  Min 0.8066666666666666
+  Max 0.9399999999999998
+-- Generation 34, Size 10, Time 673.0109696388245, Call Counts 129 --
+  Min 0.74
+  Max 0.9399999999999998
+-- Generation 35, Size 10, Time 696.5027039051056, Call Counts 133 --
+  Min 0.74
+  Max 0.9399999999999998
+-- Generation 36, Size 10, Time 715.3962833881378, Call Counts 137 --
+  Min 0.8
+  Max 0.9399999999999998
+-- Generation 37, Size 10, Time 739.0135605335236, Call Counts 142 --
+  Min 0.7633333333333333
+  Max 0.9399999999999998
+-- Generation 39, Size 10, Time 759.0186350345612, Call Counts 146 --
+  Min 0.8966666666666667
+  Max 0.9399999999999998
+-- Generation 41, Size 10, Time 788.6766474246979, Call Counts 152 --
+  Min 0.8866666666666667
+  Max 0.9399999999999998
+-- Generation 42, Size 10, Time 812.834498167038, Call Counts 157 --
+  Min 0.9
+  Max 0.9399999999999998
+-- Generation 43, Size 10, Time 827.9917929172516, Call Counts 160 --
+  Min 0.86
+  Max 0.9399999999999998
+-- Generation 44, Size 10, Time 847.2494621276855, Call Counts 164 --
+  Min 0.9099999999999999
+  Max 0.9433333333333334
+-- Generation 45, Size 10, Time 873.484393119812, Call Counts 169 --
+  Min 0.72
+  Max 0.9433333333333334
+-- Generation 46, Size 10, Time 888.7412559986115, Call Counts 172 --
+  Min 0.89
+  Max 0.9433333333333334
+-- Generation 48, Size 10, Time 912.3706600666046, Call Counts 177 --
+  Min 0.8266666666666665
+  Max 0.9433333333333334
+-- Generation 50, Size 10, Time 952.0127384662628, Call Counts 185 --
+  Min 0.9233333333333335
+  Max 0.96
+-- Generation 51, Size 10, Time 972.5042881965637, Call Counts 189 --
+  Min 0.9333333333333333
+  Max 0.9633333333333333
+-- Generation 52, Size 10, Time 997.4854068756104, Call Counts 194 --
+  Min 0.8166666666666667
+  Max 0.9800000000000001
+-- Generation 53, Size 10, Time 1022.2703368663788, Call Counts 199 --
+  Min 0.8966666666666667
+  Max 0.9800000000000001
+-- Generation 55, Size 10, Time 1057.9158964157104, Call Counts 206 --
+  Min 0.8800000000000001
+  Max 0.9800000000000001
+-- Generation 56, Size 10, Time 1073.8082296848297, Call Counts 209 --
+  Min 0.9
+  Max 0.9800000000000001
+-- Generation 58, Size 10, Time 1114.4349646568298, Call Counts 217 --
+  Min 0.7233333333333334
+  Max 0.9800000000000001
+-- Generation 59, Size 10, Time 1133.4011642932892, Call Counts 221 --
+  Min 0.9066666666666666
+  Max 0.9800000000000001
+-- Generation 61, Size 10, Time 1162.7650873661041, Call Counts 227 --
+  Min 0.8666666666666668
+  Max 0.9833333333333332
+-- Generation 63, Size 10, Time 1188.3258323669434, Call Counts 232 --
+  Min 0.9200000000000002
+  Max 0.9833333333333332
+-- Generation 65, Size 10, Time 1222.1433086395264, Call Counts 239 --
+  Min 0.7566666666666667
+  Max 0.9866666666666667
+-- Generation 66, Size 10, Time 1251.4391777515411, Call Counts 245 --
+  Min 0.8733333333333333
+  Max 0.99
+-- Generation 68, Size 10, Time 1271.3974061012268, Call Counts 249 --
+  Min 0.9866666666666667
+  Max 0.99
+-- Generation 70, Size 10, Time 1289.8736798763275, Call Counts 253 --
+  Min 0.96
+  Max 0.99
+-- Generation 71, Size 10, Time 1315.3938722610474, Call Counts 258 --
+  Min 0.9233333333333335
+  Max 1.0
+-- Generation 72, Size 10, Time 1331.0988121032715, Call Counts 261 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 74, Size 10, Time 1346.5004165172577, Call Counts 264 --
+  Min 0.9266666666666665
+  Max 1.0
+-- Generation 75, Size 10, Time 1369.3417627811432, Call Counts 269 --
+  Min 0.9633333333333333
+  Max 1.0
+-- Generation 77, Size 10, Time 1389.5360531806946, Call Counts 273 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 78, Size 10, Time 1410.1167178153992, Call Counts 277 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 79, Size 10, Time 1446.025908946991, Call Counts 284 --
+  Min 0.9533333333333334
+  Max 1.0
+-- Generation 80, Size 10, Time 1466.57035779953, Call Counts 288 --
+  Min 0.9133333333333333
+  Max 1.0
+-- Generation 81, Size 10, Time 1493.58455824852, Call Counts 293 --
+  Min 0.9666666666666666
+  Max 1.0
+-- Generation 84, Size 10, Time 1546.6484627723694, Call Counts 304 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 85, Size 10, Time 1583.052693605423, Call Counts 312 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 86, Size 10, Time 1607.02610206604, Call Counts 317 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 88, Size 10, Time 1644.8798203468323, Call Counts 325 --
+  Min 0.9800000000000001
+  Max 1.0
+-- Generation 90, Size 10, Time 1660.8444814682007, Call Counts 328 --
+  Min 0.9833333333333332
+  Max 1.0
+-- Generation 91, Size 10, Time 1690.1224842071533, Call Counts 334 --
+  Min 0.9866666666666667
+  Max 1.0
+-- Generation 92, Size 10, Time 1718.4648673534393, Call Counts 340 --
+  Min 0.9433333333333334
+  Max 1.0
+-- Generation 93, Size 10, Time 1748.6654708385468, Call Counts 346 --
+  Min 0.9866666666666667
+  Max 1.0
+-- Generation 95, Size 10, Time 1776.237975358963, Call Counts 352 --
+  Min 0.9766666666666668
+  Max 1.0
+-- Generation 96, Size 10, Time 1808.0764963626862, Call Counts 358 --
+  Min 0.95
+  Max 1.0
