@@ -90,9 +90,8 @@ if __name__ == '__main__':
     prob_env = prob_env_class.load(kwargs.prob_env_dir)
 
     if kwargs.method == 'random':
-        # problem environment has not fixed x_o.
+        # problem environment may not have fixed x_o.
         # however, we want to fix x_o for monto carlo random search
-        assert not prob_env.if_set_fixed_xo()
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
         opt = RandomSearch(prob_env)
@@ -131,9 +130,8 @@ if __name__ == '__main__':
             save_model_iter=None,
             trial_size=0,
         )
-        # opt is learned from non fixed xo environment
+        # opt may learned from non fixed xo environment
         # but we will test it under fixed xo environment
-        assert not opt.get_env_if_set_fixed_xo()
         opt.set_env_fixed_xo(prob_env.x_o)
         assert opt.get_env_if_set_fixed_xo()
         opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
@@ -141,65 +139,9 @@ if __name__ == '__main__':
         wall_time_limit = opt.learn_wall_time_limit
         # for RL, generation means learning iteration
         generation = opt.get_learn_iteration()
-    elif kwargs.method == 'rl':
-        parent_path = os.path.abspath(os.path.join(
-            kwargs.prob_env_dir,
-            'rl_{}_k{}_d{}_t{}'.
-                format(prob_env_name, prob_env.k, prob_env.d, kwargs.wall_time_limit)))
-        tensorboard_path = os.path.join(parent_path, str(time.time()))
-        model_save_load_path = os.path.join(parent_path, 'optimizer_model_fixedxoTrue', 'qlearning')
-        logger_path = os.path.join(parent_path, 'logger_fixedxoTrue.log')
-        # initialize critical components
-        BaseManager.register('QLearning', QLearning)
-        manager = BaseManager()
-        manager.start()
-        opt = manager.QLearning(
-                k=0,    # will load from environment dir
-                d=0,    # will load from environment dir
-                env_name=prob_env_name,
-                env_dir=kwargs.prob_env_dir,
-                env_fixed_xo=None,    # will load from environment dir
-                n_hidden=1000,
-                save_and_load_path=model_save_load_path,
-                load=bool(kwargs.rl_load),
-                tensorboard_path=tensorboard_path,
-                logger_path=logger_path,
-                memory_capacity=300000,
-                memory_capacity_start_learning=1000,
-                learn_wall_time_limit=kwargs.wall_time_limit,
-                prioritized=True,
-                trial_size=prob_env.d,
-        )
-        # opt loads the environment which has not fixed x_o.
-        # But it will learn based on fixed x_o.
-        assert not opt.get_env_if_set_fixed_xo()
-        opt.set_env_fixed_xo(prob_env.x_o)
-        assert opt.get_env_if_set_fixed_xo()
-
-        # don't learn if it is loaded
-        if opt.get_wall_time() < kwargs.wall_time_limit:
-            EPISODE_SIZE = int(9e30)  # run until hitting wall time limit
-            TEST_PERIOD = 100
-            p1 = Process(target=rl_collect_samples,
-                         args=[opt, EPISODE_SIZE, TEST_PERIOD])
-            p1.start()
-            p2 = Process(target=rl_learn,
-                         args=[opt])
-            p2.start()
-            p1.join()
-            p2.join()
-
-        opt_val, start_x_o, opt_x_p, start_x_p, duration = extract_rl_exp_result(opt, prob_env)
-        # for rl method, duration should be training time
-        duration = kwargs.wall_time_limit
-        wall_time_limit = kwargs.wall_time_limit
-        call_counts = opt.function_call_counts_training()
-        # for RL, generation means learning iteration
-        generation = opt.get_learn_iteration()
     elif kwargs.method == 'ga':
-        # problem environment has not fixed x_o.
-        # however, we want to fix x_o for rbf method
-        assert not prob_env.if_set_fixed_xo()
+        # problem environment may not have fixed x_o.
+        # however, we want to fix x_o for genetic algorithm
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
 
@@ -285,9 +227,8 @@ if __name__ == '__main__':
         generation = gen
     elif kwargs.method == 'sl':
         # a monte carlo method + a supervised learning model
-        # problem environment has not fixed x_o.
-        # however, we want to fix x_o for rbf method
-        assert not prob_env.if_set_fixed_xo()
+        # problem environment may not have fixed x_o.
+        # however, we want to fix x_o for supervise learning method
         prob_env.set_fixed_xo(prob_env.x_o)
         assert prob_env.if_set_fixed_xo()
         sl_model = SuperviseLearning(k=prob_env.k,

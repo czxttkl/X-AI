@@ -12,7 +12,7 @@ We mainly have two models: "rl_prtr" refers to Q-DeckRec, and "ga" refers to Gen
 
 #### Synthetic Neural Network Problem
 
-The synethetic neural network problem assumes the win rate function f() is a neural network. It also assumes $x_o$ is fixed. Therefore, Q-DeckRec will learn a search policy to find the best $x_p$ against $x_0$, while $x_p$ is initialized randomly. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
+The synethetic neural network problem assumes the win rate function f() is a neural network. It also assumes x_o is fixed. Therefore, Q-DeckRec will learn a search policy to find the best x_p against x_o, while x_p is initialized randomly. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
 
 Generate problems
 ```
@@ -24,17 +24,20 @@ python3.6 problem_generator.py --k=20 --d=6 --env=env_nn --pv=0 --env_seed=303
 Test different methods
 ```
 # final results will be stored in test_result.csv in the problem folder
-python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k20_d6_t500/optimizer_model_fixedxoFalse/qlearning"
-python3.6 experimenter.py --method="ga" --wall_time_limit=500 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
+python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k20_d6_t5000/optimizer_model_fixedxoFalse/qlearning"
+python3.6 experimenter.py --method="ga" --wall_time_limit=5 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
 ```
 
 Before test rl_prtr, we need to generate pre-training RL model
 ```
 # the model will be saved in prtr_models/
-python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --load=0 --env_dir="test_probs/prob_env_nn_pv0_envseed303" --learn_wall_time_limit=500 --root_dir="prtr_models"
+python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --load=0 --env_dir="test_probs/prob_env_nn_pv0_envseed303" --learn_wall_time_limit=5000 --root_dir="prtr_models"
 # use tensorboard to check progress
-tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t500/
+tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t5000/
 ```
+What you will see is in tensorboard is:
+![Image of Tensorflow](resource/tf_res.png)
+x axis represents learning episode and y axis represents the win rate of x_p^d against x_o.
 
 #### Deck Recommendation Using MetaStone + GreedyMove AI
 Generate problems
