@@ -10,7 +10,6 @@ import time
 from multiprocessing import Process, freeze_support
 from multiprocessing.managers import BaseManager
 import os
-import rbfopt
 
 import random
 from genetic_algorithm import cxTwoDeck, mutSwapCard, my_deck_creator_func, select_best_from_hof
