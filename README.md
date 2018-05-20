@@ -35,8 +35,9 @@ python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --
 # use tensorboard to check progress
 tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t5000/
 ```
-What you will see is in tensorboard is:
-![Image of Tensorflow](resource/tf_res.png)
+What you will see in tensorboard is:
+![Image of Tensorflow](combinatorial_search/resource/tf_res.png)
+
 x axis represents learning episode and y axis represents the win rate of x_p^d against x_o.
 
 #### Deck Recommendation Using MetaStone + GreedyMove AI
