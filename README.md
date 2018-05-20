@@ -8,11 +8,11 @@ All deck recommendation codes are available under `combinatorial_search` directo
 
 ### Usage
 
-We mainly have two models: "rl_prtr" refers to Q-DeckRec, and "ga" referes to Genetic Algorithm.
+We mainly have two models: "rl_prtr" refers to Q-DeckRec, and "ga" refers to Genetic Algorithm.
 
 #### Synthetic Neural Network Problem
 
-The synethetic neural network problem assumes the win rate function f() is a neural network. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
+The synethetic neural network problem assumes the win rate function f() is a neural network. It also assumes $x_o$ is fixed. Therefore, Q-DeckRec will learn a search policy to find the best $x_p$ against $x_0$, while $x_p$ is initialized randomly. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
 
 Generate problems
 ```
@@ -110,7 +110,7 @@ Tensorboard helper
 
 ### Requirement
 
-Python 3.6
+Python 3.6. Please also see `requirements.txt`
 
 
 Credits to https://github.com/jleclanche/fireplace

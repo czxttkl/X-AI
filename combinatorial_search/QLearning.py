@@ -268,6 +268,8 @@ class QLearning:
         self.q_target = tf.add(self.rewards,
                                self.terminal_weights * (self.gamma * tf.reduce_max(self.q_next, axis=1)),
                                name='q_target')
+        # We do not want the target to be used for computing the gradient
+        self.q_target = tf.stop_gradient(self.q_target)
         # importance sampling weight
         self.is_weights = tf.placeholder(tf.float32, [None], name='is_weights')
         self.loss = tf.reduce_mean(self.is_weights * tf.squared_difference(self.q_target, self.q_eval), name='loss')
