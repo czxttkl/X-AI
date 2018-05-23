@@ -112,11 +112,6 @@ if __name__ == '__main__':
     tensorboard_path = os.path.join(parent_path, str(time.time()))
     model_save_load_path = os.path.join(parent_path, 'optimizer_model_fixedxo{}'.format(fixed_xo), 'qlearning')
     logger_path = os.path.join(parent_path, 'logger_fixedxo{}.log'.format(fixed_xo))
-    if fixed_xo:
-        fixed_xo = numpy.zeros(k)
-        fixed_xo[:d] = 1
-    else:
-        fixed_xo = None
 
     # initialize critical components
     BaseManager.register('QLearning', QLearning)

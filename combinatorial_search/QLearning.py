@@ -115,28 +115,28 @@ class QLearning:
             if env_dir:
                 env = Environment.load(env_dir)
             else:
-                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+                raise NotImplementedError('we enforce environment has been created')
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
         elif env_name == 'env_nn_noisy':
             from environment.env_nn_noisy import Environment
             if env_dir:
                 env = Environment.load(env_dir)
             else:
-                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+                raise NotImplementedError('we enforce environment has been created')
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
         elif env_name == 'env_greedymove':
             from environment.env_greedymove import Environment
             if env_dir:
                 env = Environment.load(env_dir)
             else:
-                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+                raise NotImplementedError('we enforce environment has been created')
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
         elif env_name == 'env_gamestate':
             from environment.env_gamestate import Environment
             if env_dir:
                 env = Environment.load(env_dir)
             else:
-                env = Environment(k=k, d=d, fixed_xo=env_fixed_xo)
+                raise NotImplementedError('we enforce environment has been created')
             n_features, n_actions = 2 * env.k + 1, env.d * (env.k - env.d) + 1
 
         return env, n_features, n_actions
