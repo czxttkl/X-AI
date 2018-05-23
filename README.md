@@ -36,9 +36,10 @@ python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --
 tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t5000/
 ```
 What you will see in tensorboard is:
+
 ![Image of Tensorflow](combinatorial_search/resource/tf_res.png)
 
-x axis represents learning episode and y axis represents the win rate of x_p^d against x_o.
+x axis represents learning episode and y axis represents the win rate of x_p^d against x_o. The learned search policy will be more and more stable to find the best x_p.
 
 #### Deck Recommendation Using MetaStone + GreedyMove AI
 Generate problems
