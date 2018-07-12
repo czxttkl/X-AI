@@ -1,6 +1,6 @@
-A Collectible Card Game (CCG) Deck Recommender just for fun. The project is expected to complete in May, 2018.
+A Collectible Card Game (CCG) Deck Recommender just for fun. The project is still under construction and expected to complete in Sept, 2018.
 
-The paper is available here: Q-DeckRec: a Fast Deck Recommendation System for Collectible Card Games
+The paper is available on arxiv: [Q-DeckRec: A Fast Deck Recommendation System for Collectible Card Games](https://arxiv.org/abs/1806.09771)
 
 All deck recommendation codes are available under `combinatorial_search` directory.
 
