@@ -9,7 +9,7 @@ import optparse
 import os
 import sys
 import psutil
-from sklearn.neural_network import MLPRegressor
+from sklearn.neural_network import MLPClassifier
 from genetic_algorithm import cxTwoDeck, mutSwapCard, my_deck_creator_func, select_best_from_hof
 from deap import base
 from deap import creator
@@ -168,13 +168,13 @@ class MultiLabelLearning:
         print()
         return x_o, opt_x_p
 
-    def train_and_test(self, prob_env, num_trials):
+    def train_and_test(self, prob_env):
         """
         Train a neural network model. Then, test on a test problem.
         This function gets called in ad-hoc or in experimenter.py
         """
         duration = time.time()
-        mlp = MLPRegressor(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000, verbose=True)
+        mlp = MLPClassifier(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000, verbose=True)
         size = len(self.x)
         x, y = numpy.array(self.x[:-size//10]), numpy.array(self.y[:-size//10])
         x_test, y_test = numpy.array(self.x[-size//10:]), numpy.array(self.y[-size//10:])
@@ -188,31 +188,20 @@ class MultiLabelLearning:
         print("Training set R^2 score: %f, MSE: %f, time: %f, size: %d" % (mlp.score(x, y), mse, duration, len(y)))
         print("Test set R^2 score: %f, MSE: %f, size: %d" % (mlp.score(x_test, y_test), mse_test, len(y_test)))
 
-        x_o = numpy.copy(prob_env.x_o)
-
-        max_pred_win_rate = 0
-        max_state = None
+        x_o = numpy.copy(prob_env.x_o).reshape((1, -1))
 
         duration = time.time()
-        cpu_time = self.get_cpu_time()
-        for i in range(num_trials):
-            random_xp = numpy.zeros(prob_env.k + 1)  # state + step
-            one_idx = numpy.random.choice(prob_env.k, prob_env.d, replace=False)
-            random_xp[one_idx] = 1
+        pred_probs = mlp.predict_proba(x_o)[0]
+        cards = numpy.argsort(pred_probs)[::-1][:prob_env.d]
+        opt_x_p = numpy.zeros(prob_env.k)  # state + step
+        opt_x_p[cards] = 1
 
-            random_state = numpy.hstack((x_o, random_xp))
-            random_state_output = mlp.predict(random_state[:-1].reshape((1, -1)))
-
-            if random_state_output > max_pred_win_rate:
-                max_pred_win_rate = random_state_output
-                max_state = random_state
         duration = time.time() - duration
-        cpu_time = self.get_cpu_time() - cpu_time
-        max_real_win_rate = prob_env.still(prob_env.output(max_state))
-        print("Trial: {}, duration: {}, cpu time: {}, max predict win rate: {}, real win rate: {}"
-              .format(num_trials, duration, cpu_time, max_pred_win_rate, max_real_win_rate))
+        state = numpy.hstack((prob_env.x_o, opt_x_p, [0]))
+        real_win_rate = prob_env.still(prob_env.output(state))
+        print("duration: {}, real win rate: {}".format(duration, real_win_rate))
 
-        return max_real_win_rate, duration, max_state
+        return real_win_rate, duration, opt_x_p
 
 
 if __name__ == '__main__':
