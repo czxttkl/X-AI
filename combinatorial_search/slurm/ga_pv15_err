@@ -1,3 +1,0 @@
-slurmstepd: get_exit_code task 0 died by signal
-slurmstepd: unlink(/shared/apps/slurm/slurm-14.11.8/INSTALL/var_dir/spool/job12230368/slurm_script): No such file or directory
-slurmstepd: rmdir(/shared/apps/slurm/slurm-14.11.8/INSTALL/var_dir/spool/job12230368): No such file or directory

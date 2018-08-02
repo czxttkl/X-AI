@@ -1,3 +1,0 @@
-Training set R^2 score: 0.967689, MSE: 0.001248, time: 406.235384, size: 37220
-Test set R^2 score: 0.792199, MSE: 0.008001, size: 4136
-Trial: 6700, duration: 3.3082351684570312, cpu time: 92.64999999999964, max predict win rate: [0.6276], real win rate: 0.6133333333333333
