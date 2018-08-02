@@ -81,10 +81,11 @@ class SuperviseLearning:
         This function gets called in ad-hoc or in experimenter.py
         """
         duration = time.time()
-        mlp = MLPRegressor(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000)
+        mlp = MLPRegressor(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000, verbose=True)
         size = len(self.x)
         x, y = numpy.array(self.x[:-size//10]), numpy.array(self.y[:-size//10])
         x_test, y_test = numpy.array(self.x[-size//10:]), numpy.array(self.y[-size//10:])
+        print('training size:', len(y))
         mlp.fit(x, y)
         duration = time.time() - duration
 

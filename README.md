@@ -6,26 +6,27 @@ All deck recommendation codes are available under `combinatorial_search` directo
 
 <br>
 
-### Usage
+### Overview
 
-We mainly have two models: "rl_prtr" refers to Q-DeckRec, and "ga" refers to Genetic Algorithm.
+The paper tries to solve the following combinatorial optimization problem:
+![Image of Tensorflow](combinatorial_search/resource/obj.png)
 
-#### Synthetic Neural Network Problem
+We mainly have three models: "rl_prtr" refers to Q-DeckRec, 'sl' refers to the ad-hoc baseline using Monte-Carlo simulations, and "ga" refers to Genetic Algorithm.
 
-The synthetic neural network problem assumes the win rate function f() is a neural network. It also assumes x_o is fixed. Therefore, Q-DeckRec will learn a search policy to find the best x_p against the fixed x_o, while x_p is initialized randomly. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
+We prepare two sets of problem instances: "synthetic neural network"and "deck recommendation". The latter is the real problem on which we conduct experiments in the paper.
+
+All commands below are assumed to be executed under the `combinatorial_search` directory.
+#### Synthetic Neural Network Problems 
+
+The synthetic neural network problem assumes f() is a function parameterized by a neural network. It also assumes x_o is fixed in all problem instances. Therefore, Q-DeckRec will learn a search policy to find the best x_p against the fixed x_o, while x_p is initialized randomly. This problem is the best starting point to experiment Q-DeckRec and other algorithms before moving to real deck recommendation problems.
 
 Generate problems
 ```
 # generate a problem where there are 20 total cards and deck size is 6
 # the problem will be serialized in test_probs folder
+# pv=0 means the index of the problem instance is 0. You can change 
+# this index to create different problem instances.
 python3.6 problem_generator.py --k=20 --d=6 --env=env_nn --pv=0 --env_seed=303
-```
-
-Test different methods
-```
-# final results will be stored in test_result.csv in the problem folder
-python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k20_d6_t5000/optimizer_model_fixedxoTrue/qlearning"
-python3.6 experimenter.py --method="ga" --wall_time_limit=5 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
 ```
 
 Before test `rl_prtr`, we need to generate a pre-training RL model
@@ -35,15 +36,43 @@ python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --
 # use tensorboard to check progress
 tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t5000/
 ```
+
 What you will see in tensorboard is:
 
 ![Image of Tensorflow](combinatorial_search/resource/tf_res.png)
 
-x axis represents learning episode and y axis represents the win rate of x_p^d against x_o. The learned search policy will be more and more stable to find the best x_p.
+x axis represents learning episode and y axis represents the win rate of x_p^d against x_o. The learned search policy will be more and more stable to approach the best x_p.
+
+
+Test different methods
+```
+# final results will be stored in test_result.csv in the problem folder
+python3.6 experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_nn_k20_d6_t5000/optimizer_model_fixedxoTrue/qlearning"
+python3.6 experimenter.py --method="ga" --wall_time_limit=5 --prob_env_dir="test_probs/prob_env_nn_pv0_envseed303"
+```
 
 #### Deck Recommendation Using MetaStone + GreedyMove AI
 Generate problems
-`combinatorial_search/commands/env_greedymove/prob_generate.bash`
+```
+# the environment name is "env_greedymove"
+# you can also refer to the script combinatorial_search/commands/env_greedymove/prob_generate.bash
+python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=0 --env_seed=303
+```
+
+MC-simulation baseline
+```
+# collect training data. x: pairs of randomly generated (x_o, x_p), y: win rate
+# --load=0 or 1 decides whether to load an existing dataset or not
+# data collection will continues until reaching wall time limit (in seconds)
+python3.6 supervise_learning.py --env_name="env_greedymove" --k=312 --d=15 --load=0 --wall_time_limit=2591000 
+# test it and results will be stored in test_result.csv in the problem folder
+python3.6 experimenter.py --method="sl" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/sl_env_greedymove_k312_d15_t2591000" --wall_time_limit=2591000 --sl_num_trial=67
+```
+
+Report results
+```
+python3.6 report.py --env=env_greedymove
+```
 
 Test different methods: see different directories in `combinatorial_search/commands/env_greedymove/`
 

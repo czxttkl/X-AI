@@ -239,7 +239,7 @@ if __name__ == '__main__':
                                      path=kwargs.prtr_model_dir)
         opt_val, duration, opt_state = sl_model.train_and_test(prob_env, kwargs.sl_num_trial)
         wall_time_limit = sl_model.time_passed    # data collection time
-        generation = len(sl_model.y)              # number of data
+        generation = len(sl_model.y)              # number of data as generation
         call_counts = kwargs.sl_num_trial
         opt_x_p = opt_state[prob_env.k:-1]
         start_x_o = prob_env.x_o

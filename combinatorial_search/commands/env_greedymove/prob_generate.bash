@@ -14,4 +14,8 @@ python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=0 --env_
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=13 --env_seed=303 \
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=14 --env_seed=303 \
 && python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=15 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=16 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=17 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=18 --env_seed=303 \
+&& python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=19 --env_seed=303
 
