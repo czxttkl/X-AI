@@ -64,10 +64,19 @@ MC-simulation baseline
 # collect training data. x: pairs of randomly generated (x_o, x_p), y: win rate
 # --load=0 or 1 decides whether to load an existing dataset or not
 # data collection will continues until reaching wall time limit (in seconds)
-python3.6 supervise_learning.py --env_name="env_greedymove" --k=312 --d=15 --load=0 --wall_time_limit=2591000 
+python3.6 supervise_learning.py --env_name="env_greedymove" --k=312 --d=15 --load=0 --wall_time_limit=259200 
 # test it and results will be stored in test_result.csv in the problem folder
-python3.6 experimenter.py --method="sl" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/sl_env_greedymove_k312_d15_t2591000" --wall_time_limit=2591000 --sl_num_trial=67
+python3.6 experimenter.py --method="sl" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/sl_env_greedymove_k312_d15_t259200" --wall_time_limit=259200 --sl_num_trial=67
 ```
+
+We also added another baseline recently (not included in the paper), in which we learn a multi-label classifier (based on the same neural network structure as q-deckrec and MC-simulation) based on (x_o, x_p) pairs. During collecting the pairs, x_o is randomly generated and x_p is obtained by genetic algorithm (obtained when no improvement over 10 generations).
+```
+# collect training pairs
+python multilabel_learning.py --env_name="env_greedymove" --k=312 --d=15 --load=0 --wall_time_limit=259200 
+# test
+python experimenter.py --method="ml" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/ml_env_greedymove_k312_d15_t259200" --wall_time_limit=259200
+```
+ 
 
 Report results
 ```
@@ -134,6 +143,9 @@ Learn a win-rate predictor and then use Monte Carlo simulation to sample random 
 
 `supervise_learning_cpu_time.py`
 Only for measuring CPU time of `supervise_learning.py`
+
+`multilabel_learning.py`
+A baseline recently added (not included in the paper), in which we learn a multi-label classifier (based on the same neural network structure as q-deckrec and MC-simulation) based on (x_o, x_p) pairs. During collecting the pairs, x_o is randomly generated and x_p is obtained by genetic algorithm (obtained when no improvement over 10 generations).
 
 `tfboard.py`
 Tensorboard helper
