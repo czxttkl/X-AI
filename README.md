@@ -33,6 +33,7 @@ Before test `rl_prtr`, we need to generate a pre-training RL model
 ```
 # the model will be saved in prtr_models/
 python3.6 Q_comb_search.py --env_name="env_nn" --k=20 --d=6 --test_period=100 --load=0 --fixed_xo=1 --env_dir="test_probs/prob_env_nn_pv0_envseed303" --learn_wall_time_limit=5000 --root_dir="prtr_models"
+
 # use tensorboard to check progress
 tensorboard --logdir=prtr_models/rl_prtr_env_nn_k20_d6_t5000/
 ```
@@ -59,6 +60,22 @@ Generate problems
 python3.6 problem_generator.py --k=312 --d=15 --env=env_greedymove --pv=0 --env_seed=303
 ```
 
+Genetic Algorithm
+```
+# time limit 25 min (1500 seconds)
+python experimenter.py --method="ga" --wall_time_limit=1500 --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303"
+```
+
+Q-DeckRec
+```
+# collect samples and train a neural network model as described in the paper
+# model will be saved in prtr_models/rl_prtr_env_greedymove_k312_d15_t259200
+python Q_comb_search.py --env_name="env_greedymove" --k=312 --d=15 --test_period=99999999 --load=0 --env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --learn_wall_time_limit=259200 --root_dir="prtr_models"
+
+# test
+python experimenter.py --method="rl_prtr" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/rl_prtr_env_greedymove_k312_d15_t259200/optimizer_model_fixedxoFalse/qlearning" 
+```
+
 MC-simulation baseline
 ```
 # collect training data. x: pairs of randomly generated (x_o, x_p), y: win rate
@@ -82,8 +99,14 @@ Report results
 ```
 python3.6 report.py --env=env_greedymove
 ```
+The following table is based on the same tests as in the paper but different randomness. So the numbers might slightly differ with what reported in the paper.
 
-Test different methods: see different directories in `combinatorial_search/commands/env_greedymove/`
+|                          | Average Win Rate |
+|--------------------------|------------------|
+| Genetic Algorithm 25 min | 0.95             |
+| Monte Carlo 67K          | 0.84             |
+| Q-DeckRec 3 days         |                  |
+| Multi-Label              |                  |
 
 <br>
 
