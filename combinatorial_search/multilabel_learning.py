@@ -1,5 +1,5 @@
 """
-Supervise learning model for MC simulation
+multilabel learning model baseline
 """
 import random
 import time
@@ -10,6 +10,7 @@ import os
 import sys
 import psutil
 from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import hamming_loss
 from genetic_algorithm import cxTwoDeck, mutSwapCard, my_deck_creator_func, select_best_from_hof
 from deap import base
 from deap import creator
@@ -176,17 +177,18 @@ class MultiLabelLearning:
         duration = time.time()
         mlp = MLPClassifier(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000, verbose=True)
         size = len(self.x)
+        # 90% training, 10% testing
         x, y = numpy.array(self.x[:-size//10]), numpy.array(self.y[:-size//10])
         x_test, y_test = numpy.array(self.x[-size//10:]), numpy.array(self.y[-size//10:])
         print('training size:', len(y))
+        print('test size:', len(y_test))
         mlp.fit(x, y)
         duration = time.time() - duration
 
-        mse = ((y - mlp.predict(x)) ** 2).mean()
-        mse_test = ((y_test - mlp.predict(x_test)) ** 2).mean()
+        train_hamming_loss = self.calc_hamming_loss(mlp, x, y)
+        test_hamming_loss = self.calc_hamming_loss(mlp, x_test, y_test)
 
-        print("Training set R^2 score: %f, MSE: %f, time: %f, size: %d" % (mlp.score(x, y), mse, duration, len(y)))
-        print("Test set R^2 score: %f, MSE: %f, size: %d" % (mlp.score(x_test, y_test), mse_test, len(y_test)))
+        print("train hamming loss: {}, test hamming loss: {}".format(train_hamming_loss, test_hamming_loss))
 
         x_o = numpy.copy(prob_env.x_o).reshape((1, -1))
 
@@ -202,6 +204,22 @@ class MultiLabelLearning:
         print("duration: {}, real win rate: {}".format(duration, real_win_rate))
 
         return real_win_rate, duration, opt_x_p
+
+    def calc_hamming_loss(self, model, x, y):
+        hamming_loss_sum = 0
+        pred_y = model.predict_proba(x)
+        # pick the self.env.d-th largest predict probability
+        pred_label_thres_idx = numpy.argsort(pred_y)[:, -self.env.d]
+        pred_label_thres = pred_y[numpy.arange(len(y)), pred_label_thres_idx]
+        for py, plt, ry in zip(pred_y, pred_label_thres, y):
+            py = numpy.copy(py)
+            py[py >= plt] = 1
+            py[py < plt] = 0
+            assert numpy.sum(py) == self.env.d
+            hamming_loss_sum += hamming_loss(py, ry)
+        # on average how many cards mismatched per data point
+        hamming_loss_ave_per_sample = hamming_loss_sum / len(y) * self.env.k
+        return hamming_loss_ave_per_sample
 
 
 if __name__ == '__main__':

@@ -1,0 +1,1 @@
+grep -lr --exclude-dir=".git" -e "=ser-par-10g-5" .  | xargs sed -i '' -e 's/=ser-par-10g-5/=fullnode/g'

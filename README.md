@@ -157,6 +157,6 @@ Tensorboard helper
 ### Requirement
 
 Python 3.6. Please also see `requirements.txt`
-
+Java 1.8
 
 Credits to https://github.com/jleclanche/fireplace
