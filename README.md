@@ -99,13 +99,13 @@ Report results
 ```
 python3.6 report.py --env=env_greedymove
 ```
-The following table is based on the same tests as in the paper but different randomness. So the numbers might slightly differ with what reported in the paper.
+The following table shows test results. Some numbers might be slightly different than the paper due to different randomness. 
 
 |                          | Average Win Rate |
 |--------------------------|------------------|
 | Genetic Algorithm 25 min | 0.95             |
 | Monte Carlo 67K          | 0.84             |
-| Q-DeckRec 3 days         |                  |
+| Q-DeckRec 3 days         | 0.93             |
 | Multi-Label              |                  |
 
 <br>
@@ -180,6 +180,7 @@ Tensorboard helper
 ### Requirement
 
 Python 3.6. Please also see `requirements.txt`
+
 Java 1.8
 
 Credits to https://github.com/jleclanche/fireplace
