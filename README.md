@@ -1,4 +1,4 @@
-A Collectible Card Game (CCG) Deck Recommender just for fun. The project is still under construction and expected to complete in Sept, 2018.
+A Collectible Card Game (CCG) Deck Recommender just for fun. 
 
 The paper is available on arxiv: [Q-DeckRec: A Fast Deck Recommendation System for Collectible Card Games](https://arxiv.org/abs/1806.09771)
 
@@ -86,14 +86,6 @@ python3.6 supervise_learning.py --env_name="env_greedymove" --k=312 --d=15 --loa
 python3.6 experimenter.py --method="sl" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/sl_env_greedymove_k312_d15_t259200" --wall_time_limit=259200 --sl_num_trial=67
 ```
 
-We also added another baseline recently (not included in the paper), in which we learn a multi-label classifier (based on the same neural network structure as q-deckrec and MC-simulation) based on (x_o, x_p) pairs. During collecting the pairs, x_o is randomly generated and x_p is obtained by genetic algorithm (obtained when no improvement over 10 generations).
-```
-# collect training pairs
-python multilabel_learning.py --env_name="env_greedymove" --k=312 --d=15 --load=0 --wall_time_limit=259200 
-# test
-python experimenter.py --method="ml" --prob_env_dir="test_probs/prob_env_greedymove_pv0_envseed303" --prtr_model_dir="prtr_models/ml_env_greedymove_k312_d15_t259200" --wall_time_limit=259200
-```
- 
 
 Report results
 ```
@@ -106,7 +98,6 @@ The following table shows test results. Some numbers might be slightly different
 | Genetic Algorithm 25 min | 0.95             |
 | Monte Carlo 67K          | 0.84             |
 | Q-DeckRec 3 days         | 0.93             |
-| Multi-Label              |                  |
 
 <br>
 
@@ -166,9 +157,6 @@ Learn a win-rate predictor and then use Monte Carlo simulation to sample random 
 
 `supervise_learning_cpu_time.py`
 Only for measuring CPU time of `supervise_learning.py`
-
-`multilabel_learning.py`
-A baseline recently added (not included in the paper), in which we learn a multi-label classifier (based on the same neural network structure as q-deckrec and MC-simulation) based on (x_o, x_p) pairs. During collecting the pairs, x_o is randomly generated and x_p is obtained by genetic algorithm (obtained when no improvement over 10 generations).
 
 `tfboard.py`
 Tensorboard helper

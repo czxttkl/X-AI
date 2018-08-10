@@ -244,24 +244,25 @@ if __name__ == '__main__':
         opt_x_p = opt_state[prob_env.k:-1]
         start_x_o = prob_env.x_o
         start_x_p = None    # meaningless in supervise learning model
-    elif kwargs.method == 'ml':
-        # a multi-label method
-        # problem environment may not have fixed x_o.
-        # however, we want to fix x_o for multilabel learning method
-        prob_env.set_fixed_xo(prob_env.x_o)
-        assert prob_env.if_set_fixed_xo()
-        ml_model = MultiLabelLearning(k=prob_env.k,
-                                     d=prob_env.d,
-                                     env_name=prob_env_name,
-                                     wall_time_limit=kwargs.wall_time_limit,
-                                     load=True,
-                                     path=kwargs.prtr_model_dir)
-        opt_val, duration, opt_x_p = ml_model.train_and_test(prob_env)
-        wall_time_limit = ml_model.time_passed    # data collection time
-        generation = len(ml_model.y)              # number of data as generation
-        call_counts = len(ml_model.y)             # number of data as call count too
-        start_x_o = prob_env.x_o
-        start_x_p = None    # meaningless in supervise learning model
+    # baseline still under construction
+    # elif kwargs.method == 'ml':
+    #     # a multi-label method
+    #     # problem environment may not have fixed x_o.
+    #     # however, we want to fix x_o for multilabel learning method
+    #     prob_env.set_fixed_xo(prob_env.x_o)
+    #     assert prob_env.if_set_fixed_xo()
+    #     ml_model = MultiLabelLearning(k=prob_env.k,
+    #                                  d=prob_env.d,
+    #                                  env_name=prob_env_name,
+    #                                  wall_time_limit=kwargs.wall_time_limit,
+    #                                  load=True,
+    #                                  path=kwargs.prtr_model_dir)
+    #     opt_val, duration, opt_x_p = ml_model.train_and_test(prob_env)
+    #     wall_time_limit = ml_model.time_passed    # data collection time
+    #     generation = len(ml_model.y)              # number of data as generation
+    #     call_counts = len(ml_model.y)             # number of data as call count too
+    #     start_x_o = prob_env.x_o
+    #     start_x_p = None    # meaningless in supervise learning model
 
     # also output opt_x_p non-zero idx
     opt_x_p_idx = numpy.nonzero(opt_x_p)[0]

@@ -175,7 +175,7 @@ class MultiLabelLearning:
         This function gets called in ad-hoc or in experimenter.py
         """
         duration = time.time()
-        mlp = MLPClassifier(hidden_layer_sizes=(1000, ), early_stopping=True, max_iter=2000, verbose=True)
+        mlp = MLPClassifier(hidden_layer_sizes=(1000, ), early_stopping=False, max_iter=100, verbose=True, tol=0.0000001)
         size = len(self.x)
         # 90% training, 10% testing
         x, y = numpy.array(self.x[:-size//10]), numpy.array(self.y[:-size//10])
